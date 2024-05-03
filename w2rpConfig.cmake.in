@@ -1,0 +1,21 @@
+# - Config file for the lightweight w2rp library
+
+@PACKAGE_INIT@
+include( "${CMAKE_CURRENT_LIST_DIR}/w2rpTargets.cmake" )
+
+# Check if the package has been loaded already
+if(TARGET w2rp)
+  return()
+endif()
+
+message(STATUS "Found W2RP ${CMAKE_CURRENT_LIST_DIR}")
+
+find_package(Boost 1.73.0 EXACT COMPONENTS system log log_setup thread REQUIRED)
+
+message(STATUS "Boost was found")
+
+set(W2RP_LIB w2rp boost_log)
+set(W2RP_COMPILE_OPTIONS -g)
+set(W2RP_COMPILE_DEFINITIONS BOOST_LOG_DYN_LINK)
+
+message(STATUS "W2RP options set ${W2RP_COMPILE_OPTIONS} ${W2RP_COMPILE_DEFINITIONS}")
