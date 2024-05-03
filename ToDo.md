@@ -5,12 +5,13 @@
 ### RTPS
 
 * fragmentation
-* reader: bitmap nacks + writer: retransmissions
+* uuids
 * submessages (DataFrag, NackFrag, HBFrag, ...) - extentable, (de)serialization ...
 * sample deadline
 * reader/writerProxies
 * changeForReader/Writer
 * StatefulWriter/Reader only
+* reader: bitmap nacks + writer: retransmissions
 * QoS Policy for configuring W2RP
 * (initial) xml configuration?
 
@@ -32,10 +33,11 @@
 
 ### Misc.
 
+* multi port reception
 * Logging/lttng tracing?
 * ...
 
-### Missing
+### Missing (on purpose)
 
 * dynamic discovery
 * DDS
