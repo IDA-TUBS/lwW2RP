@@ -5,12 +5,13 @@
 #include <w2rp/changeForWriter.h>
 #include <w2rp/sampleFragment.h>
 
+namespace w2rp {
 
-unsigned int ChangeForWriter::receivedCount()
+uint32_t ChangeForWriter::receivedCount()
 {
     // count received fragments
-    unsigned int received = 0;
-    for(unsigned int i = 0; i < numberFragments; i++){
+    uint32_t received = 0;
+    for(uint32_t i = 0; i < numberFragments; i++){
         auto frag = sampleFragmentArray[i];
         if(frag->received) {
             received++;
@@ -19,7 +20,7 @@ unsigned int ChangeForWriter::receivedCount()
     return received;
 };
 
-bool ChangeForWriter::setFragmentStatus(fragmentStates status, unsigned int fragmentNumber)
+bool ChangeForWriter::setFragmentStatus(fragmentStates status, uint32_t fragmentNumber)
 {
     auto frag = sampleFragmentArray[fragmentNumber];
 
@@ -40,3 +41,5 @@ bool ChangeForWriter::setFragmentStatus(fragmentStates status, unsigned int frag
 
     return true;
 }
+
+}; // end namespace

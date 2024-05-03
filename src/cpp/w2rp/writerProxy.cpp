@@ -4,6 +4,7 @@
 
 #include <w2rp/writerProxy.h>
 
+namespace w2rp {
 
 bool WriterProxy::addChange(CacheChange &change)
 {
@@ -20,7 +21,7 @@ bool WriterProxy::addChange(CacheChange &change)
     return true;
 }
 
-void WriterProxy::removeChange(unsigned int sequenceNumber)
+void WriterProxy::removeChange(uint32_t sequenceNumber)
 {
     for (auto it = history.begin(); it != history.end();)
     {
@@ -41,7 +42,7 @@ void WriterProxy::removeChange(unsigned int sequenceNumber)
 }
 
 
-bool WriterProxy::updateFragmentStatus (fragmentStates status, unsigned int sequenceNumber, unsigned int fragmentNumber)
+bool WriterProxy::updateFragmentStatus (fragmentStates status, uint32_t sequenceNumber, uint32_t fragmentNumber)
 {
     // first find change corresponding to the given sequence number
     ChangeForWriter* tmp = nullptr;
@@ -62,7 +63,7 @@ bool WriterProxy::updateFragmentStatus (fragmentStates status, unsigned int sequ
 }
 
 
-bool WriterProxy::checkSampleCompleteness(unsigned int sequenceNumber)
+bool WriterProxy::checkSampleCompleteness(uint32_t sequenceNumber)
 {
     // access change with the given sequence number
     ChangeForWriter* change = nullptr;
@@ -88,3 +89,5 @@ bool WriterProxy::checkSampleCompleteness(unsigned int sequenceNumber)
 
     return complete;
 }
+
+}; // end namespace

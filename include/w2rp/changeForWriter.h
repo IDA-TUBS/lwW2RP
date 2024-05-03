@@ -2,15 +2,15 @@
  *
  */
 
-#ifndef RTPS_CHANGEFORWRITER_H_
-#define RTPS_CHANGEFORWRITER_H_
+#ifndef W2RP_CHANGEFORWRITER_H_
+#define W2RP_CHANGEFORWRITER_H_
 
 #include <math.h>
+#include <chrono>
 #include <w2rp/cacheChange.h>
 #include <w2rp/sampleFragment.h>
 
-using namespace omnetpp;
-
+namespace w2rp {
 
 class SampleFragment;
 
@@ -45,7 +45,7 @@ class ChangeForWriter: public CacheChange
      * @param fragmentSize size of a fragment in bytes
      * @param timestamp time when sample was generated/arrived at middleware
      */
-    ChangeForWriter(unsigned int seqNum, unsigned int sampleSize, unsigned int fragmentSize, simtime_t timestamp):
+    ChangeForWriter(uint32_t seqNum, uint32_t sampleSize, uint32_t fragmentSize, std::chrono::system_clock::time_point timestamp):
         CacheChange(seqNum, sampleSize, fragmentSize, timestamp),
         complete(false),
         lastReceivedFN(-1),
@@ -54,7 +54,7 @@ class ChangeForWriter: public CacheChange
         sampleFragmentArray = new SampleFragment*[this->numberFragments];
 
         // instantiate all fragments comprising the sample
-        for(unsigned int i = 0; i < this->numberFragments; i++){
+        for(uint32_t i = 0; i < this->numberFragments; i++){
             sampleFragmentArray[i] = new SampleFragment(this,
                                                         i,
                                                         (fragmentSize < sampleSize - (i*fragmentSize)) ? fragmentSize : sampleSize - (i*fragmentSize),
@@ -76,7 +76,7 @@ class ChangeForWriter: public CacheChange
         sampleFragmentArray = new SampleFragment*[this->numberFragments];
 
         // instantiate all fragments comprising the sample
-        for(unsigned int i = 0; i < this->numberFragments; i++){
+        for(uint32_t i = 0; i < this->numberFragments; i++){
             sampleFragmentArray[i] = new SampleFragment(this,
                                                         i,
                                                         (fragmentSize < sampleSize - (i*fragmentSize)) ? fragmentSize : sampleSize - (i*fragmentSize),
@@ -99,7 +99,7 @@ class ChangeForWriter: public CacheChange
         auto sampleArrayRef = change.getFragmentArray();
 
         // copy contents of reference array to this instance's array
-        for(unsigned int i = 0; i < this->numberFragments; i++){
+        for(uint32_t i = 0; i < this->numberFragments; i++){
             sampleFragmentArray[i] = new SampleFragment(*sampleArrayRef[i]);
         }
     }
@@ -117,7 +117,7 @@ class ChangeForWriter: public CacheChange
      *
      * @return number of fragments
      */
-    unsigned int receivedCount();
+    uint32_t receivedCount();
 
     /*
      * method for updating the fragment status
@@ -126,9 +126,9 @@ class ChangeForWriter: public CacheChange
      * @param fragmentNumber fragment whose fragment shall be updated
      * @return true if operation successful, else returns false
      */
-    virtual bool setFragmentStatus(fragmentStates status, unsigned int fragmentNumber);
+    virtual bool setFragmentStatus(fragmentStates status, uint32_t fragmentNumber);
 };
 
+}; // end namespace
 
-
-#endif // RTPS_CHANGEFORWRITER_H_
+#endif // W2RP_CHANGEFORWRITER_H_

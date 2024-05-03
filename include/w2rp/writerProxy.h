@@ -2,12 +2,14 @@
  *
  */
 
-#ifndef RTPS_WRITERPROXY_H_
-#define RTPS_WRITERPROXY_H_
+#ifndef W2RP_WRITERPROXY_H_
+#define W2RP_WRITERPROXY_H_
 
 #include <math.h>
 #include <list>
 #include <w2rp/changeForWriter.h>
+
+namespace w2rp {
 
 class SampleFragment;
 
@@ -20,13 +22,13 @@ class WriterProxy
     int highestSequenceNumber;
 
     /// max size of history
-    unsigned int historySize;
+    uint32_t historySize;
 
   public:
     /*
      * default constructor
      */
-    WriterProxy(unsigned int historySize):
+    WriterProxy(uint32_t historySize):
         historySize(historySize),
         highestSequenceNumber(-1)
     {};
@@ -34,7 +36,7 @@ class WriterProxy
     /*
      * overloaded constructor, add first change to history
      */
-    WriterProxy(unsigned int historySize, CacheChange &change):
+    WriterProxy(uint32_t historySize, CacheChange &change):
         historySize(historySize)
     {
         this->addChange(change);
@@ -61,7 +63,7 @@ class WriterProxy
      *
      * @param sequenceNumber sequence number of the change that has be be removed
      */
-    void removeChange(unsigned int sequenceNumber);
+    void removeChange(uint32_t sequenceNumber);
 
     /*
      * method for altering a fragment's status (unsent, sent, acked, ...)
@@ -71,7 +73,7 @@ class WriterProxy
      * @param fragmentNumber fn of fragment to be updated
      * @return true if successful, else false
      */
-    bool updateFragmentStatus (fragmentStates status, unsigned int sequenceNumber, unsigned int fragmentNumber);
+    bool updateFragmentStatus (fragmentStates status, uint32_t sequenceNumber, uint32_t fragmentNumber);
 
     /*
      * method for evaluating completeness of samples
@@ -79,7 +81,7 @@ class WriterProxy
      * @param sequenceNumber seq number of sample that shall be checked
      * @return true if complete, else returns false
      */
-    bool checkSampleCompleteness(unsigned int sequenceNumber);
+    bool checkSampleCompleteness(uint32_t sequenceNumber);
 
     /*
      * method returning the current (oldest) cache change
@@ -104,7 +106,7 @@ class WriterProxy
     /*
      * Method for returning history size
      */
-    unsigned int getSize()
+    uint32_t getSize()
     {
         return history.size();
     };
@@ -115,7 +117,7 @@ class WriterProxy
      * @param sequenceNumber seq number of sample that shall be retrieved
      * @return ChangeForWriter object
      */
-    ChangeForWriter* getChange(unsigned int sequenceNumber)
+    ChangeForWriter* getChange(uint32_t sequenceNumber)
     {
         // first find change corresponding to the given sequence number
         ChangeForWriter* tmp = nullptr;
@@ -132,4 +134,6 @@ class WriterProxy
     };
 };
 
-#endif // RTPS_WRITERPROXY_H_
+}; // end namespace
+
+#endif // W2RP_WRITERPROXY_H_

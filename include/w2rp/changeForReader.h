@@ -2,15 +2,16 @@
  *
  */
 
-#ifndef RTPS_CHANGEFORREADER_H_
-#define RTPS_CHANGEFORREADER_H_
+#ifndef W2RP_CHANGEFORREADER_H_
+#define W2RP_CHANGEFORREADER_H_
 
 #include <math.h>
+#include <vector>
+#include <chrono>
 #include <w2rp/cacheChange.h>
 #include <w2rp/sampleFragment.h>
 
-using namespace omnetpp;
-
+namespace w2rp {
 
 class SampleFragment;
 
@@ -18,7 +19,7 @@ class ChangeForReader: public CacheChange
 {
   private:
     /// reader entity ID
-    unsigned int readerID;
+    uint32_t readerID;
 
   public:
     /// flag for signaling that all fragments have been acknowledged
@@ -51,7 +52,7 @@ class ChangeForReader: public CacheChange
      * @param fragmentSize size of a fragment in bytes
      * @param timestamp time when sample was generated/arrived at middleware
      */
-    ChangeForReader(CacheChange* change, unsigned int id, unsigned int seqNum, unsigned int sampleSize, unsigned int fragmentSize, simtime_t timestamp):
+    ChangeForReader(CacheChange* change, uint32_t id, uint32_t seqNum, uint32_t sampleSize, uint32_t fragmentSize, std::chrono::system_clock::time_point timestamp):
         CacheChange(seqNum, sampleSize, fragmentSize, timestamp),
         readerID(id),
         complete(false),
@@ -62,7 +63,7 @@ class ChangeForReader: public CacheChange
         sampleFragmentArray = new SampleFragment*[this->numberFragments];
 
         // instantiate all fragments comprising the sample
-        for(unsigned int i = 0; i < this->numberFragments; i++){
+        for(uint32_t i = 0; i < this->numberFragments; i++){
             sampleFragmentArray[i] = new SampleFragment(baseChange,
                                                         i,
                                                         (fragmentSize < sampleSize - (i*fragmentSize)) ? fragmentSize : sampleSize - (i*fragmentSize),
@@ -76,7 +77,7 @@ class ChangeForReader: public CacheChange
      * @param id of reader
      * @param change reference to cache change
      */
-    ChangeForReader(unsigned int id, CacheChange &change):
+    ChangeForReader(uint32_t id, CacheChange &change):
         CacheChange(change.sequenceNumber, change.sampleSize, change.fragmentSize, change.arrivalTime),
         readerID(id),
         complete(false),
@@ -89,7 +90,7 @@ class ChangeForReader: public CacheChange
         auto sampleArrayRef = change.getFragmentArray();
 
         // copy contents of reference array (CacheChange) to this instance's array
-        for(unsigned int i = 0; i < this->numberFragments; i++){
+        for(uint32_t i = 0; i < this->numberFragments; i++){
             sampleFragmentArray[i] = new SampleFragment(*sampleArrayRef[i]);
         }
     };
@@ -110,7 +111,7 @@ class ChangeForReader: public CacheChange
         auto sampleArrayRef = change.getFragmentArray();
 
         // copy contents of reference array to this instance's array
-        for(unsigned int i = 0; i < this->numberFragments; i++){
+        for(uint32_t i = 0; i < this->numberFragments; i++){
             sampleFragmentArray[i] = new SampleFragment(*sampleArrayRef[i]);
         }
     }
@@ -128,28 +129,28 @@ class ChangeForReader: public CacheChange
      *
      * @return number of fragments
      */
-    unsigned int notAckCount();
+    uint32_t notAckCount();
 
     /*
      * determine number of fragments that have been acknowledged so far
      *
      * @return number of fragments
      */
-    unsigned int ackCount();
+    uint32_t ackCount();
 
     /*
      * determine number of fragments that have been sent so far, also includes those already acknowledged by the reader
      *
      * @return number of fragments
      */
-    unsigned int sentCount();
+    uint32_t sentCount();
 
     /*
      * determine number of fragments that are in state "UNSENT"
      *
      * @return number of fragments
      */
-    unsigned int unsentCount();
+    uint32_t unsentCount();
 
     /*
      * method for updating the fragment status
@@ -158,7 +159,7 @@ class ChangeForReader: public CacheChange
      * @param fragmentNumber fragment whose fragment shall be updated
      * @return true if operation successful, else returns false
      */
-    virtual bool setFragmentStatus(fragmentStates status, unsigned int fragmentNumber, simtime_t sentTimestamp = 0.0);
+    bool setFragmentStatus(fragmentStates status, uint32_t fragmentNumber, std::chrono::system_clock::time_point sentTimestamp);
 
     /*
      * gather all fragments of a given change that are currently in state unsent (and not acknowledged!)
@@ -174,6 +175,6 @@ class ChangeForReader: public CacheChange
 
 };
 
+}; // end namespace
 
-
-#endif // RTPS_CHANGEFORREADER_H_
+#endif // W2RP_CHANGEFORREADER_H_

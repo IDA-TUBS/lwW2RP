@@ -2,18 +2,15 @@
  *
  */
 
-#ifndef RTPS_READERPROXY_H_
-#define RTPS_READERPROXY_H_
+#ifndef W2RP_READERPROXY_H_
+#define W2RP_READERPROXY_H_
 
 #include <math.h>
+#include <vector>
 #include <list>
 #include <w2rp/changeForReader.h>
 
-
-
-using namespace omnetpp;
-using namespace inet;
-
+namespace w2rp {
 
 class SampleFragment;
 
@@ -23,18 +20,18 @@ class ReaderProxy
     /// history story all samples
     std::list<ChangeForReader*> history;
     /// max size of history
-    unsigned int historySize;
+    uint32_t historySize;
 
     /// enabling NACK suppresion
     bool nackSuppressionEnabled;
     /// NACK suppression duration
-    simtime_t nackSuppressionDuration;
+    std::chrono::system_clock::time_point nackSuppressionDuration;
 
   public:
     /// entity of corresponding reader
-    unsigned int readerID;
+    uint32_t readerID;
     /// the reader's priority
-    unsigned int priority;
+    uint32_t priority;
 
     /// flag signaling a timeout is active - used for WiMEP
     bool timeoutActive;
@@ -42,7 +39,7 @@ class ReaderProxy
     /*
      * default constructor
      */
-    ReaderProxy(unsigned int id, unsigned int historySize):
+    ReaderProxy(uint32_t id, uint32_t historySize):
         readerID(id),
         historySize(historySize),
         nackSuppressionEnabled(false),
@@ -52,7 +49,7 @@ class ReaderProxy
     /*
      * overloaded constructor, enable NACK suppression
      */
-    ReaderProxy(unsigned int id, unsigned int historySize, simtime_t nackSuppressionDuration):
+    ReaderProxy(uint32_t id, uint32_t historySize, std::chrono::system_clock::time_point nackSuppressionDuration):
         readerID(id),
         historySize(historySize),
         nackSuppressionEnabled(true),
@@ -63,7 +60,7 @@ class ReaderProxy
     /*
      * overloaded constructor, add first change to history
      */
-    ReaderProxy(unsigned int id, unsigned int historySize, CacheChange &change):
+    ReaderProxy(uint32_t id, uint32_t historySize, CacheChange &change):
         readerID(id),
         historySize(historySize),
         nackSuppressionEnabled(false),
@@ -75,7 +72,7 @@ class ReaderProxy
     /*
      * overloaded constructor, enable NACK suppression and add first change to history
      */
-    ReaderProxy(unsigned int id, unsigned int historySize, simtime_t nackSuppressionDuration, CacheChange &change):
+    ReaderProxy(uint32_t id, uint32_t historySize, std::chrono::system_clock::time_point nackSuppressionDuration, CacheChange &change):
         readerID(id),
         historySize(historySize),
         nackSuppressionEnabled(true),
@@ -106,7 +103,7 @@ class ReaderProxy
      *
      * @return entity id
      */
-    unsigned int getReaderId()
+    uint32_t getReaderId()
     {
         return readerID;
     }
@@ -116,7 +113,7 @@ class ReaderProxy
      *
      * @param prio the priority assigned to the corresponding reader
      */
-    void setPriority(unsigned int prio)
+    void setPriority(uint32_t prio)
     {
         this->priority = prio;
     }
@@ -126,7 +123,7 @@ class ReaderProxy
      *
      * @param sequenceNumber sequence number of the change that has to be removed
      */
-    void removeChange(unsigned int sequenceNumber);
+    void removeChange(uint32_t sequenceNumber);
 
     /*
      * method for checking whether a Cache Change is in the history cache
@@ -134,7 +131,7 @@ class ReaderProxy
      * @param sequenceNumber sequence number of the change that has be be removed
      * @return bool
      */
-    bool changeExists(unsigned int sequenceNumber);
+    bool changeExists(uint32_t sequenceNumber);
 
     /*
      * method for altering a fragment's status (unsent, sent, acked, ...)
@@ -144,7 +141,7 @@ class ReaderProxy
      * @param fragmentNumber fn of fragment to be updated
      * @return true if successful, else false
      */
-    bool updateFragmentStatus (fragmentStates status, unsigned int sequenceNumber, unsigned int fragmentNumber, simtime_t sentTimestamp = 0.0);
+    bool updateFragmentStatus (fragmentStates status, uint32_t sequenceNumber, uint32_t fragmentNumber, std::chrono::system_clock::time_point sentTimestamp);
 
     /*
      * method for updating the fragment status based on NackFrag information
@@ -152,7 +149,7 @@ class ReaderProxy
      * @param nackFrag message containing the nackFrag
      * @return true if successful, else returns false
      */
-    bool processNack(RtpsInetPacket* nackFrag);
+    bool processNack(void* nackFrag); // TODO replace with message or similar!
 
     /*
      * method for updating the fragment status based on NackFrag information
@@ -160,7 +157,7 @@ class ReaderProxy
      * @param sequenceNumber seq number of sample that shall be checked
      * @return true if complete, else returns false
      */
-    bool checkSampleCompleteness(unsigned int sequenceNumber);
+    bool checkSampleCompleteness(uint32_t sequenceNumber);
 
     /*
      * method returning the current (oldest) cache change
@@ -176,7 +173,7 @@ class ReaderProxy
      * @param sequenceNumber seq number of sample that shall be checked
      * @return list of fragments
      */
-    std::vector<SampleFragment*> getUnsentFragments(unsigned int sequenceNumber);
+    std::vector<SampleFragment*> getUnsentFragments(uint32_t sequenceNumber);
 
     /*
      * determine whether a timeout is needed to ensure safe and complete sample transmission
@@ -184,15 +181,17 @@ class ReaderProxy
      * @param sequenceNumber seq number of sample that shall be checked
      * @return true if a timeout needs to be triggered, else returns false
      */
-    bool checkForTimeout(unsigned int sequenceNumber);
+    bool checkForTimeout(uint32_t sequenceNumber);
 
     /*
      * WiMEP function, used for resetting fragment states to 'UNSENT' if not acked yet
      *
      * @param sequenceNumber seq number of sample that shall be updated
      */
-    void resetTimeoutedFragments(unsigned int sequenceNumber);
+    void resetTimeoutedFragments(uint32_t sequenceNumber);
 
 };
 
-#endif // RTPS_READERPROXY_H_
+}; // end namespace
+
+#endif // W2RP_READERPROXY_H_

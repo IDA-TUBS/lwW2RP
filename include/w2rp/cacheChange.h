@@ -2,13 +2,18 @@
  *
  */
 
-#ifndef RTPS_CACHECHANGE_H_
-#define RTPS_CACHECHANGE_H_
+#ifndef W2RP_CACHECHANGE_H_
+#define W2RP_CACHECHANGE_H_
 
 #include <math.h>
+#include <chrono>
 #include <w2rp/sampleFragment.h>
 
-using namespace omnetpp;
+
+
+namespace w2rp {
+
+class SampleFragment;
 
 enum fragmentStates{
     UNSENT,
@@ -19,23 +24,21 @@ enum fragmentStates{
     TIMEOUT // added for W2RP
 };
 
-class SampleFragment;
-
 class CacheChange
 {
   public:
     /// sequence number of current sample
-    unsigned int sequenceNumber;
+    uint32_t sequenceNumber;
     /// size of the sample in bytes
-    unsigned int sampleSize;
+    uint32_t sampleSize;
     /// size of each fragment
-    unsigned int fragmentSize;
+    uint32_t fragmentSize;
     /// total number of fragments per sample
-    unsigned int numberFragments;
+    uint32_t numberFragments;
 
 
     /// timestamp: when did the sample arrive at the middleware
-    simtime_t arrivalTime;
+    std::chrono::system_clock::time_point arrivalTime;
 
     /// status flag for indicating complete transmission of a sample (to a reader)
     bool complete;
@@ -56,7 +59,7 @@ class CacheChange
      * @param fragmentSize size of a fragment in bytes
      * @param timestamp time when sample was generated/arrived at middleware
      */
-    CacheChange(unsigned int seqNum, unsigned int sampleSize, unsigned int fragmentSize, simtime_t timestamp):
+    CacheChange(uint32_t seqNum, uint32_t sampleSize, uint32_t fragmentSize, std::chrono::system_clock::time_point timestamp):
         sequenceNumber(seqNum),
         sampleSize(sampleSize),
         fragmentSize(fragmentSize),
@@ -66,7 +69,7 @@ class CacheChange
         sampleFragmentArray = new SampleFragment*[this->numberFragments];
 
         // instantiate all fragments comprising the sample
-        for(unsigned int i = 0; i < this->numberFragments; i++){
+        for(uint32_t i = 0; i < this->numberFragments; i++){
             sampleFragmentArray[i] = new SampleFragment(this,
                                                         i,
                                                         (fragmentSize < sampleSize - (i*fragmentSize)) ? fragmentSize : sampleSize - (i*fragmentSize),
@@ -89,7 +92,7 @@ class CacheChange
         auto sampleArrayRef = change.getFragmentArray();
 
         // copy contents of reference array (CacheChange) to this instance's array
-        for(unsigned int i = 0; i < this->numberFragments; i++){
+        for(uint32_t i = 0; i < this->numberFragments; i++){
             sampleFragmentArray[i] = new SampleFragment(*sampleArrayRef[i]);
         }
     }
@@ -113,7 +116,7 @@ class CacheChange
      * @param fragmentNumber fn of fragment to be updated
      * @return true if successful, else false
      */
-    bool setFragmentStatus (fragmentStates status, unsigned int fragmentNumber)
+    bool setFragmentStatus (fragmentStates status, uint32_t fragmentNumber)
     {
         // actual implementations found in ChangeForReader/Writer
         return false;
@@ -137,9 +140,10 @@ class CacheChange
      * @param deadline sample deadline
      * @return true if sample still valid, else returns false
      */
-    bool isValid(simtime_t deadline)
+    bool isValid(std::chrono::system_clock::duration deadline)
     {
-        return ((simTime() - this->arrivalTime) < deadline);
+        auto now = std::chrono::system_clock::now();
+        return ((now - this->arrivalTime) < deadline);
     }
 
     /*
@@ -155,7 +159,6 @@ class CacheChange
            if(!fragment->acked && !fragment->received){
                return false;
            }
-//           EV << "fragment "  << i << "  received\n";
        }
        this->complete = tmp;
        return this->complete;
@@ -163,6 +166,6 @@ class CacheChange
 
 };
 
+}; // end namespace
 
-
-#endif // RTPS_CACHECHANGE_H_
+#endif // W2RP_CACHECHANGE_H_

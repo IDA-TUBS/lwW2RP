@@ -7,6 +7,11 @@
 #include <vector>
 
 #include <w2rp/sampleFragment.h>
+#include <w2rp/helper/serializedPayload.h>
+
+namespace w2rp {
+
+class SampleFragment;
 
 class Fragmentation
 {
@@ -28,4 +33,7 @@ class Fragmentation
 
     void fragmentPayload(SerializedPayload* payload, uint32_t fragSize, std::vector<SampleFragment*>* res, bool compare);
 };
+
+}; // end namespace
+
 #endif // FRAGMENTATION_H

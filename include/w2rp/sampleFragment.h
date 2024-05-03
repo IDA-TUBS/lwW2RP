@@ -2,10 +2,13 @@
  *
  */
 
-#ifndef RTPS_ENTITIES_SAMPLEFRAGMENT_H_
-#define RTPS_ENTITIES_SAMPLEFRAGMENT_H_
+#ifndef W2RP_ENTITIES_SAMPLEFRAGMENT_H_
+#define W2RP_ENTITIES_SAMPLEFRAGMENT_H_
 
+#include <chrono>
+#include <cstring>
 
+namespace w2rp {
 
 class CacheChange;
 
@@ -13,17 +16,20 @@ class SampleFragment
 {
   public:
     /// fragment number
-    unsigned int fragmentStartingNum;
+    uint32_t fragmentStartingNum;
     /// counting how often the given fragment has been transmitted
-    unsigned int sendCounter;
+    uint32_t sendCounter;
     /// actual fragment size (can be smaller than fragmentSize)
-    unsigned int dataSize;
+    uint32_t dataSize;
 
     /// reference (pointer) to ChangeForReader owning this object
     CacheChange* baseChange;
 
+    /// actual data
+    unsigned char* data;
+
     /// timestamp the fragment has been sent (the latest timestamp if already sent multiple times)
-    simtime_t sendTime;
+    std::chrono::system_clock::time_point sendTime;
 
     /// flag fragment as sent - relevant for writer
     bool sent;
@@ -47,7 +53,7 @@ class SampleFragment
      * @param dataSize size of the fragment in bytes
      * @param sendTime time when sample first arrived at middleware
      */
-    SampleFragment(CacheChange *baseChange, unsigned int fragStartNum, unsigned int dataSize, simtime_t sendTime):
+    SampleFragment(CacheChange *baseChange, uint32_t fragStartNum, uint32_t dataSize, std::chrono::system_clock::time_point sendTime):
         fragmentStartingNum(fragStartNum),
         sendCounter(0),
         dataSize(dataSize),
@@ -82,6 +88,17 @@ class SampleFragment
     ~SampleFragment() {};
 
     /*
+     * comparison operator
+     */
+    bool operator == (const SampleFragment& other) const
+    {
+        return ((this->dataSize == other.dataSize) &&
+               (0 == memcmp(this->data, other.data, this->dataSize)) &&
+               (this->fragmentStartingNum == other.fragmentStartingNum));
+    }   
+
+
+    /*
      * set status of flag 'sent'
      *
      * @param b set 'sent' to this boolean value
@@ -92,9 +109,8 @@ class SampleFragment
         {
             this->sent = b;
 
-            this->sendTime = simTime();
+            this->sendTime = std::chrono::system_clock::now();;
             sendCounter++;
-            EV << "set send\n";
         }
     };
 
@@ -117,8 +133,19 @@ class SampleFragment
     {
         this->received = b;
     };
+
+    /*
+     * set data
+     *
+     * @param binaryData binary representation of the fragment data 
+     */
+    void setData(unsigned char* binaryData, uint32_t size)
+    {
+        this->data = binaryData;
+        this->dataSize = size;
+    }
 };
 
+}; // end namespace
 
-
-#endif // RTPS_ENTITIES_SAMPLEFRAGMENT_H_
+#endif // W2RP_ENTITIES_SAMPLEFRAGMENT_H_

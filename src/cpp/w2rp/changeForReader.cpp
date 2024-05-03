@@ -5,13 +5,14 @@
 #include <w2rp/changeForReader.h>
 #include <w2rp/sampleFragment.h>
 
+namespace w2rp {
 
-unsigned int ChangeForReader::notAckCount()
+uint32_t ChangeForReader::notAckCount()
 {
     // count negatively acknowledged fragments and fragments that timed out
     // does not count fragments that have been sent but not acknowledged yet!
-    unsigned int notAcked = 0;
-    for(unsigned int i = 0; i < numberFragments; i++)
+    uint32_t notAcked = 0;
+    for(uint32_t i = 0; i < numberFragments; i++)
     {
         auto frag = sampleFragmentArray[i];
         if(!(frag->acked) && !(frag->sent))
@@ -22,11 +23,11 @@ unsigned int ChangeForReader::notAckCount()
     return notAcked;
 }
 
-unsigned int ChangeForReader::ackCount()
+uint32_t ChangeForReader::ackCount()
 {
     // count acknowledged fragments
-    unsigned int acked = 0;
-    for(unsigned int i = 0; i < numberFragments; i++)
+    uint32_t acked = 0;
+    for(uint32_t i = 0; i < numberFragments; i++)
     {
         auto frag = sampleFragmentArray[i];
         if(frag->acked)
@@ -37,11 +38,11 @@ unsigned int ChangeForReader::ackCount()
     return acked;
 }
 
-unsigned int ChangeForReader::sentCount()
+uint32_t ChangeForReader::sentCount()
 {
     // count sent fragments, includes already acked fragments as well!
-    unsigned int sent = 0;
-    for(unsigned int i = 0; i < numberFragments; i++)
+    uint32_t sent = 0;
+    for(uint32_t i = 0; i < numberFragments; i++)
     {
         auto frag = sampleFragmentArray[i];
         if(frag->sent || frag->acked)
@@ -52,11 +53,11 @@ unsigned int ChangeForReader::sentCount()
     return sent;
 }
 
-unsigned int ChangeForReader::unsentCount()
+uint32_t ChangeForReader::unsentCount()
 {
     // count unsent fragments
-    unsigned int unsent = 0;
-    for(unsigned int i = 0; i < numberFragments; i++)
+    uint32_t unsent = 0;
+    for(uint32_t i = 0; i < numberFragments; i++)
     {
         auto frag = sampleFragmentArray[i];
         if(!(frag->sent))
@@ -67,7 +68,7 @@ unsigned int ChangeForReader::unsentCount()
     return unsent;
 }
 
-bool ChangeForReader::setFragmentStatus(fragmentStates status, unsigned int fragmentNumber, simtime_t sentTimestamp)
+bool ChangeForReader::setFragmentStatus(fragmentStates status, uint32_t fragmentNumber, std::chrono::system_clock::time_point sentTimestamp)
 {
     auto frag = sampleFragmentArray[fragmentNumber];
 
@@ -106,7 +107,7 @@ std::vector<SampleFragment*> ChangeForReader::getUnsentFragments()
 {
     std::vector<SampleFragment*> unsentFragments;
 
-    for(unsigned int i = 0; i < numberFragments; i++)
+    for(uint32_t i = 0; i < numberFragments; i++)
     {
         auto frag = sampleFragmentArray[i];
         if(!(frag->sent) && !(frag->acked))
@@ -120,12 +121,15 @@ std::vector<SampleFragment*> ChangeForReader::getUnsentFragments()
 
 void ChangeForReader::resetSentFragments()
 {
-    for(unsigned int i = 0; i < numberFragments; i++)
+    for(uint32_t i = 0; i < numberFragments; i++)
     {
         auto frag = sampleFragmentArray[i];
         if((frag->sent) && !(frag->acked))
         {
-            this->setFragmentStatus(UNSENT, frag->fragmentStartingNum);
+            auto now = std::chrono::system_clock::now();
+            this->setFragmentStatus(UNSENT, frag->fragmentStartingNum, now);
         }
     }
 }
+
+}; // end namespace

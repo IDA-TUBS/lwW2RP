@@ -1,15 +1,16 @@
 // file.cpp
 #include <w2rp/helper/fragmentation.h>
 
+namespace w2rp {
 
 void Fragmentation::action(uint32_t fragmentSize)
 {
     std::cout << "Fragmenting large samples!" << std::endl;
-    frag = new Fragment();
+    frag = new SampleFragment();
     fragData = new unsigned char[fragmentSize];
 }
 
-void Fragmentation::fragmentPayload(SerializedPayload* payload, uint32_t fragSize, std::vector<Fragment*>* res, bool compare)
+void Fragmentation::fragmentPayload(SerializedPayload* payload, uint32_t fragSize, std::vector<SampleFragment*>* res, bool compare)
 {
     uint32_t fragmentCount = (payload->length + fragSize - 1) / fragSize;    
 
@@ -34,3 +35,5 @@ void Fragmentation::fragmentPayload(SerializedPayload* payload, uint32_t fragSiz
         // TODO: delete frags somewhere
     } 
 }
+
+}; // end namespace
