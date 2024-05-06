@@ -29,7 +29,7 @@ class SampleFragment
     unsigned char* data;
 
     /// timestamp the fragment has been sent (the latest timestamp if already sent multiple times)
-    std::chrono::system_clock::time_point sendTime;
+    std::chrono::system_clock::time_point arrivalTime;
 
     /// flag fragment as sent - relevant for writer
     bool sent;
@@ -43,21 +43,8 @@ class SampleFragment
     /*
      * empty default constructor
      */
-    SampleFragment() {};
-
-    /*
-     * overloaded constructor
-     *
-     * @param baseChange reference (pointer) to Change, the fragment is associated to
-     * @param fragStartNum fragment number
-     * @param dataSize size of the fragment in bytes
-     * @param sendTime time when sample first arrived at middleware
-     */
-    SampleFragment(CacheChange *baseChange, uint32_t fragStartNum, uint32_t dataSize, std::chrono::system_clock::time_point sendTime):
-        fragmentStartingNum(fragStartNum),
+    SampleFragment():
         sendCounter(0),
-        dataSize(dataSize),
-        sendTime(sendTime),
         // Relevant for the Writer
         sent(false),
         acked(false),
@@ -75,7 +62,8 @@ class SampleFragment
         fragmentStartingNum(sf.fragmentStartingNum),
         sendCounter(sf.sendCounter),
         dataSize(sf.dataSize),
-        sendTime(sf.sendTime),
+        data(sf.data),
+        arrivalTime(sf.arrivalTime),
         sent(sf.sent),
         acked(sf.acked),
         received(sf.received),
@@ -109,7 +97,7 @@ class SampleFragment
         {
             this->sent = b;
 
-            this->sendTime = std::chrono::system_clock::now();;
+            this->arrivalTime = std::chrono::system_clock::now();;
             sendCounter++;
         }
     };
@@ -139,11 +127,18 @@ class SampleFragment
      *
      * @param binaryData binary representation of the fragment data 
      */
-    void setData(unsigned char* binaryData, uint32_t size)
+    void setData(unsigned char* binaryData, uint32_t size, uint32_t fragmentNum, std::chrono::system_clock::time_point arrivalTime)
     {
         this->data = binaryData;
         this->dataSize = size;
-    }
+        this->fragmentStartingNum = fragmentNum;
+        this->arrivalTime = arrivalTime;
+    };
+
+    void setBaseChange(CacheChange *baseChange)
+    {
+        this->baseChange = baseChange;
+    };
 };
 
 }; // end namespace

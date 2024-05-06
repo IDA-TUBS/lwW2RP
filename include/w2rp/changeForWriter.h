@@ -51,15 +51,15 @@ class ChangeForWriter: public CacheChange
         lastReceivedFN(-1),
         highestFNreceived(0)
     {
-        sampleFragmentArray = new SampleFragment*[this->numberFragments];
+        // sampleFragmentArray = new SampleFragment*[this->numberFragments];
 
-        // instantiate all fragments comprising the sample
-        for(uint32_t i = 0; i < this->numberFragments; i++){
-            sampleFragmentArray[i] = new SampleFragment(this,
-                                                        i,
-                                                        (fragmentSize < sampleSize - (i*fragmentSize)) ? fragmentSize : sampleSize - (i*fragmentSize),
-                                                        arrivalTime);
-        }
+        // // instantiate all fragments comprising the sample
+        // for(uint32_t i = 0; i < this->numberFragments; i++){
+        //     sampleFragmentArray[i] = new SampleFragment(this,
+        //                                                 i,
+        //                                                 (fragmentSize < sampleSize - (i*fragmentSize)) ? fragmentSize : sampleSize - (i*fragmentSize),
+        //                                                 arrivalTime);
+        // }
     };
 
     /*
@@ -73,15 +73,15 @@ class ChangeForWriter: public CacheChange
         lastReceivedFN(-1),
         highestFNreceived(0)
     {
-        sampleFragmentArray = new SampleFragment*[this->numberFragments];
+        // sampleFragmentArray = new SampleFragment*[this->numberFragments];
 
-        // instantiate all fragments comprising the sample
-        for(uint32_t i = 0; i < this->numberFragments; i++){
-            sampleFragmentArray[i] = new SampleFragment(this,
-                                                        i,
-                                                        (fragmentSize < sampleSize - (i*fragmentSize)) ? fragmentSize : sampleSize - (i*fragmentSize),
-                                                        arrivalTime);
-        }
+        // // instantiate all fragments comprising the sample
+        // for(uint32_t i = 0; i < this->numberFragments; i++){
+        //     sampleFragmentArray[i] = new SampleFragment(this,
+        //                                                 i,
+        //                                                 (fragmentSize < sampleSize - (i*fragmentSize)) ? fragmentSize : sampleSize - (i*fragmentSize),
+        //                                                 arrivalTime);
+        // }
     };
 
     /*
@@ -95,13 +95,13 @@ class ChangeForWriter: public CacheChange
         lastReceivedFN(change.lastReceivedFN),
         highestFNreceived(change.highestFNreceived)
     {
-        sampleFragmentArray = new SampleFragment*[this->numberFragments];
-        auto sampleArrayRef = change.getFragmentArray();
+        // sampleFragmentArray = new SampleFragment*[this->numberFragments];
+        // auto sampleArrayRef = change.getFragmentArray();
 
-        // copy contents of reference array to this instance's array
-        for(uint32_t i = 0; i < this->numberFragments; i++){
-            sampleFragmentArray[i] = new SampleFragment(*sampleArrayRef[i]);
-        }
+        // // copy contents of reference array to this instance's array
+        // for(uint32_t i = 0; i < this->numberFragments; i++){
+        //     sampleFragmentArray[i] = new SampleFragment(*sampleArrayRef[i]);
+        // }
     }
 
     /*

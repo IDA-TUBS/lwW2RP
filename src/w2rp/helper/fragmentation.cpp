@@ -3,16 +3,20 @@
 
 namespace w2rp {
 
-void Fragmentation::action(uint32_t fragmentSize)
+Fragmentation::Fragmentation(uint32_t fragmentSize)   
 {
-    std::cout << "Fragmenting large samples!" << std::endl;
-    frag = new SampleFragment();
-    fragData = new unsigned char[fragmentSize];
+    this->fragSize = fragmentSize;
+    
+};
+
+Fragmentation::~Fragmentation()
+{
+    //TODO
 }
 
-void Fragmentation::fragmentPayload(SerializedPayload* payload, uint32_t fragSize, std::vector<SampleFragment*>* res, bool compare)
+void Fragmentation::fragmentPayload(SerializedPayload* payload, CacheChange *baseChange, std::vector<SampleFragment*>* res, std::chrono::system_clock::time_point arrivalTime, bool compare)
 {
-    uint32_t fragmentCount = (payload->length + fragSize - 1) / fragSize;    
+    uint32_t fragmentCount = (payload->length + this->fragSize - 1) / this->fragSize; 
 
     for (uint32_t fragNum = 1; fragNum <= fragmentCount; fragNum++)
     {
@@ -21,18 +25,20 @@ void Fragmentation::fragmentPayload(SerializedPayload* payload, uint32_t fragSiz
         // Calculate fragment size. If last fragment, size may be smaller
         uint32_t fragmentSize = fragNum < fragmentCount ? fragSize : payload->length - fragmentStart;
 
+        unsigned char *fragData = new unsigned char[this->fragSize]; 
         std::memcpy(fragData, &(payload->data[fragmentStart]), fragmentSize);
 
-        frag->setData(fragData, fragmentSize);
+        SampleFragment *fragment = new SampleFragment();
 
+        fragment->setData(fragData, fragmentSize, fragNum - 1, arrivalTime);
+        fragment->setBaseChange(baseChange);
+        
         if(compare)
         {
-            bool same = (*frag == *(res->at(fragNum-1)));
+            bool same = (*fragment == *(res->at(fragNum-1)));
         }
 
-        res->at(fragNum-1)->setData(fragData, fragmentSize);
-        // delete frag;
-        // TODO: delete frags somewhere
+        res->push_back(fragment);
     } 
 }
 

@@ -6,7 +6,7 @@
 
 * fragmentation
 * uuids
-* submessages (DataFrag, NackFrag, HBFrag, ...) - extentable, (de)serialization ...
+* submessages (DataFrag, NackFrag, HBFrag, ...) - extentable, (de)serialization ... - class MsgBuilder - let reader and writer inherent from that class
 * sample deadline
 * reader/writerProxies
 * changeForReader/Writer
@@ -18,7 +18,7 @@
 ### W2RP
 
 * Shaping
-* Timeouts
+* Timeouts (take from FassDDS-based W2RP impl.)
 * NACK Guard
 
 ### W2RP extensions

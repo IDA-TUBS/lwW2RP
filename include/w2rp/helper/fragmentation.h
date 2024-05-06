@@ -16,22 +16,13 @@ class SampleFragment;
 class Fragmentation
 {
   public:
+    uint32_t fragSize;
 
-    SampleFragment* frag;
-    unsigned char* fragData;
+    Fragmentation(uint32_t fragmentSize);
 
-    Fragmentation(uint32_t fragmentSize)   
-    {
-        this->action(fragmentSize);
-    };
+    ~Fragmentation();
 
-    ~Fragmentation()  
-    {
-    };
-
-    void action(uint32_t fragmentSize);
-
-    void fragmentPayload(SerializedPayload* payload, uint32_t fragSize, std::vector<SampleFragment*>* res, bool compare);
+    void fragmentPayload(SerializedPayload* payload, std::vector<SampleFragment*>* res, std::chrono::system_clock::time_point arrivalTime, bool compare);
 };
 
 }; // end namespace

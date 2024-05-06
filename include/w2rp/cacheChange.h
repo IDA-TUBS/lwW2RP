@@ -66,15 +66,15 @@ class CacheChange
         numberFragments(int(ceil(sampleSize / fragmentSize))),
         arrivalTime(timestamp)
     {
-        sampleFragmentArray = new SampleFragment*[this->numberFragments];
+        // sampleFragmentArray = new SampleFragment*[this->numberFragments];
 
-        // instantiate all fragments comprising the sample
-        for(uint32_t i = 0; i < this->numberFragments; i++){
-            sampleFragmentArray[i] = new SampleFragment(this,
-                                                        i,
-                                                        (fragmentSize < sampleSize - (i*fragmentSize)) ? fragmentSize : sampleSize - (i*fragmentSize),
-                                                        arrivalTime);
-        }
+        // // instantiate all fragments comprising the sample
+        // for(uint32_t i = 0; i < this->numberFragments; i++){
+        //     sampleFragmentArray[i] = new SampleFragment(this,
+        //                                                 i,
+        //                                                 (fragmentSize < sampleSize - (i*fragmentSize)) ? fragmentSize : sampleSize - (i*fragmentSize),
+        //                                                 arrivalTime);
+        // }
     };
 
     /*
