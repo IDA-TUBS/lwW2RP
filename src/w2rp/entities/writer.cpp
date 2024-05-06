@@ -40,9 +40,9 @@ Writer::~Writer()
     sendQueue.clear();
 }
 
-/********************************************
- ** Callbacks triggered by external events ** 
-********************************************/
+/********************************************/
+/** Callbacks triggered by external events **/ 
+/********************************************/
 
 bool Writer::handleNewSample(SerializedPayload *data)
 {
@@ -88,22 +88,172 @@ bool Writer::addSampleToCache(SerializedPayload *data, std::chrono::system_clock
 
 
 
-/*********************************************
- * methods used during fragment transmission * 
- *********************************************/
+/*********************************************/
+/* methods used during fragment transmission */
+/*********************************************/
+
+bool Writer::sendMessage(){
+    // check liveliness of sample in history cache, removes outdated samples
+    checkSampleLiveliness();
+
+    // check whether a sample has been successfully transmitted to all readers
+    removeCompleteSamples();
+
+    // if no sample left to transmit: no need to transmit anything or schedule a new transmission
+    if(historyCache.size() == 0)
+    {
+        return false;
+    }
+    
+    if(currentSampleNumber != historyCache.front()->sequenceNumber)
+    {
+        // new sample to transmit
+        this->currentSampleNumber = historyCache.front()->sequenceNumber;
+        // priming send queue with all fragments of the new sample
+        fillSendQueueWithSample(this->currentSampleNumber);
+    }
+
+    // differentiate two scenarios:
+    // 1. scenario: send queue is empty, select a new fragment for tx
+    if(sendQueue.empty())
+    {
+        // add new fragment to queue
+        SampleFragment* sf = nullptr;
+        ReaderProxy *rp = nullptr;
+        // then select a reader
+        if(rp = selectReader())
+        {
+            // finally select a fragment from the previously chosen reader for transmission
+
+            if(sf = selectNextFragment(rp))
+            {
+                // add sample fragment to send queue
+                // use actual 'data' sample fragment from history cache instead of sf from reader proxy
+                auto sfToSend = (sf->baseChange->getFragmentArray())[sf->fragmentStartingNum];
+                sendQueue.push_back(sfToSend);
+            }
+        }
+    }
+    // 2. scenario: send queue not empty (any more)
+    if(!sendQueue.empty())
+    {
+        SampleFragment* sf = sendQueue.front();
+        sendQueue.pop_front();
+        // update fragment status (at all reader proxies if multicast is used)
+        for(auto rp: matchedReaders)
+        {
+            rp->updateFragmentStatus(SENT, sf->baseChange->sequenceNumber, sf->fragmentStartingNum, std::chrono::system_clock::time_point::min());
+
+            // TODO timeout stuff
+            // // check for timeout situation: reader has no fragments in state 'UNSENT' left
+            // if(rp->checkForTimeout(sf->baseChange->sequenceNumber) && !(rp->timeoutActive))
+            // {
+            //     rp->timeoutActive = true;
+            //     // trigger timeout
+            //     auto nextTimeout = new Timeout("timeoutEvent");
+            //     nextTimeout->setId(rp->getReaderId());
+            //     nextTimeout->setSequenceNumber(sf->baseChange->sequenceNumber);
+
+            //     activeTimeouts++;
+
+            //     scheduleAt(simTime() + timeout, nextTimeout);
+            // }
+
+        // TODO: create message ... DataFrag + append HBFrag
+        // TODO send message
+        }
+    }
+    // if send queue still empty, no need to schedule new fragment transmission, 
+    // wait for next sample top arrive
+    else
+    {
+        // ...
+    }
+
+
+    return true;
+}
+
+ReaderProxy* Writer::selectReader()
+{
+    ReaderProxy *nextReader = nullptr;    
+    
+    // for mode 1:
+    uint32_t highestPriority = std::numeric_limits<uint32_t>::max();
+    // for mode 2:
+    uint32_t leastNacks = std::numeric_limits<uint32_t>::max();
+    // for mode 3:
+    uint32_t mostNacks = 0;
+    // find the highest priority reader that still hasn't received the current sample completely
+    for(auto rp: matchedReaders)
+    {
+        // TODO if needed insert checking for deadline violation condition here:
+        // check whether the remaining slot suffice for transmitting sending all
+        // remaining fragments: N_f,rem >= N_f,missing
+
+        if(config.prioMode == FIXED)
+        {
+            // Prio Mode 1: Using fixed priorities
+
+            // note: if everything is working correctly currentSampleNumber will be also
+            // be the sequence number of the first element in the reader proxy's history
+            if((rp->priority < highestPriority) && !(rp->checkSampleCompleteness(this->currentSampleNumber)))
+            {
+                nextReader = rp;
+                highestPriority = rp->priority;
+            }
+        }
+        else if(config.prioMode == ADAPTIVE_LOW_PDR)
+        {
+            // Prio Mode 2: Use adaptive prioritization based on packet delivery rate (PDR)
+            // select the reader with the most negatively acknowledged fragments
+            // works best for equal FERs at each reader
+            if((rp->getUnsentFragments(this->currentSampleNumber).size() > mostNacks) && !(rp->checkSampleCompleteness(currentSampleNumber)))
+            {
+                mostNacks = rp->getUnsentFragments(currentSampleNumber).size();
+                nextReader = rp;
+            }
+
+        }
+        else if(config.prioMode == ADAPTIVE_HIGH_PDR)
+        {
+            // Prio Mode 3: Use adaptive prioritization based on packet delivery rate (PDR)
+            // select the reader with the least amount of negatively acknowledged fragments
+            if((rp->getUnsentFragments(this->currentSampleNumber).size() < leastNacks) && !(rp->checkSampleCompleteness(currentSampleNumber)))
+            {
+                leastNacks = rp->getUnsentFragments(this->currentSampleNumber).size();
+                nextReader = rp;
+            }
+        }
+    }
+    
+
+    return nextReader;
+}
+
+void Writer::fillSendQueueWithSample(uint32_t sequenceNumber)
+{
+    // for multicast all readers need the same data. Just take the first reader here,
+    // as it does not make a difference in the transmission phase which on is used
+    // for fragment selection - each readers needs each fragment once
+
+    ReaderProxy* rp = matchedReaders[0];
+
+    auto unsentFragments = rp->getUnsentFragments(sequenceNumber);
+    // use actual 'data' sample fragment from history cache instead of sf from reader proxy
+    for (auto sf: unsentFragments)
+    {
+        auto sfToSend = (sf->baseChange->getFragmentArray())[sf->fragmentStartingNum];
+        sendQueue.push_back(sfToSend);
+    }
+}
 
 
 
 
-
-
-
-
-
-
-/*************************************************
- * methods for checking validity of cacheChanges * 
- ************************************************/
+/*************************************************/
+/* methods for checking validity of cacheChanges */ 
+/*************************************************/
 
 void Writer::checkSampleLiveliness()
 {
@@ -118,7 +268,7 @@ void Writer::checkSampleLiveliness()
         return;
     }
 
-    std::vector<unsigned int> deprecatedSNs;
+    std::vector<uint32_t> deprecatedSNs;
     std::vector<CacheChange*> toDelete;
     // check liveliness of samples in history cache, if deadline expired remove sample from cache and ReaderProxies
     auto* change = historyCache.front();
@@ -141,7 +291,7 @@ void Writer::checkSampleLiveliness()
         break;
     }
 
-    for (unsigned int sequenceNumber: deprecatedSNs)
+    for (uint32_t sequenceNumber: deprecatedSNs)
     {
         for (auto rp: matchedReaders)
         {
@@ -159,8 +309,8 @@ void Writer::checkSampleLiveliness()
         for(auto it = sendQueue.cbegin(); it != sendQueue.end(); it++)
         {
             // remove fragments if their sequence number matches any of those in deprecatedSNs
-            unsigned int sequenceNumber = (*it)->baseChange->sequenceNumber;
-            for(unsigned int deprecatedSn: deprecatedSNs)
+            uint32_t sequenceNumber = (*it)->baseChange->sequenceNumber;
+            for(uint32_t deprecatedSn: deprecatedSNs)
             {
                 if(sequenceNumber == deprecatedSn)
                 {
@@ -178,7 +328,85 @@ void Writer::checkSampleLiveliness()
         toDelete.erase(toDelete.begin());
         delete to_delete_element;
     }
-
 }
+
+void Writer::removeCompleteSamples()
+{
+    if(historyCache.size() == 0)
+    {
+        return;
+    }
+
+    // iterate over all changes, remove those that are complete at ALL (!!) readers
+    while(1)
+    {
+        auto* change = historyCache.front();
+
+        if(!change)
+        {
+            break;
+        }
+
+        bool completed = true;
+        for(auto rp: matchedReaders)
+        {
+            if(!(rp->checkSampleCompleteness(change->sequenceNumber)))
+            {
+                completed = false;
+                break;
+            }
+        }
+
+        if(completed)
+        {
+            // remove if change successfully acknowledged by all readers
+            for(auto rp: matchedReaders)
+            {
+                rp->removeChange(change->sequenceNumber);
+            }
+            historyCache.pop_front();
+            // remove all queued fragments of that sample from the send queue
+            for(auto it = sendQueue.cbegin(); it != sendQueue.end(); it++)
+            {
+                // remove fragments if their sequence number matches that of the just removed change
+                uint32_t sequenceNumber = (*it)->baseChange->sequenceNumber;
+
+                if(sequenceNumber == change->sequenceNumber)
+                {
+                    sendQueue.erase(it--);
+                    break;
+                }
+
+            }
+            delete change;
+        }
+        else
+        {
+            // assumption here: samples put into history cache in the right order AND
+            // a consecutive sample will only be transmitted after a previous sample is
+            // either complete or its deadline expired. Hence, there is no need to check
+            // further samples for completeness if there is any incomplete sample
+            break;
+        }
+//        if(historyCache.size() == 0 || change == historyCache.back())
+//        {
+//            break;
+//        }
+    }
+}
+
+
+/*****************************/
+/* timeout related functions */ 
+/*****************************/
+
+
+
+
+/***************************/
+/* miscellaneous functions */ 
+/***************************/
+
+
 
 } //end namespace
