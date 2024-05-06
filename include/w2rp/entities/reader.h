@@ -14,6 +14,8 @@ private:
 public:
     Reader(/* args */);
     ~Reader();
+protected:
+    /* ... */
 };
 
 

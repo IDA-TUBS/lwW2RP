@@ -54,6 +54,27 @@ class SampleFragment
     {};
 
     /*
+     * overloaded constructor, creates sampleFragment without data
+     *
+     * @param baseChange reference (pointer) to Change, the fragment is associated to
+     * @param fragStartNum fragment number
+     * @param dataSize size of the fragment in bytes
+     * @param arrivalTime time when sample first arrived at middleware
+     */
+    SampleFragment(CacheChange *baseChange, unsigned int fragStartNum, unsigned int dataSize, std::chrono::system_clock::time_point arrivalTime):
+        fragmentStartingNum(fragStartNum),
+        sendCounter(0),
+        dataSize(dataSize),
+        arrivalTime(arrivalTime),
+        // Relevant for the Writer
+        sent(false),
+        acked(false),
+        // Relevant for the Reader
+        received(false),
+        baseChange(baseChange)
+    {};
+
+    /*
      * copy constructor
      *
      * @param sf reference to object to be copied

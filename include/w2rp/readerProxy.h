@@ -49,7 +49,7 @@ class ReaderProxy
     /*
      * overloaded constructor, enable NACK suppression
      */
-    ReaderProxy(uint32_t id, uint32_t historySize, std::chrono::system_clock::time_point nackSuppressionDuration):
+    ReaderProxy(uint32_t id, uint32_t historySize, std::chrono::system_clock::duration nackSuppressionDuration):
         readerID(id),
         historySize(historySize),
         nackSuppressionEnabled(true),
@@ -72,7 +72,7 @@ class ReaderProxy
     /*
      * overloaded constructor, enable NACK suppression and add first change to history
      */
-    ReaderProxy(uint32_t id, uint32_t historySize, std::chrono::system_clock::time_point nackSuppressionDuration, CacheChange &change):
+    ReaderProxy(uint32_t id, uint32_t historySize, std::chrono::system_clock::duration nackSuppressionDuration, CacheChange &change):
         readerID(id),
         historySize(historySize),
         nackSuppressionEnabled(true),

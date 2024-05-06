@@ -20,7 +20,7 @@ find_package(Boost 1.73.0 EXACT COMPONENTS thread log log_setup REQUIRED)
 set(
     LIB_SRC_FILES
     ${PROJECT_SOURCE_DIR}/src/w2rp/test.cpp
-    #${PROJECT_SOURCE_DIR}/src/w2rp/entities/writer.cpp
+    ${PROJECT_SOURCE_DIR}/src/w2rp/entities/writer.cpp
     #${PROJECT_SOURCE_DIR}/src/w2rp/entities/reader.cpp
     ${PROJECT_SOURCE_DIR}/src/w2rp/helper/fragmentation.cpp
     ${PROJECT_SOURCE_DIR}/src/w2rp/changeForReader.cpp

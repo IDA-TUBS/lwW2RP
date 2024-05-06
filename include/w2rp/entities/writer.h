@@ -19,6 +19,7 @@ struct writerCfg
     uint8_t numberReaders;
     std::vector<std::string> readerAddresses;
     unsigned int sizeCache;
+    uint8_t writerUuid;
 };
 
 
@@ -58,6 +59,7 @@ public:
     ~Writer(); // TODO
 
 protected:
+
     /********************************************
      ** Callbacks triggered by external events ** 
      ********************************************/
@@ -76,6 +78,13 @@ protected:
      */
     void handleNackFrag(/* TODO nackfrag data*/);
 
+
+    /*
+     * @brief add new sample to cache
+     *
+     * @param data (in serialized form) of the sample received from the application
+     */
+    bool addSampleToCache(SerializedPayload *data,  std::chrono::system_clock::time_point timestamp);
 
     /*********************************************
      * methods used during fragment transmission * 
@@ -136,7 +145,7 @@ protected:
      * miscellaneous functions * 
      **************************/
 
-}   
+};
 
 
 } //end namespace
