@@ -282,3 +282,10 @@ cython_debug/
 # cmake
 # cmake/modules/
 # camke/packaging/
+
+
+
+# ignore boost build files
+thirdparty/boost_1_73_0/stage
+thirdparty/boost_1_73_0/bin.v2
+thirdparty/boost_1_73_0/project-config.jam*
