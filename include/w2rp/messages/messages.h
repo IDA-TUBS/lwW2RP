@@ -150,7 +150,10 @@ class DataFrag
      * default destructor
      */
     ~DataFrag()
-    {};
+    {
+        delete subMsgHeader;
+        delete serializedPayload;
+    };
 
   protected:
     // contents
@@ -199,7 +202,10 @@ class NackFrag
      * default destructor
      */
     ~NackFrag()
-    {};
+    {
+        delete subMsgHeader;
+        delete fragmentNumberState;
+    };
   protected:
     // contents
     SubmessageHeader *subMsgHeader;
@@ -240,7 +246,9 @@ class HeartbeatFrag
      * default destructor
      */
     ~HeartbeatFrag()
-    {};
+    {
+        delete subMsgHeader;
+    };
   protected:
     // contents
     SubmessageHeader *subMsgHeader;
