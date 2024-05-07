@@ -150,7 +150,7 @@ class SampleFragment
      */
     void setData(unsigned char* binaryData, uint32_t size, uint32_t fragmentNum, std::chrono::system_clock::time_point arrivalTime)
     {
-        this->data = binaryData;
+        memcpy(this->data, binaryData, size);
         this->dataSize = size;
         this->fragmentStartingNum = fragmentNum;
         this->arrivalTime = arrivalTime;

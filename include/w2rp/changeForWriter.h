@@ -73,15 +73,15 @@ class ChangeForWriter: public CacheChange
         lastReceivedFN(-1),
         highestFNreceived(0)
     {
-        // sampleFragmentArray = new SampleFragment*[this->numberFragments];
+        sampleFragmentArray = new SampleFragment*[this->numberFragments];
 
-        // // instantiate all fragments comprising the sample
-        // for(uint32_t i = 0; i < this->numberFragments; i++){
-        //     sampleFragmentArray[i] = new SampleFragment(this,
-        //                                                 i,
-        //                                                 (fragmentSize < sampleSize - (i*fragmentSize)) ? fragmentSize : sampleSize - (i*fragmentSize),
-        //                                                 arrivalTime);
-        // }
+        // instantiate all fragments comprising the sample
+        for(uint32_t i = 0; i < this->numberFragments; i++){
+            sampleFragmentArray[i] = new SampleFragment(this,
+                                                        i,
+                                                        (fragmentSize < sampleSize - (i*fragmentSize)) ? fragmentSize : sampleSize - (i*fragmentSize),
+                                                        arrivalTime);
+        }
     };
 
     /*
@@ -95,13 +95,13 @@ class ChangeForWriter: public CacheChange
         lastReceivedFN(change.lastReceivedFN),
         highestFNreceived(change.highestFNreceived)
     {
-        // sampleFragmentArray = new SampleFragment*[this->numberFragments];
-        // auto sampleArrayRef = change.getFragmentArray();
+        sampleFragmentArray = new SampleFragment*[this->numberFragments];
+        auto sampleArrayRef = change.getFragmentArray();
 
-        // // copy contents of reference array to this instance's array
-        // for(uint32_t i = 0; i < this->numberFragments; i++){
-        //     sampleFragmentArray[i] = new SampleFragment(*sampleArrayRef[i]);
-        // }
+        // copy contents of reference array to this instance's array
+        for(uint32_t i = 0; i < this->numberFragments; i++){
+            sampleFragmentArray[i] = new SampleFragment(*sampleArrayRef[i]);
+        }
     }
 
     /*
@@ -126,7 +126,25 @@ class ChangeForWriter: public CacheChange
      * @param fragmentNumber fragment whose fragment shall be updated
      * @return true if operation successful, else returns false
      */
-    virtual bool setFragmentStatus(fragmentStates status, uint32_t fragmentNumber);
+    bool setFragmentStatus(fragmentStates status, uint32_t fragmentNumber);
+
+    /*
+     * method for updating the fragment data on reception
+     *
+     * @param fragmentNumber fragment whose fragment shall be updated
+     * @param data actual fragment data
+     * @param dataLendth fragment length in byte
+     * @return true if operation successful, else returns false
+     */
+    bool setFragmentData(uint32_t fragmentNumber, unsigned char *data, uint32_t dataLength);
+
+    /*
+     * @brief determine all missing fragments smaller with sequence number smaller than lastfragmentNum 
+     * 
+     * @param lastfragmentNum highest fragment number transmitted so far for a given sample (SN)
+     * @param res vector for storing the missing fragment numbers
+     */
+    void getMissingFragments(uint32_t lastfragmentNum, std::vector<uint32_t> *res);
 };
 
 }; // end namespace

@@ -71,9 +71,11 @@ class WriterProxy
      * @param status fragment status
      * @param sequenceNumber seq number of the sample which fragment status shall be altered
      * @param fragmentNumber fn of fragment to be updated
+     * @param data actual fragment data
+     * @param dataLength size of fragment
      * @return true if successful, else false
      */
-    bool updateFragmentStatus (fragmentStates status, uint32_t sequenceNumber, uint32_t fragmentNumber);
+    bool updateFragmentStatus (fragmentStates status, uint32_t sequenceNumber, uint32_t fragmentNumber, unsigned char *data, uint32_t dataLength);
 
     /*
      * method for evaluating completeness of samples
@@ -117,21 +119,8 @@ class WriterProxy
      * @param sequenceNumber seq number of sample that shall be retrieved
      * @return ChangeForWriter object
      */
-    ChangeForWriter* getChange(uint32_t sequenceNumber)
-    {
-        // first find change corresponding to the given sequence number
-        ChangeForWriter* tmp = nullptr;
-        for (auto cfw: history)
-        {
-            if (cfw->sequenceNumber == sequenceNumber)
-            {
-                tmp = cfw;
-                break;
-            }
-        }
+    ChangeForWriter* getChange(uint32_t sequenceNumber);
 
-        return tmp;
-    };
 };
 
 }; // end namespace
