@@ -41,8 +41,8 @@ void WriterProxy::removeChange(uint32_t sequenceNumber)
     }
 }
 
-
-bool WriterProxy::updateFragmentStatus (fragmentStates status, uint32_t sequenceNumber, uint32_t fragmentNumber)
+// TODO also store data!
+bool WriterProxy::updateFragmentStatus(fragmentStates status, uint32_t sequenceNumber, uint32_t fragmentNumber, unsigned char *data, uint32_t dataLength)
 {
     // first find change corresponding to the given sequence number
     ChangeForWriter* tmp = nullptr;
@@ -57,8 +57,12 @@ bool WriterProxy::updateFragmentStatus (fragmentStates status, uint32_t sequence
 
     if(tmp)
     {
-        return tmp->setFragmentStatus(status, fragmentNumber);
+        bool status_state = tmp->setFragmentStatus(status, fragmentNumber);
+        bool status_data = tmp->setFragmentData(fragmentNumber, data, dataLength);
+
+        return (status_data && status_state);
     }
+ 
     return false;
 }
 
@@ -89,5 +93,22 @@ bool WriterProxy::checkSampleCompleteness(uint32_t sequenceNumber)
 
     return complete;
 }
+
+
+ChangeForWriter* WriterProxy::getChange(uint32_t sequenceNumber)
+    {
+        // first find change corresponding to the given sequence number
+        ChangeForWriter* tmp = nullptr;
+        for (auto cfw: history)
+        {
+            if (cfw->sequenceNumber == sequenceNumber)
+            {
+                tmp = cfw;
+                break;
+            }
+        }
+
+        return tmp;
+    };
 
 }; // end namespace

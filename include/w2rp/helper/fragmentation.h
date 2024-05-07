@@ -22,7 +22,7 @@ class Fragmentation
 
     ~Fragmentation();
 
-    void fragmentPayload(SerializedPayload* payload, std::vector<SampleFragment*>* res, std::chrono::system_clock::time_point arrivalTime, bool compare);
+    void fragmentPayload(SerializedPayload* payload, CacheChange *baseChange, std::vector<SampleFragment*>* res, std::chrono::system_clock::time_point arrivalTime, bool compare);
 };
 
 }; // end namespace

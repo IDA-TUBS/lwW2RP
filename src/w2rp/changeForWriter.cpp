@@ -42,4 +42,30 @@ bool ChangeForWriter::setFragmentStatus(fragmentStates status, uint32_t fragment
     return true;
 }
 
+
+bool ChangeForWriter::setFragmentData(uint32_t fragmentNumber, unsigned char *data, uint32_t dataLength)
+{
+    auto frag = sampleFragmentArray[fragmentNumber];
+
+    if(frag != nullptr)
+    {
+        auto t = std::chrono::system_clock::now();
+        frag->setData(data, dataLength, fragmentNumber, t);
+    }
+
+    
+}
+
+
+void ChangeForWriter::getMissingFragments(uint32_t lastfragmentNum, std::vector<uint32_t> *res)
+{
+    for(uint32_t i = 0; i < numberFragments; i++){
+        auto frag = sampleFragmentArray[i];
+        if(frag->received) {
+            res->push_back(i);
+        }
+    }
+}
+
+
 }; // end namespace

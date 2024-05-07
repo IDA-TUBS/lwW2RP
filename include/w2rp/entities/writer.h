@@ -7,8 +7,17 @@
 #include <string>
 #include <w2rp/readerProxy.h>
 #include <w2rp/helper/fragmentation.h>
+#include <w2rp/messages/messages.h>
 
 namespace w2rp {
+
+typedef enum
+{
+    NONE,
+    FIXED,
+    ADAPTIVE_LOW_PDR,
+    ADAPTIVE_HIGH_PDR
+} PrioritizationMode;
 
 struct writerCfg
 {
@@ -19,6 +28,8 @@ struct writerCfg
     uint8_t numberReaders;
     std::vector<std::string> readerAddresses;
     unsigned int sizeCache;
+    uint8_t writerUuid;
+    PrioritizationMode prioMode;
 };
 
 
@@ -31,12 +42,20 @@ private:
     /// sample fragmenter
     Fragmentation *sampleFragmenter;
 
+    /**********************************/
+    /* protocol management structures */
+    /**********************************/
+
     /// storing the "actual" data that is transmitted via RTPS
     std::list<CacheChange*> historyCache;
     /// the reader proxies keep track of sending/acknowledgment states for each reader
     std::vector<ReaderProxy*> matchedReaders;
     /// list of fragments to send next
     std::list<SampleFragment*> sendQueue;
+
+    /****************/
+    /* Timer events */
+    /****************/
 
     /// Timed Event for resetting fragments
     // TimedEvent* timeoutTimer;
@@ -45,6 +64,16 @@ private:
 
     /// counter for next sample's sequence number
     uint32_t sequenceNumberCnt;
+
+
+    /******************************/
+    /************ misc. ***********/
+    /******************************/
+    // variable storing the sequence number of the sample that is currently being transmitted
+    int currentSampleNumber;
+    /// counter for total number of fragments sent
+    int fragmentCounter;
+    ///
 
 public:
     /*
@@ -58,9 +87,10 @@ public:
     ~Writer(); // TODO
 
 protected:
-    /********************************************
-     ** Callbacks triggered by external events ** 
-     ********************************************/
+
+    /********************************************/
+    /** Callbacks triggered by external events **/ 
+    /********************************************/
 
     /*
      * @brief Callback for creating new cache change on arrival of new sample from application
@@ -77,9 +107,21 @@ protected:
     void handleNackFrag(/* TODO nackfrag data*/);
 
 
-    /*********************************************
-     * methods used during fragment transmission * 
-     *********************************************/
+    /*
+     * @brief add new sample to cache
+     *
+     * @param data (in serialized form) of the sample received from the application
+     */
+    bool addSampleToCache(SerializedPayload *data,  std::chrono::system_clock::time_point timestamp);
+
+
+
+
+
+
+    /*********************************************/
+    /* methods used during fragment transmission */
+    /*********************************************/
 
     /*
      * @brief callback that is triggered according to some schedule. At the end,
@@ -94,7 +136,7 @@ protected:
      *
      * @return reader proxy
      */
-    ReaderProxy selectReader();
+    ReaderProxy* selectReader();
 
     /*
      * @brief Method for selecting which fragment (missing at a specific reader) to transmit next
@@ -104,10 +146,24 @@ protected:
      */
     SampleFragment* selectNextFragment(ReaderProxy *rp);
 
+    /*
+     * Method for priming the send queue with each fragment that needs to be transmitted.
+     * Used in WiMEP's transmissions phase and ensure that no retransmissions will be
+     * performed prior to each fragment being transmitted once. Always called if a new
+     * sample has to be transmitted
+     *
+     * @param sequenceNumber of the corresponding sample that shall be transmitted next
+     */
+    void fillSendQueueWithSample(uint32_t sequenceNumber);
 
-    /*************************************************
-     * methods for checking validity of cacheChanges * 
-     ************************************************/
+
+
+
+
+
+    /*************************************************/
+    /* methods for checking validity of cacheChanges */ 
+    /*************************************************/
  
     /*
      * @brief Method for evaluating whether a sample is still valid or whether its deadline elapsed.
@@ -122,9 +178,18 @@ protected:
      */
     void removeCompleteSamples();
 
-    /*****************************
-     * timeout related functions * 
-     ****************************/
+
+
+
+
+
+
+
+
+
+    /*****************************/
+    /* timeout related functions */ 
+    /*****************************/
 
     /*
      * @brief callback for handling of timeouts
@@ -132,11 +197,18 @@ protected:
     void handleTimeout();
 
 
-    /***************************
-     * miscellaneous functions * 
-     **************************/
 
-}   
+
+
+
+    
+
+
+    /***************************/
+    /* miscellaneous functions */ 
+    /***************************/
+
+};
 
 
 } //end namespace

@@ -7,6 +7,7 @@
 
 #include <math.h>
 #include <chrono>
+#include <vector>
 #include <w2rp/sampleFragment.h>
 
 
@@ -116,12 +117,29 @@ class CacheChange
      * @param fragmentNumber fn of fragment to be updated
      * @return true if successful, else false
      */
-    bool setFragmentStatus (fragmentStates status, uint32_t fragmentNumber)
+    bool setFragmentStatus(fragmentStates status, uint32_t fragmentNumber)
     {
         // actual implementations found in ChangeForReader/Writer
         return false;
     };
 
+
+    /*
+     * set the fragment array
+     *
+     * @param vector of sample fragments 
+     */
+    void setFragmentArray(std::vector<SampleFragment*> *fragments)
+    {
+        sampleFragmentArray = new SampleFragment*[this->numberFragments];
+
+        uint16_t i = 0;
+        for (auto sf: *fragments)
+        {
+            sampleFragmentArray[i] = new SampleFragment(*sf);
+            i++;
+        }        
+    }
 
     /*
      * return the fragment array
