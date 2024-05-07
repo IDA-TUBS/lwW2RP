@@ -7,6 +7,7 @@
 #include <string>
 #include <w2rp/readerProxy.h>
 #include <w2rp/helper/fragmentation.h>
+#include <w2rp/messages/messages.h>
 
 namespace w2rp {
 
@@ -113,6 +114,11 @@ protected:
      */
     bool addSampleToCache(SerializedPayload *data,  std::chrono::system_clock::time_point timestamp);
 
+
+
+
+
+
     /*********************************************/
     /* methods used during fragment transmission */
     /*********************************************/
@@ -151,6 +157,10 @@ protected:
     void fillSendQueueWithSample(uint32_t sequenceNumber);
 
 
+
+
+
+
     /*************************************************/
     /* methods for checking validity of cacheChanges */ 
     /*************************************************/
@@ -168,6 +178,15 @@ protected:
      */
     void removeCompleteSamples();
 
+
+
+
+
+
+
+
+
+
     /*****************************/
     /* timeout related functions */ 
     /*****************************/
@@ -176,6 +195,13 @@ protected:
      * @brief callback for handling of timeouts
      */
     void handleTimeout();
+
+
+
+
+
+
+    
 
 
     /***************************/

@@ -40,6 +40,12 @@ Writer::~Writer()
     sendQueue.clear();
 }
 
+
+
+
+
+
+
 /********************************************/
 /** Callbacks triggered by external events **/ 
 /********************************************/
