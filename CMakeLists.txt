@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0.0)
 project(w2rp VERSION 0.1.0)
-set (CMAKE_CXX_STANDARD 11)
+set (CMAKE_CXX_STANDARD 17)
 
 include(GNUInstallDirs)
 
@@ -13,19 +13,22 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+# Generate compile_commands.json
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 ### search for local boost
 find_package(Boost 1.73.0 EXACT COMPONENTS thread log log_setup REQUIRED)
 
 ### Define library content
 set(
     LIB_SRC_FILES
-    ${PROJECT_SOURCE_DIR}/src/w2rp/test.cpp
+    ${PROJECT_SOURCE_DIR}/src/w2rp/timer/timerManager.cpp
     #${PROJECT_SOURCE_DIR}/src/w2rp/entities/writer.cpp
     #${PROJECT_SOURCE_DIR}/src/w2rp/entities/reader.cpp
-    ${PROJECT_SOURCE_DIR}/src/w2rp/helper/fragmentation.cpp
-    ${PROJECT_SOURCE_DIR}/src/w2rp/changeForReader.cpp
-    ${PROJECT_SOURCE_DIR}/src/w2rp/readerProxy.cpp
-    ${PROJECT_SOURCE_DIR}/src/w2rp/writerProxy.cpp
+    # ${PROJECT_SOURCE_DIR}/src/w2rp/helper/fragmentation.cpp
+    # ${PROJECT_SOURCE_DIR}/src/w2rp/changeForReader.cpp
+    # ${PROJECT_SOURCE_DIR}/src/w2rp/readerProxy.cpp
+    # ${PROJECT_SOURCE_DIR}/src/w2rp/writerProxy.cpp
 )
 
 ## Define library content
@@ -123,9 +126,11 @@ file(GLOB_RECURSE ALL_HEADERS
 set(SRC_FILES 
   ${ALL_HEADERS}
 
-  src/w2rp/test.cpp
+  src/w2rp/timer/timerManager.cpp
 )
 
 
-
+## TimedEvent testing
+add_executable(timer_test test/timer/timer_test.cpp ${SRC_FILES})
+target_link_libraries(timer_test w2rp)
 
