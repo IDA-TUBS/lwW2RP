@@ -37,11 +37,21 @@ Writer::Writer()
     // init and start timers
     std::chrono::microseconds cycle(500000); // TODO take cycle time from writer config
 
+    // shapingTimer = new TimedEvent(
+    //     this->timer_manager, 
+    //     cycle,
+    //     [&]()
+    //     {
+    //         return timerHandler();
+    //     }
+    // );
+
     shapingTimer = new TimedEvent(
         this->timer_manager, 
         cycle,
-        this->sendMessage
+        std::bind(&Writer::timerHandler, this)
     );
+
 
     timer_manager.start();
 }
@@ -127,6 +137,11 @@ void Writer::handleNackFrag(NackFrag *msg)
 /*********************************************/
 /* methods used during fragment transmission */
 /*********************************************/
+
+void Writer::timerHandler()
+{
+    logInfo("Test")
+};
 
 bool Writer::sendMessage(){
     // check liveliness of sample in history cache, removes outdated samples

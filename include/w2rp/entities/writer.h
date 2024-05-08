@@ -126,6 +126,8 @@ protected:
     /* methods used during fragment transmission */
     /*********************************************/
 
+    void timerHandler();
+
     /*
      * @brief callback that is triggered according to some schedule. At the end,
      *   sends a packaged sample fragment down towards the UDP/IP stack
