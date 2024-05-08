@@ -138,7 +138,7 @@ class DataFrag
              fragmentSize(fragmentSize),
              timestamp(sampleTimestamp)
     {
-        memcpy(this->serializedPayload , payload, fragmentSize);
+        memcpy(this->serializedPayload, payload, fragmentSize);
 
         this->length = sizeof(readerID) +
                        sizeof(writerID) +
@@ -218,7 +218,7 @@ class NackFrag
     uint32_t writerID;                      // Identifies the Writer entity that is the target of the NackFrag message. This is the Writer Entity that is being asked to re-send some fragments.
     uint64_t writerSN;                      // The sequence number for which some fragments are missing.
     FragmentNumberSet fragmentNumberState;  // Communicates the state of the reader to the writer. The fragment numbers that appear in the set indicate missing fragments on the reader side. The ones that do not appear in the set are undetermined (could have been received or not).
-    uint32_t count;                         // Reader's NackFrag counter
+    uint32_t count;                         // Reader's NackFrag counter // repurposed for returning the HB's lastFragmentNum
     
     // misc information
     uint32_t length;

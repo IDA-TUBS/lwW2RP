@@ -18,6 +18,13 @@ class TimedEvent
 {
     public:
     
+    /*
+     * @brief empty constructor
+     */
+    TimedEvent() 
+    {};
+
+
     /**
      * @brief Construct a new periodic Timed Event object
      * 

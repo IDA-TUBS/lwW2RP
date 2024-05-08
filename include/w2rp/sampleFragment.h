@@ -29,7 +29,7 @@ class SampleFragment
     unsigned char* data;
 
     /// timestamp the fragment has been sent (the latest timestamp if already sent multiple times)
-    std::chrono::system_clock::time_point arrivalTime;
+    std::chrono::system_clock::time_point sentTime;
 
     /// flag fragment as sent - relevant for writer
     bool sent;
@@ -59,13 +59,13 @@ class SampleFragment
      * @param baseChange reference (pointer) to Change, the fragment is associated to
      * @param fragStartNum fragment number
      * @param dataSize size of the fragment in bytes
-     * @param arrivalTime time when sample first arrived at middleware
+     * @param sentTime time when sample first arrived at middleware
      */
-    SampleFragment(CacheChange *baseChange, unsigned int fragStartNum, unsigned int dataSize, std::chrono::system_clock::time_point arrivalTime):
+    SampleFragment(CacheChange *baseChange, unsigned int fragStartNum, unsigned int dataSize, std::chrono::system_clock::time_point sentTime):
         fragmentStartingNum(fragStartNum),
         sendCounter(0),
         dataSize(dataSize),
-        arrivalTime(arrivalTime),
+        sentTime(sentTime),
         // Relevant for the Writer
         sent(false),
         acked(false),
@@ -84,7 +84,7 @@ class SampleFragment
         sendCounter(sf.sendCounter),
         dataSize(sf.dataSize),
         data(sf.data),
-        arrivalTime(sf.arrivalTime),
+        sentTime(sf.sentTime),
         sent(sf.sent),
         acked(sf.acked),
         received(sf.received),
@@ -118,7 +118,7 @@ class SampleFragment
         {
             this->sent = b;
 
-            this->arrivalTime = std::chrono::system_clock::now();;
+            this->sentTime = std::chrono::system_clock::now();;
             sendCounter++;
         }
     };
@@ -148,12 +148,12 @@ class SampleFragment
      *
      * @param binaryData binary representation of the fragment data 
      */
-    void setData(unsigned char* binaryData, uint32_t size, uint32_t fragmentNum, std::chrono::system_clock::time_point arrivalTime)
+    void setData(unsigned char* binaryData, uint32_t size, uint32_t fragmentNum, std::chrono::system_clock::time_point sentTime)
     {
         memcpy(this->data, binaryData, size);
         this->dataSize = size;
         this->fragmentStartingNum = fragmentNum;
-        this->arrivalTime = arrivalTime;
+        this->sentTime = sentTime;
     };
 
     void setBaseChange(CacheChange *baseChange)

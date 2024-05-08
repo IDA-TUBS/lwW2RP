@@ -11,6 +11,8 @@ Writer::Writer()
     // TODO fill writer config
 
 
+    
+
     sequenceNumberCnt = 0;
 
     // initialize sample fragmenter
@@ -31,6 +33,17 @@ Writer::Writer()
         }
         matchedReaders.push_back(rp);
     }
+
+    // init and start timers
+    std::chrono::microseconds cycle(500000); // TODO take cycle time from writer config
+
+    shapingTimer = new TimedEvent(
+        this->timer_manager, 
+        cycle,
+        this->sendMessage
+    );
+
+    timer_manager.start();
 }
 
 Writer::~Writer()
@@ -91,6 +104,23 @@ bool Writer::addSampleToCache(SerializedPayload *data, std::chrono::system_clock
 }
 
 
+void Writer::handleNackFrag(NackFrag *msg)
+{
+    uint32_t readerID = msg->readerID;
+
+    // assumption and simplifications for PoC: readerID always correspond to index in matchedReaders 
+    auto rp = matchedReaders[readerID];
+
+    // only handle NackFrag if sample still in history, if already complete or expired just ignore NackFrag
+    if(rp->processNack(msg))
+    {
+        unsigned int sequenceNumber = msg->writerSN;
+        bool complete = rp->checkSampleCompleteness(sequenceNumber);
+    }
+}
+
+
+
 
 
 
@@ -143,12 +173,14 @@ bool Writer::sendMessage(){
     // 2. scenario: send queue not empty (any more)
     if(!sendQueue.empty())
     {
+        auto t_now = std::chrono::system_clock::now();
+
         SampleFragment* sf = sendQueue.front();
         sendQueue.pop_front();
         // update fragment status (at all reader proxies if multicast is used)
         for(auto rp: matchedReaders)
         {
-            rp->updateFragmentStatus(SENT, sf->baseChange->sequenceNumber, sf->fragmentStartingNum, std::chrono::system_clock::time_point::min());
+            rp->updateFragmentStatus(SENT, sf->baseChange->sequenceNumber, sf->fragmentStartingNum, t_now);
 
             // TODO timeout stuff
             // // check for timeout situation: reader has no fragments in state 'UNSENT' left
@@ -167,6 +199,10 @@ bool Writer::sendMessage(){
 
         // TODO: create message ... DataFrag + append HBFrag
         // TODO send message
+
+        
+
+
         }
     }
     // if send queue still empty, no need to schedule new fragment transmission, 

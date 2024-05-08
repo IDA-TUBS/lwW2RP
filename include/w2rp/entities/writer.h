@@ -8,6 +8,8 @@
 #include <w2rp/readerProxy.h>
 #include <w2rp/helper/fragmentation.h>
 #include <w2rp/messages/messages.h>
+#include <w2rp/timer/timedEvent.hpp>
+#include <w2rp/timer/timerManager.hpp>
 
 namespace w2rp {
 
@@ -57,10 +59,11 @@ private:
     /* Timer events */
     /****************/
 
+    TimerManager timer_manager;
     /// Timed Event for resetting fragments
-    // TimedEvent* timeoutTimer;
+    // TimedEvent *timeoutTimer;
     /// Timed Event for periodic shaping and sample transmissions
-    // TimedEvent* shapingTimer;
+    TimedEvent<> *shapingTimer;
 
     /// counter for next sample's sequence number
     uint32_t sequenceNumberCnt;
@@ -102,9 +105,9 @@ protected:
     /*
      * @brief Method for reacting to NackFrags received from readers
      *
-     * @param nackFrag message containing the ack/nack bitmap
+     * @param nackFrag message containing the nack bitmap
      */
-    void handleNackFrag(/* TODO nackfrag data*/);
+    void handleNackFrag(NackFrag *msg);
 
 
     /*
