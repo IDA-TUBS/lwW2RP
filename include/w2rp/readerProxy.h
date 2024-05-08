@@ -9,6 +9,7 @@
 #include <vector>
 #include <list>
 #include <w2rp/changeForReader.h>
+#include <w2rp/messages/messages.h>
 
 namespace w2rp {
 
@@ -25,7 +26,7 @@ class ReaderProxy
     /// enabling NACK suppresion
     bool nackSuppressionEnabled;
     /// NACK suppression duration
-    std::chrono::system_clock::time_point nackSuppressionDuration;
+    std::chrono::system_clock::duration nackSuppressionDuration;
 
   public:
     /// entity of corresponding reader
@@ -149,7 +150,7 @@ class ReaderProxy
      * @param nackFrag message containing the nackFrag
      * @return true if successful, else returns false
      */
-    bool processNack(void* nackFrag); // TODO replace with message or similar!
+    bool processNack(NackFrag *msg);
 
     /*
      * method for updating the fragment status based on NackFrag information

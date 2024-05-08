@@ -80,7 +80,7 @@ bool ChangeForReader::setFragmentStatus(fragmentStates status, uint32_t fragment
             break;
         case SENT:
             lastSentFN = fragmentNumber;
-            frag->arrivalTime = sentTimestamp;
+            frag->sentTime = sentTimestamp;
             frag->sent = true;
             frag->acked = false;
             if(fragmentNumber > highestFNSend)

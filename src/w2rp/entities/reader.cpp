@@ -45,6 +45,8 @@ bool Reader::handleDataFrag(DataFrag *msg)
 
     bool complete = writerProxy->checkSampleCompleteness(change->sequenceNumber);
 
+    // TODO if sample complete, send data up to application
+
     delete change;
 
     return true;
@@ -83,7 +85,7 @@ bool Reader::handleHBFrag(HeartbeatFrag *msg)
     uint32_t writerID = 0;
 
     NackFrag *response = new NackFrag(guidPrefix, config.readerUuid, writerID,
-                                        msg->writerSN, bitmapBase, bitmap, this->nackCount);
+                                        msg->writerSN, bitmapBase, bitmap, lastFragmentNum); // this->nackCount replaced with lastFragmentNum
     this->nackCount++;
 
     // transmit Message ...

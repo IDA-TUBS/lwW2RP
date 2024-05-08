@@ -102,9 +102,9 @@ protected:
     /*
      * @brief Method for reacting to NackFrags received from readers
      *
-     * @param nackFrag message containing the ack/nack bitmap
+     * @param nackFrag message containing the nack bitmap
      */
-    void handleNackFrag(/* TODO nackfrag data*/);
+    void handleNackFrag(NackFrag *msg);
 
 
     /*
