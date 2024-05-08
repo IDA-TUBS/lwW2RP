@@ -110,7 +110,7 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-build/
+# build/
 develop-eggs/
 dist/
 downloads/
@@ -283,7 +283,8 @@ cython_debug/
 # cmake/modules/
 # camke/packaging/
 
-
+# ignore cmake build dir
+/build
 
 # ignore boost build files
 thirdparty/boost_1_73_0/stage
