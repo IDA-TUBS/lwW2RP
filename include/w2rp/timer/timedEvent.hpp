@@ -105,6 +105,16 @@ class TimedEvent
         // TBD
     };
 
+    /**
+     * @brief return state of timer
+     * 
+     * @return return true or false, if the timer is active or inactive respectively
+     */
+    bool isActive()
+    {
+        // TBD
+    };
+
     private:
     size_t id;
     TimerManager& service_;

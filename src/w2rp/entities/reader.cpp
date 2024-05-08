@@ -21,10 +21,19 @@ Reader::~Reader()
     // TODO
 }
 
+
+/********************************************/
+/** Callbacks triggered by external events **/ 
+/********************************************/
+
 bool Reader::handleMessages()
 {
     // TODO
-    return false;
+    // first extract submessages from msg
+    
+    // call corresponding 
+
+    return true;
 }
 
 bool Reader::handleDataFrag(DataFrag *msg)
