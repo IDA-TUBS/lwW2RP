@@ -138,7 +138,7 @@ class DataFrag
              fragmentSize(fragmentSize),
              timestamp(sampleTimestamp)
     {
-        memcpy(this->serializedPayload , payload, fragmentSize);
+        memcpy(this->serializedPayload, payload, fragmentSize);
 
         this->length = sizeof(readerID) +
                        sizeof(writerID) +

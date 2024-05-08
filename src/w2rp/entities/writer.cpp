@@ -11,6 +11,8 @@ Writer::Writer()
     // TODO fill writer config
 
 
+    
+
     sequenceNumberCnt = 0;
 
     // initialize sample fragmenter
@@ -31,6 +33,17 @@ Writer::Writer()
         }
         matchedReaders.push_back(rp);
     }
+
+    // init and start timers
+    std::chrono::microseconds cycle(500000); // TODO take cycle time from writer config
+
+    shapingTimer = new TimedEvent(
+        this->timer_manager, 
+        cycle,
+        this->sendMessage
+    );
+
+    timer_manager.start();
 }
 
 Writer::~Writer()
