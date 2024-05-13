@@ -46,7 +46,7 @@ Writer::Writer()
     //     }
     // );
 
-    shapingTimer = new TimedEvent(
+    shapingTimer = new PeriodicEvent(
         this->timer_manager, 
         cycle,
         std::bind(&Writer::timerHandler, this)
@@ -138,9 +138,10 @@ void Writer::handleNackFrag(NackFrag *msg)
 /* methods used during fragment transmission */
 /*********************************************/
 
-void Writer::timerHandler()
+bool Writer::timerHandler()
 {
     logInfo("Test")
+    return true;
 };
 
 bool Writer::sendMessage(){

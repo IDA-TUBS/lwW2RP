@@ -15,11 +15,11 @@ namespace w2rp{
 
 class TimerManager
 {
+    /************************************************************************/
     public:
     
     typedef std::chrono::system_clock::time_point TimePoint;
     typedef std::chrono::steady_clock::duration Duration;
-
 
     /**
      * @brief Construct a new Timer Manager object
@@ -56,21 +56,16 @@ class TimerManager
      * @param args handler arguments
      * @return size_t timer id
      */
-    template <typename FunctionType, typename... Args>
-    size_t registerSteadyTimer(const Duration& duration, bool repeat, FunctionType&& function, Args&&... args)
+    size_t registerTimer(const Duration& duration, std::function<bool()> function)
     {
         size_t timer_id = assignID();
        
-        std::unique_lock<std::mutex> lock(m_mutex);
-        timer_repeat.insert({timer_id, repeat});
-        lock.unlock();
-
         // Create a timer and bind it to the function
         auto timer = std::make_shared<boost::asio::steady_timer>(timer_io);
-        configureSteadyTimer(timer, timer_id, duration, function, args...);        
+        configureTimer(timer, timer_id, duration, function);        
 
         // Add the timer to the list of timers
-        lock.lock();
+        std::unique_lock<std::mutex> lock(m_mutex);
         m_steady_timers.emplace(timer_id, std::move(timer));
         
         return timer_id;
@@ -86,14 +81,13 @@ class TimerManager
      * @param args handler arguments
      * @return size_t timer id
      */
-    template <typename FunctionType, typename... Args>
-    size_t registerSystemTimer(const TimePoint& time_point, FunctionType&& function, Args&&... args)
+    size_t registerTimer(const TimePoint& time_point, std::function<void()> function)
     {
         size_t timer_id = assignID();
 
         // Create a timer and bind it to the function
         auto timer = std::make_shared<boost::asio::system_timer>(timer_io);
-        configureSystemTimer(timer, timer_id, time_point, function, args...);
+        configureTimer(timer, timer_id, time_point, function);
 
         // Add the timer to the list of timers
         std::unique_lock<std::mutex> lock(m_mutex);
@@ -112,14 +106,13 @@ class TimerManager
      * @param args handler arguments
      * @return size_t timer id
      */
-    template <typename FunctionType, typename... Args>
-    void restartSteadyTimer(size_t timer_id, const Duration& duration, FunctionType&& function, Args&&... args)
+    void restartTimer(size_t timer_id, const Duration& duration, std::function<bool()> function)
     {
         std::unique_lock<std::mutex> lock(m_mutex);
         auto timer = m_steady_timers[timer_id];
         lock.unlock();
 
-        configureSteadyTimer(timer, timer_id, duration, function, args...);
+        configureTimer(timer, timer_id, duration, function);
     };
 
     /**
@@ -132,14 +125,13 @@ class TimerManager
      * @param args handler arguments
      * @return size_t timer id
      */
-    template <typename FunctionType, typename... Args>
-    void restartSystemTimer(size_t timer_id, const TimePoint& time_point, FunctionType&& function, Args&&... args)
+    void restartTimer(size_t timer_id, const TimePoint& time_point, std::function<void()> function)
     {
         std::unique_lock<std::mutex> lock(m_mutex);
         auto timer = m_system_timers[timer_id];
         lock.unlock();
 
-        configureSystemTimer(timer, timer_id, time_point, function, args...);
+        configureTimer(timer, timer_id, time_point, function);
     };
 
     /**
@@ -156,6 +148,8 @@ class TimerManager
      */
     void unregisterSystemTimer(size_t id);
 
+
+    /************************************************************************/
     private:
 
     /**
@@ -176,20 +170,18 @@ class TimerManager
      * @param function event handler
      * @param args handler arguments
      */
-    template<typename FunctionType, typename... Args>
-    void configureSteadyTimer(std::shared_ptr<boost::asio::steady_timer> timer, size_t timer_id, Duration duration, FunctionType&& function, Args&&... args)
+    void configureTimer(std::shared_ptr<boost::asio::steady_timer> timer, size_t timer_id, Duration duration, std::function<bool()> function)
     {
         timer->expires_after(duration);
         timer->async_wait(
-            [timer, timer_id, function, duration, this, args...](const boost::system::error_code& ec) {
+            [timer, timer_id, function, duration, this](const boost::system::error_code& ec) {
                 if (!ec) {
-                    auto task = std::bind(function, args...);
-                    task();                
-                    auto entry = timer_repeat.find(timer_id);
-                    if(entry->second == true)
+                    auto task = std::bind(function);
+                    bool restart_ = task();                
+                    if(restart_ == true)
                     {
                         logInfo("Re-register intervall timer: " << timer_id)
-                        configureSteadyTimer(timer, timer_id, duration, function, args...);
+                        configureTimer(timer, timer_id, duration, function);
                     }
                 }
                 else
@@ -210,14 +202,13 @@ class TimerManager
      * @param function event handler
      * @param args handler arguments
      */
-    template<typename FunctionType, typename... Args>
-    void configureSystemTimer(std::shared_ptr<boost::asio::system_timer> timer, size_t timer_id, TimePoint time_point, FunctionType&& function, Args&&... args)
+    void configureTimer(std::shared_ptr<boost::asio::system_timer> timer, size_t timer_id, TimePoint time_point, std::function<void()> function)
     {
         timer->expires_at(time_point);
         timer->async_wait(
-            [timer, timer_id, function, this, args...](const boost::system::error_code& ec) {
+            [timer, timer_id, function, this](const boost::system::error_code& ec) {
             if (!ec) {
-                auto task = std::bind(function, args...);
+                auto task = std::bind(function);
                 task();                
             }
             else
@@ -232,9 +223,7 @@ class TimerManager
     
     std::thread executor;
     
-    std::map<size_t, bool> timer_repeat;
     std::map<size_t, std::shared_ptr<boost::asio::steady_timer>> m_steady_timers;
-    
     std::map<size_t, std::shared_ptr<boost::asio::system_timer>> m_system_timers;
 
     std::mutex m_mutex;

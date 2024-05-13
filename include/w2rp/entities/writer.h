@@ -9,6 +9,7 @@
 #include <w2rp/helper/fragmentation.h>
 #include <w2rp/messages/messages.h>
 #include <w2rp/timer/timedEvent.hpp>
+#include <w2rp/timer/periodicEvent.hpp>
 #include <w2rp/timer/timerManager.hpp>
 
 namespace w2rp {
@@ -63,7 +64,7 @@ private:
     /// Timed Event for resetting fragments
     // TimedEvent *timeoutTimer;
     /// Timed Event for periodic shaping and sample transmissions
-    TimedEvent<> *shapingTimer;
+    PeriodicEvent<> *shapingTimer;
 
     /// counter for next sample's sequence number
     uint32_t sequenceNumberCnt;
@@ -126,7 +127,7 @@ protected:
     /* methods used during fragment transmission */
     /*********************************************/
 
-    void timerHandler();
+    bool timerHandler();
 
     /*
      * @brief callback that is triggered according to some schedule. At the end,

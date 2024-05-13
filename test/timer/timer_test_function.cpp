@@ -1,13 +1,15 @@
 #include <w2rp/timer/timedEvent.hpp>
+#include <w2rp/timer/periodicEvent.hpp>
 #include <w2rp/timer/timerManager.hpp>
 
 #include <w2rp/log.hpp>
 
 using namespace w2rp;
 
-void handler()
+bool handler()
 {
     logInfo("Hello from handler!")
+    return true;
 }
 
 void trigger_handler()
@@ -21,17 +23,18 @@ int main()
     TimerManager timer_manager;
 
     std::chrono::microseconds cycle(500000);
+    std::chrono::microseconds cycle2(250000);
 
-    TimedEvent<>* new_event;
-    new_event = new TimedEvent(
+    PeriodicEvent<>* new_event;
+    new_event = new PeriodicEvent(
         timer_manager, 
         cycle,
         handler 
     );
 
-    TimedEvent timer(
+    PeriodicEvent timer(
         timer_manager, 
-        cycle,
+        cycle2,
         handler
     );
     
@@ -43,12 +46,6 @@ int main()
         trigger_handler
     );
     
-    new_event = new TimedEvent(
-        timer_manager, 
-        cycle,
-        handler 
-    );
-
     timer_manager.start();
 
     while(true)

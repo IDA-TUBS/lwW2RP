@@ -1,5 +1,6 @@
 
 #include <w2rp/timer/timedEvent.hpp>
+#include <w2rp/timer/periodicEvent.hpp>
 #include <w2rp/timer/timerManager.hpp>
 
 #include <w2rp/log.hpp>
@@ -16,14 +17,22 @@ int main()
         timerObject():
             serviceHandler(),
             cycle(500000),
-            event_()
+            trigger_tp(std::chrono::system_clock::now() + std::chrono::seconds(1)),
+            t_event_(),
+            p_event_()
         {
             serviceHandler.start();
 
-            event_ = new TimedEvent(
+            t_event_ = new TimedEvent(
+                serviceHandler,
+                trigger_tp,
+                std::bind(&timerObject::t_callback, this)
+            );
+
+            p_event_ = new PeriodicEvent(
                 serviceHandler,
                 cycle,
-                std::bind(&timerObject::callback, this)
+                std::bind(&timerObject::p_callback, this)
             );
 
         };
@@ -33,15 +42,23 @@ int main()
             serviceHandler.stop();
         }
 
-        void callback()
+        void t_callback()
         {
             logInfo("Hello from timerObject callback!")
         };
 
+        bool p_callback()
+        {
+            logInfo("Hello from periodic timerObject callback!")
+            return true;
+        };
+
         private:
         TimerManager serviceHandler;
-        TimedEvent<>* event_;
+        TimedEvent<>* t_event_;
+        PeriodicEvent<>* p_event_;
         std::chrono::microseconds cycle;
+        std::chrono::system_clock::time_point trigger_tp;
     };
 
     timerObject myObject;

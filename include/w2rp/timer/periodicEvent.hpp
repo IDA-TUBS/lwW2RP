@@ -1,5 +1,5 @@
-#ifndef TimedEvent_h
-#define TimedEvent_h
+#ifndef PeriodicEvent_h
+#define PeriodicEvent_h
 
 #include <w2rp/timer/timerManager.hpp>
 
@@ -14,7 +14,7 @@
 namespace w2rp{
 
 template<typename... Args>
-class TimedEvent
+class PeriodicEvent
 {
     /************************************************************************/
     public:
@@ -23,40 +23,39 @@ class TimedEvent
     /**
      * @brief empty constructor
      */
-    TimedEvent() 
+    PeriodicEvent() 
     {};
 
     /**
-     * @brief Construct a new single shot Timed Event object
+     * @brief Construct a new periodic Timed Event object
      * 
-     * @param time_point trigger time point
+     * @param interval event cycle
      * @param callback handler routine
      * @param service management entity
      */
-    TimedEvent(
+    PeriodicEvent(
         TimerManager& service,
-        std::chrono::system_clock::time_point time_point,
-        std::function<void()> callback,
+        std::chrono::microseconds interval,
+        std::function<bool()> callback,
         Args... args
     ):
         service_(service),
-        time_point_(time_point),
-        callback_(std::bind(callback, args...)),
+        interval_(interval),
+        callback_(std::bind(callback, args...)),    
         args_(std::make_tuple(args...))
     {
-        auto timerCallback = std::bind(&TimedEvent<Args...>::eventCallback, this);
-        id = service_.registerTimer(time_point, timerCallback);
+        auto timerCallback = [&]() { return eventCallback(); }; /*std::bind(&TimedEvent<Args...>::eventCallback, this);*/
+        id = service_.registerTimer(interval, timerCallback);
         isActive_ = true;
     };
-
     
     /**
      * @brief Destroy the Timed Event object
      * 
      */
-    ~TimedEvent()
+    ~PeriodicEvent()
     {
-        service_.unregisterSystemTimer(id);
+        service_.unregisterSteadyTimer(id);
     };
 
     /**
@@ -82,26 +81,26 @@ class TimedEvent
         return isActive_;
     }
 
-    void eventCallback()
+    bool eventCallback()
     {
-        callback_();
-        isActive_ = false;
+        isActive_ = callback_();
+        return isActive_;
     }
-    
+
     /************************************************************************/
     private:
     
     size_t id;
     TimerManager& service_;
-    std::chrono::system_clock::time_point time_point_;
-    std::function<void()> callback_;
+    std::chrono::microseconds interval_;
+    std::function<bool()> callback_;
     std::tuple<Args...> args_;
     bool isActive_;
 };
 
 // Deduction guide for TimedEvent Class
-template<typename eventType, typename... Args>
-TimedEvent(TimerManager&, std::chrono::microseconds, std::function<void()>, Args...) -> TimedEvent<Args...>;
+template<typename... Args>
+PeriodicEvent(TimerManager&, std::chrono::microseconds, std::function<bool()>, Args...) -> PeriodicEvent<Args...>;
 
 }; // End w2rp namespace
 

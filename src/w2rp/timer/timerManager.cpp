@@ -7,7 +7,6 @@ TimerManager::TimerManager()
 :
     timer_io(),
     io_work(timer_io),
-    timer_repeat(),
     m_steady_timers(),
     m_system_timers(),
     m_mutex(),
@@ -41,7 +40,8 @@ void TimerManager::unregisterSteadyTimer(size_t id)
 
     logInfo("Removing timer: " << id)
     timer_ptr->cancel();
-    timer_repeat.erase(id);
+    
+    m_steady_timers.erase(id);
 
     lock.unlock();
 };
@@ -54,6 +54,8 @@ void TimerManager::unregisterSystemTimer(size_t id)
     logInfo("Removing timer: " << id)
     timer_ptr->cancel();
    
+    m_system_timers.erase(id);
+
     lock.unlock();
 };
 

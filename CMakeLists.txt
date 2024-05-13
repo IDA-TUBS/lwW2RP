@@ -131,6 +131,9 @@ set(SRC_FILES
 
 
 ## TimedEvent testing
-add_executable(timer_test test/timer/timer_test.cpp ${SRC_FILES})
-target_link_libraries(timer_test w2rp)
+add_executable(timer_test_function test/timer/timer_test_function.cpp ${SRC_FILES})
+target_link_libraries(timer_test_function w2rp)
 
+## TimedEvent testing
+add_executable(timer_test_object test/timer/timer_test_object.cpp ${SRC_FILES})
+target_link_libraries(timer_test_object w2rp)
