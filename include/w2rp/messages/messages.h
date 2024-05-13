@@ -3,11 +3,10 @@
 
 #include <cstring>
 #include <chrono>
+#include <w2rp/messages/message_net.hpp>
 
 
-#ifndef MAX_MSG_LENGTH
-#define MAX_MSG_LENGTH = 1472
-#endif
+
 
 namespace w2rp {
 

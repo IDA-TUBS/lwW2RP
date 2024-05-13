@@ -34,23 +34,18 @@ Writer::Writer()
         matchedReaders.push_back(rp);
     }
 
-    // init and start timers
+    // init timers
     std::chrono::microseconds cycle(500000); // TODO take cycle time from writer config
-
-    // shapingTimer = new TimedEvent(
-    //     this->timer_manager, 
-    //     cycle,
-    //     [&]()
-    //     {
-    //         return timerHandler();
-    //     }
-    // );
 
     shapingTimer = new PeriodicEvent(
         this->timer_manager, 
         cycle,
         std::bind(&Writer::timerHandler, this)
     );
+    shapingTimer->cancel_timer();
+    // only start timer once data available
+
+
 
 
     timer_manager.start();
@@ -110,6 +105,12 @@ bool Writer::addSampleToCache(SerializedPayload *data, std::chrono::system_clock
         rp->addChange(*newChange);
     }
 
+    // start shaping timer for sample transmission to begin
+    if(!shapingTimer->isActive())
+    {
+        shapingTimer->restart_timer();
+    }
+
     return true;
 }
 
@@ -126,7 +127,14 @@ void Writer::handleNackFrag(NackFrag *msg)
     {
         unsigned int sequenceNumber = msg->writerSN;
         bool complete = rp->checkSampleCompleteness(sequenceNumber);
+
+        // TODO restart shapingTimer if not active any more and sample not yet complete
+        if(!shapingTimer->isActive())
+        {
+            shapingTimer->restart_timer();
+        }
     }
+    
 }
 
 
