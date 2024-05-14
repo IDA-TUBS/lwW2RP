@@ -40,15 +40,18 @@ Writer::Writer()
     shapingTimer = new PeriodicEvent(
         this->timer_manager, 
         cycle,
-        std::bind(&Writer::timerHandler, this)
+        std::bind(&Writer::sendMessage, this)
     );
+    // only start timer once data available, hence stop immediately
     shapingTimer->cancel_timer();
-    // only start timer once data available
-
-
+    
 
 
     timer_manager.start();
+
+    currentSampleNumber = -1;
+    fragmentCounter = 0;
+    hbCounter = 0;
 }
 
 Writer::~Writer()
@@ -117,6 +120,7 @@ bool Writer::addSampleToCache(SerializedPayload *data, std::chrono::system_clock
 
 void Writer::handleNackFrag(NackFrag *msg)
 {
+    logDebug("handleNackFrag: received NackFrag")
     uint32_t readerID = msg->readerID;
 
     // assumption and simplifications for PoC: readerID always correspond to index in matchedReaders 
@@ -128,13 +132,12 @@ void Writer::handleNackFrag(NackFrag *msg)
         unsigned int sequenceNumber = msg->writerSN;
         bool complete = rp->checkSampleCompleteness(sequenceNumber);
 
-        // TODO restart shapingTimer if not active any more and sample not yet complete
+        // restart shapingTimer if not active any more and sample not yet complete
         if(!shapingTimer->isActive())
         {
             shapingTimer->restart_timer();
         }
-    }
-    
+    }    
 }
 
 
@@ -146,13 +149,14 @@ void Writer::handleNackFrag(NackFrag *msg)
 /* methods used during fragment transmission */
 /*********************************************/
 
-bool Writer::timerHandler()
-{
-    logInfo("Test")
-    return true;
-};
+// bool Writer::timerHandler()
+// {
+//     logInfo("Test")
+//     return true;
+// };
 
 bool Writer::sendMessage(){
+    logDebug("sendMessage: call")
     // check liveliness of sample in history cache, removes outdated samples
     checkSampleLiveliness();
 
@@ -162,6 +166,7 @@ bool Writer::sendMessage(){
     // if no sample left to transmit: no need to transmit anything or schedule a new transmission
     if(historyCache.size() == 0)
     {
+        logDebug("sendMessage: history empty, halt shaping")
         return false;
     }
     
@@ -174,9 +179,10 @@ bool Writer::sendMessage(){
     }
 
     // differentiate two scenarios:
-    // 1. scenario: send queue is empty, select a new fragment for tx
+    // 1. scenario: send queue is empty, select a new fragment for tx or retx
     if(sendQueue.empty())
     {
+        logDebug("sendMessage: fill queue for retx")
         // add new fragment to queue
         SampleFragment* sf = nullptr;
         ReaderProxy *rp = nullptr;
@@ -197,6 +203,7 @@ bool Writer::sendMessage(){
     // 2. scenario: send queue not empty (any more)
     if(!sendQueue.empty())
     {
+        logDebug("sendMessage: select fragment for (re)tx")
         auto t_now = std::chrono::system_clock::now();
 
         SampleFragment* sf = sendQueue.front();
@@ -222,6 +229,10 @@ bool Writer::sendMessage(){
             // }
 
         // TODO: create message ... DataFrag + append HBFrag
+        DataFrag* msg;
+        
+        this->createDataFrag(sf, msg);
+
         // TODO send message
 
         
@@ -233,7 +244,9 @@ bool Writer::sendMessage(){
     // wait for next sample top arrive
     else
     {
+        logDebug("sendMessage: no fragments available, halt shaping")
         // ...
+        return false;
     }
 
 
@@ -314,6 +327,30 @@ void Writer::fillSendQueueWithSample(uint32_t sequenceNumber)
     }
 }
 
+
+void Writer::createDataFrag(SampleFragment* sf, DataFrag* ret)
+{   
+    // TODO borad/multicast readerID = numeric_limits<uint32_t>::max()? message.h #define ID_BROADCAST numeric_limits<uint32_t>::max()
+    uint32_t readerID = 0;
+
+    ret = new DataFrag(config.guidPrefix, readerID, config.writerUuid,
+                        sf->baseChange->sequenceNumber, sf->fragmentStartingNum,
+                        sf->baseChange->sampleSize, sf->dataSize, sf->data, sf->baseChange->arrivalTime);
+}
+
+
+void Writer::createHBFrag(SampleFragment* sf, HeartbeatFrag* ret)
+{
+    // TODO borad/multicast readerID = 0? message.h #define ID_BROADCAST 0
+    uint32_t readerID = 0;
+
+    ret = new HeartbeatFrag(config.guidPrefix, readerID, config.writerUuid,
+                            sf->baseChange->sequenceNumber,
+                            matchedReaders[0]->getCurrentChange()->highestFNSend,
+                            hbCounter);
+
+    hbCounter++;
+}
 
 
 

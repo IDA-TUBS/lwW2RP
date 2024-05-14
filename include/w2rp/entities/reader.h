@@ -20,6 +20,7 @@ struct readerCfg
     std::string writerAddresses;
     unsigned int sizeCache;
     uint8_t readerUuid;
+    unsigned char* guidPrefix;
     uint32_t priority;
 };
 

@@ -89,15 +89,17 @@ bool Reader::handleHBFrag(HeartbeatFrag *msg)
         bitmap[index] |= (1 << bitPosition);
     }
 
-    // TODO get guid prefix and writerID from somewhere?!
-    unsigned char *guidPrefix;
+    // TODO writerID?
     uint32_t writerID = 0;
 
-    NackFrag *response = new NackFrag(guidPrefix, config.readerUuid, writerID,
+    NackFrag *response = new NackFrag(config.guidPrefix, config.readerUuid, writerID,
                                         msg->writerSN, bitmapBase, bitmap, lastFragmentNum); // this->nackCount replaced with lastFragmentNum
     this->nackCount++;
 
     // transmit Message ...
+
+    // delete object
+    delete response;
 
     return true;
 }

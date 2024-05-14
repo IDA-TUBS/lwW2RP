@@ -32,6 +32,7 @@ struct writerCfg
     std::vector<std::string> readerAddresses;
     unsigned int sizeCache;
     uint8_t writerUuid;
+    unsigned char* guidPrefix;
     PrioritizationMode prioMode;
 };
 
@@ -76,8 +77,9 @@ private:
     // variable storing the sequence number of the sample that is currently being transmitted
     int currentSampleNumber;
     /// counter for total number of fragments sent
-    int fragmentCounter;
-    ///
+    uint32_t fragmentCounter;
+    /// HB counter
+    uint32_t hbCounter; 
 
 public:
     /*
@@ -127,7 +129,7 @@ protected:
     /* methods used during fragment transmission */
     /*********************************************/
 
-    bool timerHandler();
+    // bool timerHandler();
 
     /*
      * @brief callback that is triggered according to some schedule. At the end,
@@ -162,7 +164,24 @@ protected:
      */
     void fillSendQueueWithSample(uint32_t sequenceNumber);
 
+    /*
+     * @brief create DataFrag submessage
+     * 
+     * @param pointer to sample fragment that shall be transmitted
+     * @param pointer to data frag submessage  
+     */
 
+    void createDataFrag(SampleFragment* sf, DataFrag* ret);
+
+
+    /*
+     * @brief create HeartbeatFrag submessage
+     * 
+     * @param pointer to latest sample fragment
+     * @param pointer to HeartbeatFrag submessage  
+     */
+
+    void createHBFrag(SampleFragment* sf, HeartbeatFrag* ret);
 
 
 
