@@ -2,7 +2,7 @@
  *
  */
 
-#include <w2rp/readerProxy.h>
+#include <w2rp/readerProxy.hpp>
 
 namespace w2rp {
 

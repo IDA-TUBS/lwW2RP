@@ -2,8 +2,8 @@
  *
  */
 
-#include <w2rp/changeForReader.h>
-#include <w2rp/sampleFragment.h>
+#include <w2rp/changeForReader.hpp>
+#include <w2rp/sampleFragment.hpp>
 
 namespace w2rp {
 

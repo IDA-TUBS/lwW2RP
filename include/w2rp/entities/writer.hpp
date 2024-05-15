@@ -5,8 +5,8 @@
 #include <math.h>
 #include <chrono>
 #include <string>
-#include <w2rp/readerProxy.h>
-#include <w2rp/helper/fragmentation.h>
+#include <w2rp/readerProxy.hpp>
+#include <w2rp/helper/fragmentation.hpp>
 #include <w2rp/messages/messages.hpp>
 #include <w2rp/timer/timedEvent.hpp>
 #include <w2rp/timer/periodicEvent.hpp>

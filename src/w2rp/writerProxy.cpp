@@ -2,7 +2,7 @@
  *
  */
 
-#include <w2rp/writerProxy.h>
+#include <w2rp/writerProxy.hpp>
 
 namespace w2rp {
 

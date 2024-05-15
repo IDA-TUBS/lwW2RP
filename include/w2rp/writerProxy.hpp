@@ -7,7 +7,7 @@
 
 #include <math.h>
 #include <list>
-#include <w2rp/changeForWriter.h>
+#include <w2rp/changeForWriter.hpp>
 
 namespace w2rp {
 
@@ -25,16 +25,16 @@ class WriterProxy
     uint32_t historySize;
 
   public:
-    /*
-     * default constructor
+    /**
+     * @brief default constructor
      */
     WriterProxy(uint32_t historySize):
         historySize(historySize),
         highestSequenceNumber(-1)
     {};
 
-    /*
-     * overloaded constructor, add first change to history
+    /**
+     * @brief overloaded constructor, add first change to history
      */
     WriterProxy(uint32_t historySize, CacheChange &change):
         historySize(historySize)
@@ -42,31 +42,31 @@ class WriterProxy
         this->addChange(change);
     };
 
-    /*
-     * default destructor
+    /**
+     * @brief default destructor
      */
     ~WriterProxy()
     {
         history.clear();
     };
 
-    /*
-     * method for adding a new Cache Change to the proxy's history cache
+    /**
+     * @brief method for adding a new Cache Change to the proxy's history cache
      *
      * @param change reference to cache change that will be replicated in the reader proxy
      * @return true if change was added, false if cache was full and change was not added to history
      */
     bool addChange(CacheChange &change);
 
-    /*
-     * method for removing a Cache Change from the proxie's history cache
+    /**
+     * @brief method for removing a Cache Change from the proxie's history cache
      *
      * @param sequenceNumber sequence number of the change that has be be removed
      */
     void removeChange(uint32_t sequenceNumber);
 
-    /*
-     * method for altering a fragment's status (unsent, sent, acked, ...)
+    /**
+     * @brief method for altering a fragment's status (unsent, sent, acked, ...)
      *
      * @param status fragment status
      * @param sequenceNumber seq number of the sample which fragment status shall be altered
@@ -77,16 +77,16 @@ class WriterProxy
      */
     bool updateFragmentStatus (fragmentStates status, uint32_t sequenceNumber, uint32_t fragmentNumber, unsigned char *data, uint32_t dataLength);
 
-    /*
-     * method for evaluating completeness of samples
+    /**
+     * @brief method for evaluating completeness of samples
      *
      * @param sequenceNumber seq number of sample that shall be checked
      * @return true if complete, else returns false
      */
     bool checkSampleCompleteness(uint32_t sequenceNumber);
 
-    /*
-     * method returning the current (oldest) cache change
+    /**
+     * @brief method returning the current (oldest) cache change
      *
      * @return ChangeForWriter object
      */
@@ -95,8 +95,8 @@ class WriterProxy
         return history.front();
     };
 
-    /*
-     * method returning the latest cache change
+    /**
+     * @brief method returning the latest cache change
      *
      * @return ChangeForWriter object
      */
@@ -105,16 +105,16 @@ class WriterProxy
         return history.back();
     };
 
-    /*
-     * Method for returning history size
+    /**
+     * @brief Method for returning history size
      */
     uint32_t getSize()
     {
         return history.size();
     };
 
-    /*
-     * method cache change with corresponding sequence number
+    /**
+     * @brief method cache change with corresponding sequence number
      *
      * @param sequenceNumber seq number of sample that shall be retrieved
      * @return ChangeForWriter object

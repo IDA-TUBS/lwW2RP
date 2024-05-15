@@ -8,8 +8,8 @@
 #include <math.h>
 #include <vector>
 #include <chrono>
-#include <w2rp/cacheChange.h>
-#include <w2rp/sampleFragment.h>
+#include <w2rp/cacheChange.hpp>
+#include <w2rp/sampleFragment.hpp>
 
 namespace w2rp {
 
@@ -34,8 +34,8 @@ class ChangeForReader: public CacheChange
     CacheChange *baseChange;
 
 
-    /*
-     * empty default constructor
+    /**
+     * @brief empty default constructor
      */
     ChangeForReader(){
         complete = false;
@@ -43,8 +43,8 @@ class ChangeForReader: public CacheChange
         highestFNSend = 0;
     }
 
-    /*
-     * overloaded constructor
+    /**
+     * @brief overloaded constructor
      *
      * @param id of reader
      * @param seqNum sequence number of the current sample
@@ -71,8 +71,8 @@ class ChangeForReader: public CacheChange
         }
     };
 
-    /*
-     * overloaded constructor, generate ChangeForReader from CacheChange
+    /**
+     * @brief overloaded constructor, generate ChangeForReader from CacheChange
      *
      * @param id of reader
      * @param change reference to cache change
@@ -95,8 +95,8 @@ class ChangeForReader: public CacheChange
         }
     };
 
-    /*
-     * copy constructor
+    /**
+     * @brief copy constructor
      */
     ChangeForReader(ChangeForReader &change):
         CacheChange(change.sequenceNumber, change.sampleSize, change.fragmentSize, change.arrivalTime),
@@ -116,44 +116,44 @@ class ChangeForReader: public CacheChange
         }
     }
 
-    /*
-     * empty default destructor
+    /**
+     * @brief empty default destructor
      */
     ~ChangeForReader()
     {
         // delete[] sampleFragmentArray; // Leads to conflicts at object destruction
     };
 
-    /*
-     * determine number of fragments that have not been acknowledged yet
+    /**
+     * @brief determine number of fragments that have not been acknowledged yet
      *
      * @return number of fragments
      */
     uint32_t notAckCount();
 
-    /*
-     * determine number of fragments that have been acknowledged so far
+    /**
+     * @brief determine number of fragments that have been acknowledged so far
      *
      * @return number of fragments
      */
     uint32_t ackCount();
 
-    /*
-     * determine number of fragments that have been sent so far, also includes those already acknowledged by the reader
+    /**
+     * @brief determine number of fragments that have been sent so far, also includes those already acknowledged by the reader
      *
      * @return number of fragments
      */
     uint32_t sentCount();
 
-    /*
-     * determine number of fragments that are in state "UNSENT"
+    /**
+     * @brief determine number of fragments that are in state "UNSENT"
      *
      * @return number of fragments
      */
     uint32_t unsentCount();
 
-    /*
-     * method for updating the fragment status
+    /**
+     * @brief method for updating the fragment status
      *
      * @param statues new fragment status
      * @param fragmentNumber fragment whose fragment shall be updated
@@ -161,15 +161,15 @@ class ChangeForReader: public CacheChange
      */
     bool setFragmentStatus(fragmentStates status, uint32_t fragmentNumber, std::chrono::system_clock::time_point sentTimestamp);
 
-    /*
-     * gather all fragments of a given change that are currently in state unsent (and not acknowledged!)
+    /**
+     * @brief gather all fragments of a given change that are currently in state unsent (and not acknowledged!)
      *
      * @return list of fragments
      */
     std::vector<SampleFragment*> getUnsentFragments();
 
-    /*
-     * reset all sent but unacknowledged fragments to state 'UNSENT', used by WiMEP
+    /**
+     * @brief reset all sent but unacknowledged fragments to state 'UNSENT', used by WiMEP
      */
     void resetSentFragments();
 

@@ -2,7 +2,7 @@
  *
  */
 
-#include <w2rp/entities/reader.h>
+#include <w2rp/entities/reader.hpp>
 
 namespace w2rp {
 

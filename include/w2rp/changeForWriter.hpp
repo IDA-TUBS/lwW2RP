@@ -7,8 +7,8 @@
 
 #include <math.h>
 #include <chrono>
-#include <w2rp/cacheChange.h>
-#include <w2rp/sampleFragment.h>
+#include <w2rp/cacheChange.hpp>
+#include <w2rp/sampleFragment.hpp>
 
 namespace w2rp {
 
@@ -36,8 +36,8 @@ class ChangeForWriter: public CacheChange
         highestFNreceived = 0;
     }
 
-    /*
-     * overloaded constructor
+    /**
+     * @brief overloaded constructor
      *
      * @param id of reader
      * @param seqNum sequence number of the current sample
@@ -62,8 +62,8 @@ class ChangeForWriter: public CacheChange
         // }
     };
 
-    /*
-     * overloaded constructor
+    /**
+     * @brief overloaded constructor
      *
      * @param CacheChange object
      */
@@ -84,8 +84,8 @@ class ChangeForWriter: public CacheChange
         }
     };
 
-    /*
-     * copy constructor
+    /**
+     * @brief copy constructor
      * *
      * @param ChangeForWriter object
      */
@@ -104,23 +104,23 @@ class ChangeForWriter: public CacheChange
         }
     }
 
-    /*
-     * empty default destructor
+    /**
+     * @brief empty default destructor
      */
     ~ChangeForWriter()
     {
 //        delete[] sampleFragmentArray; // Leads to conflicts at object destruction
     };
 
-    /*
-     * determine number of fragments that have been received so far
+    /**
+     * @brief determine number of fragments that have been received so far
      *
      * @return number of fragments
      */
     uint32_t receivedCount();
 
-    /*
-     * method for updating the fragment status
+    /**
+     * @brief method for updating the fragment status
      *
      * @param statues new fragment status
      * @param fragmentNumber fragment whose fragment shall be updated
@@ -128,8 +128,8 @@ class ChangeForWriter: public CacheChange
      */
     bool setFragmentStatus(fragmentStates status, uint32_t fragmentNumber);
 
-    /*
-     * method for updating the fragment data on reception
+    /**
+     * @brief method for updating the fragment data on reception
      *
      * @param fragmentNumber fragment whose fragment shall be updated
      * @param data actual fragment data
@@ -138,7 +138,7 @@ class ChangeForWriter: public CacheChange
      */
     bool setFragmentData(uint32_t fragmentNumber, unsigned char *data, uint32_t dataLength);
 
-    /*
+    /**
      * @brief determine all missing fragments smaller with sequence number smaller than lastfragmentNum 
      * 
      * @param lastfragmentNum highest fragment number transmitted so far for a given sample (SN)

@@ -8,7 +8,7 @@
 #include <math.h>
 #include <chrono>
 #include <string>
-#include <w2rp/writerProxy.h>
+#include <w2rp/writerProxy.hpp>
 #include <w2rp/messages/messages.hpp>
 
 namespace w2rp {

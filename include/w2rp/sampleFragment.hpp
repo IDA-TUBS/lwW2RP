@@ -40,8 +40,8 @@ class SampleFragment
 
 
   public:
-    /*
-     * empty default constructor
+    /**
+     * @brief empty default constructor
      */
     SampleFragment():
         sendCounter(0),
@@ -53,8 +53,8 @@ class SampleFragment
         baseChange(baseChange)
     {};
 
-    /*
-     * overloaded constructor, creates sampleFragment without data
+    /**
+     * @brief overloaded constructor, creates sampleFragment without data
      *
      * @param baseChange reference (pointer) to Change, the fragment is associated to
      * @param fragStartNum fragment number
@@ -74,8 +74,8 @@ class SampleFragment
         baseChange(baseChange)
     {};
 
-    /*
-     * copy constructor
+    /**
+     * @brief copy constructor
      *
      * @param sf reference to object to be copied
      */
@@ -91,13 +91,13 @@ class SampleFragment
         baseChange(sf.baseChange)
     {};
 
-    /*
-     * empty default destructor
+    /**
+     * @brief empty default destructor
      */
     ~SampleFragment() {};
 
-    /*
-     * comparison operator
+    /**
+     * @brief comparison operator
      */
     bool operator == (const SampleFragment& other) const
     {
@@ -107,8 +107,8 @@ class SampleFragment
     }   
 
 
-    /*
-     * set status of flag 'sent'
+    /**
+     * @brief set status of flag 'sent'
      *
      * @param b set 'sent' to this boolean value
      */
@@ -123,8 +123,8 @@ class SampleFragment
         }
     };
 
-    /*
-     * set status of flag 'acked'
+    /**
+     * @brief set status of flag 'acked'
      *
      * @param b set 'acked' to this boolean value
      */
@@ -133,8 +133,8 @@ class SampleFragment
         this->acked = b;
     };
 
-    /*
-     * set status of flag 'received'
+    /**
+     * @brief set status of flag 'received'
      *
      * @param b set 'received' to this boolean value
      */
@@ -143,8 +143,8 @@ class SampleFragment
         this->received = b;
     };
 
-    /*
-     * set data
+    /**
+     * @brief set data
      *
      * @param binaryData binary representation of the fragment data 
      */
@@ -156,6 +156,11 @@ class SampleFragment
         this->sentTime = sentTime;
     };
 
+    /**
+     * @brief set base change
+     *
+     * @param baseChange pointer to base change
+     */
     void setBaseChange(CacheChange *baseChange)
     {
         this->baseChange = baseChange;

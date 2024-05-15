@@ -6,8 +6,8 @@
 #include <cstring>
 #include <vector>
 
-#include <w2rp/sampleFragment.h>
-#include <w2rp/helper/serializedPayload.h>
+#include <w2rp/sampleFragment.hpp>
+#include <w2rp/helper/serializedPayload.hpp>
 
 namespace w2rp {
 

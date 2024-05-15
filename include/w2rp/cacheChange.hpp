@@ -8,7 +8,7 @@
 #include <math.h>
 #include <chrono>
 #include <vector>
-#include <w2rp/sampleFragment.h>
+#include <w2rp/sampleFragment.hpp>
 
 
 
@@ -52,8 +52,8 @@ class CacheChange
      */
     CacheChange() {};
 
-    /*
-     * overloaded constructor
+    /**
+     * @brief overloaded constructor
      *
      * @param seqNum sequence number of the current sample
      * @param sampleSize size of the sample in bytes
@@ -78,8 +78,8 @@ class CacheChange
         // }
     };
 
-    /*
-     * copy constructor
+    /**
+     * @brief copy constructor
      */
     CacheChange(CacheChange &change):
         sequenceNumber(change.sequenceNumber),
@@ -98,8 +98,8 @@ class CacheChange
         }
     }
 
-    /*
-     * empty default destructor
+    /**
+     * @brief empty default destructor
      */
     ~CacheChange()
     {
@@ -110,8 +110,8 @@ class CacheChange
         }
     };
 
-    /*
-     * method for altering a fragment's status (unsent, sent, acked, ...)
+    /**
+     * @brief method for altering a fragment's status (unsent, sent, acked, ...)
      *
      * @param status fragment status
      * @param fragmentNumber fn of fragment to be updated
@@ -124,8 +124,8 @@ class CacheChange
     };
 
 
-    /*
-     * set the fragment array
+    /**
+     * @brief set the fragment array
      *
      * @param vector of sample fragments 
      */
@@ -141,8 +141,8 @@ class CacheChange
         }        
     }
 
-    /*
-     * return the fragment array
+    /**
+     * @brief return the fragment array
      *
      * @return array of sample fragments
      */
@@ -152,8 +152,8 @@ class CacheChange
     }
 
 
-    /*
-     * determine whether age has been exceeded
+    /**
+     * @brief determine whether age has been exceeded
      *
      * @param deadline sample deadline
      * @return true if sample still valid, else returns false
@@ -164,8 +164,8 @@ class CacheChange
         return ((now - this->arrivalTime) < deadline);
     }
 
-    /*
-     * check whether sample has been received or acknowledged in its entirety
+    /**
+     * @brief check whether sample has been received or acknowledged in its entirety
      *
      * @return true if complete, else returns false
      */

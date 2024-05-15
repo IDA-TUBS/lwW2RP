@@ -2,7 +2,7 @@
  *
  */
 
-#include <w2rp/entities/writer.h>
+#include <w2rp/entities/writer.hpp>
 
 namespace w2rp {
 
