@@ -3,6 +3,7 @@
 
 #include <cstring>
 #include <chrono>
+#include <vector>
 #include <w2rp/messages/message_net.hpp>
 
 
@@ -380,6 +381,26 @@ class HeartbeatFrag: public SubmessageBase
      */
     void netToHB(MessageNet_t* msg);
 };
+
+
+
+class NetMessageParser
+{
+  public:
+    /**
+    * @brief constructor
+    */
+    NetMessageParser();
+
+    /**
+    * @brief destructor
+    */
+    ~NetMessageParser();
+
+
+    void getSubmessages(MessageNet_t* msg, std::vector<SubmessageBase*> *res);
+};
+
 
 } //end namespace
 

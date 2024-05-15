@@ -145,7 +145,85 @@ void HeartbeatFrag::netToHB(MessageNet_t* msg)
 }
 
 
+void NetMessageParser::getSubmessages(MessageNet_t* msg, std::vector<SubmessageBase*> *res)
+{
+    W2RPHeader *w2rpHeader;
+    w2rpHeader = new W2RPHeader();
 
+    SubmessageHeader *subMsgHeader;
+    subMsgHeader = new SubmessageHeader();
+
+    w2rpHeader->netToHeader(msg);
+
+    while (true)
+    {
+        // check if end of message has been reached
+        if(msg->pos >= (msg->length - 1))
+        {
+            // end of message reached
+            break;
+        }
+
+        // parse submessage header
+        subMsgHeader->netToHeader(msg);
+
+        // based on id, parse corresponding submessage
+        switch (subMsgHeader->submessageId)
+        {
+        case DATA_FRAG:
+            if(msg->movePos(subMsgHeader->length))
+            {
+                DataFrag *dataFrag;
+                dataFrag = new DataFrag();
+
+                dataFrag->netToData(msg);
+
+                res->push_back(dataFrag);
+            }
+            else
+            {
+                // something went wrong
+                // TODO handle error
+            }
+            break;
+        case HEARTBEAT_FRAG:
+            if(msg->movePos(subMsgHeader->length))
+            {
+                HeartbeatFrag *hbFrag;
+                hbFrag = new HeartbeatFrag();
+
+                hbFrag->netToHB(msg);
+
+                res->push_back(hbFrag);
+            }
+            else
+            {
+                // something went wrong
+                // TODO handle error
+            }
+            break;
+        case NACK_FRAG:
+            if(msg->movePos(subMsgHeader->length))
+            {
+                NackFrag *nackFrag;
+                nackFrag = new NackFrag();
+
+                nackFrag->netToNack(msg);
+
+                res->push_back(nackFrag);
+            }
+            else
+            {
+                // something went wrong
+                // TODO handle error
+            }
+            break;
+        default:
+            break;
+        }
+    }
+    
+}
 
 
 } // end namespace

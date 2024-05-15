@@ -172,6 +172,31 @@ struct MessageNet_t
         }
     }
 
+
+    /**
+     * @brief move position pointer manually
+     * 
+     * @param diff move pointer by stated positions
+     * @return bool (true): success (false): failure 
+     */
+    bool movePos(uint32_t diff)
+    {
+        uint32_t temp = pos;
+
+        temp += diff;
+
+        if(temp != 0)
+        {
+            pos += diff;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+
     // Attributes
 	/**
 	 * @brief pointer to serialized char array
@@ -203,6 +228,7 @@ struct MessageNet_t
      */
     bool allocated;
 };
+
 
 } // end namespace
 
