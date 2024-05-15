@@ -9,7 +9,7 @@
 #include <chrono>
 #include <string>
 #include <w2rp/writerProxy.h>
-#include <w2rp/messages/messages.h>
+#include <w2rp/messages/messages.hpp>
 
 namespace w2rp {
 
@@ -28,13 +28,13 @@ struct readerCfg
 class Reader
 {
   public:
-    /*
-     * default constructor
+    /**
+     * @brief default constructor
      */
     Reader(/* args */);
 
-    /*
-     * default destructor
+    /**
+     * @brief default destructor
      */
     ~Reader();
 
@@ -59,7 +59,7 @@ class Reader
     /** Callbacks triggered by external events **/ 
     /********************************************/
 
-    /*
+    /**
      * @brief Callback 
      *
      * @param data frag
@@ -75,7 +75,7 @@ class Reader
      */
     bool handleDataFrag(DataFrag *msg);
 
-    /*
+    /**
      * @brief Method for reacting to Heartbeatfrags, send Nackfrag in return
      *
      * @param heartbeat message
@@ -93,7 +93,7 @@ class Reader
     /* methods for checking validity of cacheChanges */ 
     /*************************************************/
 
-    /*
+    /**
      * Method for evaluating whether a sample is still valid or whether its deadline elapsed.
      * Handles removing of sample in case of elapsed deadline
      */

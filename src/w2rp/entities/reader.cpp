@@ -89,12 +89,17 @@ bool Reader::handleHBFrag(HeartbeatFrag *msg)
         bitmap[index] |= (1 << bitPosition);
     }
 
+    // create W2RP header
+    W2RPHeader *header = new W2RPHeader(config.guidPrefix);
+
+    // create NackFrag submessage
     // TODO writerID?
     uint32_t writerID = 0;
-
     NackFrag *response = new NackFrag(config.guidPrefix, config.readerUuid, writerID,
                                         msg->writerSN, bitmapBase, bitmap, lastFragmentNum); // this->nackCount replaced with lastFragmentNum
     this->nackCount++;
+
+
 
     // transmit Message ...
 

@@ -9,7 +9,7 @@
 #include <vector>
 #include <list>
 #include <w2rp/changeForReader.h>
-#include <w2rp/messages/messages.h>
+#include <w2rp/messages/messages.hpp>
 
 namespace w2rp {
 

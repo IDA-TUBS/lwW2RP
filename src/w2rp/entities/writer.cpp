@@ -228,10 +228,17 @@ bool Writer::sendMessage(){
             //     scheduleAt(simTime() + timeout, nextTimeout);
             // }
 
-        // TODO: create message ... DataFrag + append HBFrag
+        // create W2RP header
+        W2RPHeader *header = new W2RPHeader(config.guidPrefix);
+        
+        // create submessages: DataFrag and HBFrag
         DataFrag* msg;
+        HeartbeatFrag* hb;
         
         this->createDataFrag(sf, msg);
+        this->createHBFrag(sf, hb);
+
+        // TODO serialization (toNet) and concatenation of submessages 
 
         // TODO send message
 

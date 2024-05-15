@@ -10,8 +10,6 @@
 
 namespace w2rp {
 
-} //end namespace
-
 enum SUBMESSAGES
 {
     // basic RTPS submessages needed for W2RP
@@ -30,11 +28,11 @@ struct FragmentNumberSet {
 };
 
 
-
+// TODO add timestamp - non RTPS compliant?
 class W2RPHeader
 {
   public:
-    /*
+    /**
      * @brief default constructor
      *
      * @param 12 byte guid prefix
@@ -56,7 +54,7 @@ class W2RPHeader
                         sizeof(this->guidPrefix);
     };
 
-    /*
+    /**
      * @brief default empty destructor
      */
     ~W2RPHeader(){};
@@ -70,7 +68,7 @@ class W2RPHeader
     // misc information
     uint32_t length;    
 
-    /*
+    /**
      * @brief encode protocol name in uint32_t
      *
      * @param string containing 4 letter protocol name
@@ -84,6 +82,22 @@ class W2RPHeader
         }
         return result;
     };
+
+
+    /**
+     * @brief Convert header to char array
+     * 
+     * @param msg char array to store the byte stream
+     */
+    void headerToNet(MessageNet_t* msg);
+
+    /**
+     * @brief Convert char array to header
+     * 
+     * @param msg char array to store the byte stream
+     */
+    void netToHeader(MessageNet_t* msg);
+
 };
 
 
@@ -114,16 +128,30 @@ class SubmessageHeader
 
     // misc information
     uint32_t length;
+
+    /**
+     * @brief Convert submsg header to char array
+     * 
+     * @param msg char array to store the byte stream
+     */
+    void headerToNet(MessageNet_t* msg);
+
+    /**
+     * @brief Convert char array to submsg header
+     * 
+     * @param msg char array to store the byte stream
+     */
+    void netToHeader(MessageNet_t* msg);
 };
 
 
 
-// TODO add timestamp - non RTPS compliant?
+
 class DataFrag
 {
   public:
-    /*
-     * default constructor
+    /**
+     * @brief default constructor
      */
     DataFrag(unsigned char* guidPrefix, uint32_t readerID, uint32_t writerID,
              uint64_t writerSN, uint32_t fragmentStartingNum, 
@@ -150,8 +178,8 @@ class DataFrag
         SubmessageHeader(DATA_FRAG, this->length, false);
     };
 
-    /*
-     * default destructor
+    /**
+     * @brief default destructor
      */
     ~DataFrag()
     {
@@ -174,6 +202,20 @@ class DataFrag
 
     // misc information
     uint32_t length;
+
+    /**
+     * @brief Convert data frag to char array
+     * 
+     * @param msg char array to store the byte stream
+     */
+    void dataToNet(MessageNet_t* msg);
+
+    /**
+     * @brief Convert char array to data frag
+     * 
+     * @param msg char array to store the byte stream
+     */
+    void netToData(MessageNet_t* msg);
 };
 
 
@@ -181,8 +223,8 @@ class DataFrag
 class NackFrag
 {
   public:
-    /*
-     * default constructor
+    /** 
+     * @brief default constructor
      */
     NackFrag(unsigned char* guidPrefix, uint32_t readerID, uint32_t writerID,
              uint64_t writerSN, uint16_t bitmapBase, unsigned char *fragmentStates, uint32_t NackFragCount):
@@ -203,8 +245,8 @@ class NackFrag
         SubmessageHeader(NACK_FRAG, this->length, false);
     };
 
-    /*
-     * default destructor
+    /**
+     * @brief default destructor
      */
     ~NackFrag()
     {
@@ -227,8 +269,8 @@ class NackFrag
 class HeartbeatFrag
 {
   public:
-    /*
-     * default constructor
+    /**
+     * @brief default constructor
      */
     HeartbeatFrag(unsigned char* guidPrefix, uint32_t readerID, uint32_t writerID,
              uint64_t writerSN, uint32_t lastFragmentNum, uint32_t HBFragCount):
@@ -246,8 +288,8 @@ class HeartbeatFrag
         SubmessageHeader(HEARTBEAT_FRAG, this->length, false);
     };
 
-    /*
-     * default destructor
+    /**
+     * @brief default destructor
      */
     ~HeartbeatFrag()
     {
@@ -266,5 +308,6 @@ class HeartbeatFrag
     uint32_t length;
 };
 
+} //end namespace
 
 #endif //MESSAGES_H

@@ -7,7 +7,7 @@
 #include <string>
 #include <w2rp/readerProxy.h>
 #include <w2rp/helper/fragmentation.h>
-#include <w2rp/messages/messages.h>
+#include <w2rp/messages/messages.hpp>
 #include <w2rp/timer/timedEvent.hpp>
 #include <w2rp/timer/periodicEvent.hpp>
 #include <w2rp/timer/timerManager.hpp>
@@ -82,12 +82,12 @@ private:
     uint32_t hbCounter; 
 
 public:
-    /*
+    /**
      * @brief empty default constructor
      */ 
     Writer(/* args */); // TODO
 
-    /*
+    /**
      * @brief empty default destructor
      */
     ~Writer(); // TODO
@@ -98,14 +98,14 @@ protected:
     /** Callbacks triggered by external events **/ 
     /********************************************/
 
-    /*
+    /**
      * @brief Callback for creating new cache change on arrival of new sample from application
      *
      * @param data (in serialized form) of the sample received from the application
      */
     bool handleNewSample(SerializedPayload* data);
 
-    /*
+    /**
      * @brief Method for reacting to NackFrags received from readers
      *
      * @param nackFrag message containing the nack bitmap
@@ -113,7 +113,7 @@ protected:
     void handleNackFrag(NackFrag *msg);
 
 
-    /*
+    /**
      * @brief add new sample to cache
      *
      * @param data (in serialized form) of the sample received from the application
@@ -131,7 +131,7 @@ protected:
 
     // bool timerHandler();
 
-    /*
+    /**
      * @brief callback that is triggered according to some schedule. At the end,
      *   sends a packaged sample fragment down towards the UDP/IP stack
      *
@@ -139,14 +139,14 @@ protected:
      */
     bool sendMessage();
 
-    /*
+    /**
      * @brief Method for selecting a reader for the next transmission
      *
      * @return reader proxy
      */
     ReaderProxy* selectReader();
 
-    /*
+    /**
      * @brief Method for selecting which fragment (missing at a specific reader) to transmit next
      *
      * @param rp pointer to reader proxy used for fragment selection
@@ -154,7 +154,7 @@ protected:
      */
     SampleFragment* selectNextFragment(ReaderProxy *rp);
 
-    /*
+    /**
      * Method for priming the send queue with each fragment that needs to be transmitted.
      * Used in WiMEP's transmissions phase and ensure that no retransmissions will be
      * performed prior to each fragment being transmitted once. Always called if a new
@@ -164,7 +164,7 @@ protected:
      */
     void fillSendQueueWithSample(uint32_t sequenceNumber);
 
-    /*
+    /**
      * @brief create DataFrag submessage
      * 
      * @param pointer to sample fragment that shall be transmitted
@@ -174,7 +174,7 @@ protected:
     void createDataFrag(SampleFragment* sf, DataFrag* ret);
 
 
-    /*
+    /**
      * @brief create HeartbeatFrag submessage
      * 
      * @param pointer to latest sample fragment
@@ -190,14 +190,14 @@ protected:
     /* methods for checking validity of cacheChanges */ 
     /*************************************************/
  
-    /*
+    /**
      * @brief Method for evaluating whether a sample is still valid or whether its deadline elapsed.
      * Handles removing of sample in case of elapsed deadline
      */
     void checkSampleLiveliness();
     
 
-    /*
+    /**
      * @brief Method for removing samples from the history cache in case the sample has been successfully
      * transmitted to ALL matched readers
      */

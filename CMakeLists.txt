@@ -29,6 +29,7 @@ set(
     ${PROJECT_SOURCE_DIR}/src/w2rp/changeForReader.cpp
     ${PROJECT_SOURCE_DIR}/src/w2rp/readerProxy.cpp
     ${PROJECT_SOURCE_DIR}/src/w2rp/writerProxy.cpp
+    ${PROJECT_SOURCE_DIR}/src/w2rp/messages/messages.cpp
 )
 
 ## Define library content
