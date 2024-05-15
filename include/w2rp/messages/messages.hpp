@@ -33,7 +33,13 @@ class W2RPHeader
 {
   public:
     /**
-     * @brief default constructor
+     * @brief constructor for empty submessage object
+     */
+    W2RPHeader();
+
+
+    /**
+     * @brief constructor
      *
      * @param 12 byte guid prefix
      */
@@ -105,6 +111,18 @@ class W2RPHeader
 class SubmessageHeader
 {
   public:
+    /**
+     * @brief constructor for empty submessage object
+     */
+    SubmessageHeader();
+
+    /**
+     * @brief constructor
+     *
+     * @param id of submessage
+     * @param length of submessage
+     * @param true if last submsg, else false
+     */
     SubmessageHeader(uint8_t subMsgId, uint32_t subMsgLength, bool isLast): 
         submessageId(subMsgId),
         submessageLength(0),
@@ -117,6 +135,9 @@ class SubmessageHeader
                         sizeof(this->is_last);
     };
 
+    /**
+     * @brief destructor
+     */
     ~SubmessageHeader()
     {};
 
@@ -144,14 +165,37 @@ class SubmessageHeader
     void netToHeader(MessageNet_t* msg);
 };
 
-
-
-
-class DataFrag
+class SubmessageBase
 {
   public:
     /**
-     * @brief default constructor
+     * @brief constructor for base msg object
+     */
+    SubmessageBase();
+
+    /**
+     * @brief destructor
+     */
+    ~SubmessageBase()
+    {
+        delete subMsgHeader;
+    };
+
+    // contents
+    SubmessageHeader *subMsgHeader;
+};
+
+
+class DataFrag: public SubmessageBase
+{
+  public:
+    /**
+     * @brief constructor for empty submessage object
+     */
+    DataFrag();
+
+    /**
+     * @brief constructor
      */
     DataFrag(unsigned char* guidPrefix, uint32_t readerID, uint32_t writerID,
              uint64_t writerSN, uint32_t fragmentStartingNum, 
@@ -175,7 +219,7 @@ class DataFrag
                        sizeof(timestamp) +
                        fragmentSize;
 
-        SubmessageHeader(DATA_FRAG, this->length, false);
+        subMsgHeader = new SubmessageHeader(DATA_FRAG, this->length, false);
     };
 
     /**
@@ -183,12 +227,9 @@ class DataFrag
      */
     ~DataFrag()
     {
-        delete subMsgHeader;
         delete serializedPayload;
     };
 
-    // contents
-    SubmessageHeader *subMsgHeader;
     uint32_t readerID;                  // Identifies the Reader entity that is being informed of the change to the data-object. // TODO require multicast readerID?!
     uint32_t writerID;                  // Identifies the Writer entity that made the change to the data- object.
     uint64_t writerSN;                  // Uniquely identifies the change and the relative order for all changes made by the Writer.
@@ -220,11 +261,16 @@ class DataFrag
 
 
 
-class NackFrag
+class NackFrag: public SubmessageBase
 {
   public:
+    /**
+    * @brief constructor for empty submessage object
+    */
+    NackFrag();
+
     /** 
-     * @brief default constructor
+     * @brief constructor
      */
     NackFrag(unsigned char* guidPrefix, uint32_t readerID, uint32_t writerID,
              uint64_t writerSN, uint16_t bitmapBase, unsigned char *fragmentStates, uint32_t NackFragCount):
@@ -242,19 +288,15 @@ class NackFrag
                        sizeof(count) +
                        fragmentNumberState.size;
 
-        SubmessageHeader(NACK_FRAG, this->length, false);
+        subMsgHeader = new SubmessageHeader(NACK_FRAG, this->length, false);
     };
 
     /**
      * @brief default destructor
      */
-    ~NackFrag()
-    {
-        delete subMsgHeader;
-    };
+    ~NackFrag();
 
     // contents
-    SubmessageHeader *subMsgHeader;
     uint32_t readerID;                      // Identifies the Reader entity that requests to receive certain fragments.
     uint32_t writerID;                      // Identifies the Writer entity that is the target of the NackFrag message. This is the Writer Entity that is being asked to re-send some fragments.
     uint64_t writerSN;                      // The sequence number for which some fragments are missing.
@@ -263,12 +305,31 @@ class NackFrag
     
     // misc information
     uint32_t length;
+
+    /**
+     * @brief Convert nack frag to char array
+     * 
+     * @param msg char array to store the byte stream
+     */
+    void nackToNet(MessageNet_t* msg);
+
+    /**
+     * @brief Convert char array to nack frag
+     * 
+     * @param msg char array to store the byte stream
+     */
+    void netToNack(MessageNet_t* msg);
 };
 
 
-class HeartbeatFrag
+class HeartbeatFrag: public SubmessageBase
 {
   public:
+    /**
+    * @brief constructor for empty submessage object
+    */
+    HeartbeatFrag();
+
     /**
      * @brief default constructor
      */
@@ -285,16 +346,13 @@ class HeartbeatFrag
                        sizeof(writerSN) +
                        sizeof(lastFragmentNum) + 
                        sizeof(count);
-        SubmessageHeader(HEARTBEAT_FRAG, this->length, false);
+        subMsgHeader = new SubmessageHeader(HEARTBEAT_FRAG, this->length, false);
     };
 
     /**
      * @brief default destructor
      */
-    ~HeartbeatFrag()
-    {
-        delete subMsgHeader;
-    };
+    ~HeartbeatFrag();
 
     // contents
     SubmessageHeader *subMsgHeader;
@@ -306,6 +364,21 @@ class HeartbeatFrag
 
     // misc information
     uint32_t length;
+
+
+    /**
+     * @brief Convert hb frag to char array
+     * 
+     * @param msg char array to store the byte stream
+     */
+    void hbToNet(MessageNet_t* msg);
+
+    /**
+     * @brief Convert char array to hb frag
+     * 
+     * @param msg char array to store the byte stream
+     */
+    void netToHB(MessageNet_t* msg);
 };
 
 } //end namespace
