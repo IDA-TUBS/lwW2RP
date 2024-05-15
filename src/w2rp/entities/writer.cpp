@@ -34,11 +34,8 @@ Writer::Writer()
         matchedReaders.push_back(rp);
     }
 
-
     // init net message parser
     netParser = new NetMessageParser();
-
-
 
     // init timers
     std::chrono::microseconds cycle(500000); // TODO take cycle time from writer config
@@ -49,9 +46,7 @@ Writer::Writer()
         std::bind(&Writer::sendMessage, this)
     );
     // only start timer once data available, hence stop immediately
-    shapingTimer->cancel_timer();
-    
-
+    shapingTimer->cancel_timer();  
 
     timer_manager.start();
 
@@ -268,19 +263,26 @@ bool Writer::sendMessage(){
         W2RPHeader *header = new W2RPHeader(config.guidPrefix);
         
         // create submessages: DataFrag and HBFrag
-        DataFrag* msg;
+        DataFrag* data;
         HeartbeatFrag* hb;
         
-        this->createDataFrag(sf, msg);
+        this->createDataFrag(sf, data);
         this->createHBFrag(sf, hb);
 
-        // TODO serialization (toNet) and concatenation of submessages 
+        // serialization (toNet) and concatenation of submessages 
+        MessageNet_t *txMsg;
+        header->headerToNet(txMsg);
+        data->dataToNet(txMsg);
+        hb->hbToNet(txMsg);
 
         // TODO send message
 
-        
 
 
+        delete header;
+        delete data;
+        delete hb;
+        delete txMsg;
         }
     }
     // if send queue still empty, no need to schedule new fragment transmission, 

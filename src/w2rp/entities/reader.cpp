@@ -126,11 +126,18 @@ bool Reader::handleHBFrag(HeartbeatFrag *msg)
     this->nackCount++;
 
 
+    // serialization (toNet) and concatenation of submessages 
+    MessageNet_t *txMsg;
+    header->headerToNet(txMsg);
+    response->nackToNet(txMsg);
 
-    // transmit Message ...
+    // TODO transmit Message ...
+    
 
     // delete object
+    delete header;
     delete response;
+    delete txMsg;
 
     return true;
 }

@@ -91,12 +91,12 @@ public:
     /**
      * @brief empty default constructor
      */ 
-    Writer(/* args */); // TODO
+    Writer();
 
     /**
      * @brief empty default destructor
      */
-    ~Writer(); // TODO
+    ~Writer();
 
 protected:
 
@@ -144,8 +144,6 @@ protected:
     /* methods used during fragment transmission */
     /*********************************************/
 
-    // bool timerHandler();
-
     /**
      * @brief callback that is triggered according to some schedule. At the end,
      *   sends a packaged sample fragment down towards the UDP/IP stack
@@ -170,7 +168,7 @@ protected:
     SampleFragment* selectNextFragment(ReaderProxy *rp);
 
     /**
-     * Method for priming the send queue with each fragment that needs to be transmitted.
+     * @brief Method for priming the send queue with each fragment that needs to be transmitted.
      * Used in WiMEP's transmissions phase and ensure that no retransmissions will be
      * performed prior to each fragment being transmitted once. Always called if a new
      * sample has to be transmitted
