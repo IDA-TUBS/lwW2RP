@@ -62,6 +62,18 @@ class W2RPHeader
     };
 
     /**
+     * @brief copy constructor
+     */
+    W2RPHeader(W2RPHeader &header)
+    {
+        this->protocol = header.protocol;
+        this->version = header.version;
+        this->vendorID = header.vendorID;
+
+        this->length = header.length;
+    };
+
+    /**
      * @brief default empty destructor
      */
     ~W2RPHeader(){};
@@ -134,6 +146,19 @@ class SubmessageHeader
                         sizeof(this->submessageLength) + 
                         sizeof(this->flags) + 
                         sizeof(this->is_last);
+    };
+
+    /**
+     * @brief copy constructor
+     */
+    SubmessageHeader(SubmessageHeader &header)
+    {
+        this->submessageId = header.submessageId;
+        this->submessageLength = header.submessageLength;
+        this->flags = header.flags;
+        this->is_last = header.is_last;
+
+        this->length = header.length;
     };
 
     /**
@@ -224,6 +249,25 @@ class DataFrag: public SubmessageBase
     };
 
     /**
+     * @brief copy constructor
+     */
+    DataFrag(DataFrag &frag)
+    {
+        subMsgHeader = frag.subMsgHeader;
+
+        this->readerID = frag.readerID;
+        this->writerID = frag.writerID;
+        this->writerSN = frag.writerSN;
+        this->fragmentStartingNum = frag.fragmentStartingNum;
+        this->fragmentsInSubmessage = frag.fragmentsInSubmessage;
+        this->dataSize = frag.dataSize;
+        memcpy(this->serializedPayload, frag.serializedPayload, frag.fragmentSize);
+        this->timestamp = frag.timestamp;
+
+        this->length = frag.length;
+    };
+
+    /**
      * @brief default destructor
      */
     ~DataFrag()
@@ -293,6 +337,23 @@ class NackFrag: public SubmessageBase
     };
 
     /**
+     * @brief copy constructor
+     */
+    NackFrag(NackFrag &nack)
+    {
+        subMsgHeader = nack.subMsgHeader;
+        
+        this->readerID = nack.readerID;
+        this->writerID = nack.writerID;
+        this->writerSN = nack.writerSN;
+        this->fragmentNumberState = nack.fragmentNumberState;
+        this->count = nack.count;
+        
+
+        this->length = nack.length;
+    };
+
+    /**
      * @brief default destructor
      */
     ~NackFrag();
@@ -348,6 +409,23 @@ class HeartbeatFrag: public SubmessageBase
                        sizeof(lastFragmentNum) + 
                        sizeof(count);
         subMsgHeader = new SubmessageHeader(HEARTBEAT_FRAG, this->length, false);
+    };
+
+    /**
+     * @brief copy constructor
+     */
+    HeartbeatFrag(HeartbeatFrag &hb)
+    {
+        subMsgHeader = hb.subMsgHeader;
+        
+        this->readerID = hb.readerID;
+        this->writerID = hb.writerID;
+        this->writerSN = hb.writerSN;
+        this->lastFragmentNum = hb.lastFragmentNum;
+        this->count = hb.count;
+        
+
+        this->length = hb.length;
     };
 
     /**

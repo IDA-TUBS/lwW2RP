@@ -70,6 +70,12 @@ private:
     /// counter for next sample's sequence number
     uint32_t sequenceNumberCnt;
 
+    /******************/
+    /* Message parser */
+    /******************/
+
+    NetMessageParser *netParser;
+
 
     /******************************/
     /************ misc. ***********/
@@ -99,6 +105,14 @@ protected:
     /********************************************/
 
     /**
+     * @brief Callback 
+     *
+     * @param net MessageNet_t object containing W2RP submessages
+     * @return true: success, false: failure
+     */
+    bool handleMessages(MessageNet_t *net);
+
+    /**
      * @brief Callback for creating new cache change on arrival of new sample from application
      *
      * @param data (in serialized form) of the sample received from the application
@@ -108,7 +122,7 @@ protected:
     /**
      * @brief Method for reacting to NackFrags received from readers
      *
-     * @param nackFrag message containing the nack bitmap
+     * @param msg message containing the nack bitmap
      */
     void handleNackFrag(NackFrag *msg);
 
@@ -117,6 +131,7 @@ protected:
      * @brief add new sample to cache
      *
      * @param data (in serialized form) of the sample received from the application
+     * @param timestamp a sample's arrival timestamp
      */
     bool addSampleToCache(SerializedPayload *data,  std::chrono::system_clock::time_point timestamp);
 
@@ -135,7 +150,7 @@ protected:
      * @brief callback that is triggered according to some schedule. At the end,
      *   sends a packaged sample fragment down towards the UDP/IP stack
      *
-     * @return true on success, else false
+     * @return true: success, false: failure
      */
     bool sendMessage();
 
@@ -167,8 +182,8 @@ protected:
     /**
      * @brief create DataFrag submessage
      * 
-     * @param pointer to sample fragment that shall be transmitted
-     * @param pointer to data frag submessage  
+     * @param sf pointer to sample fragment that shall be transmitted
+     * @param ret pointer to data frag submessage  
      */
 
     void createDataFrag(SampleFragment* sf, DataFrag* ret);
@@ -177,8 +192,8 @@ protected:
     /**
      * @brief create HeartbeatFrag submessage
      * 
-     * @param pointer to latest sample fragment
-     * @param pointer to HeartbeatFrag submessage  
+     * @param sf pointer to latest sample fragment
+     * @param ret pointer to HeartbeatFrag submessage  
      */
 
     void createHBFrag(SampleFragment* sf, HeartbeatFrag* ret);

@@ -34,6 +34,12 @@ Writer::Writer()
         matchedReaders.push_back(rp);
     }
 
+
+    // init net message parser
+    netParser = new NetMessageParser();
+
+
+
     // init timers
     std::chrono::microseconds cycle(500000); // TODO take cycle time from writer config
 
@@ -59,6 +65,8 @@ Writer::~Writer()
     matchedReaders.clear();
     historyCache.clear();
     sendQueue.clear();
+
+    delete netParser;
 }
 
 
@@ -70,6 +78,34 @@ Writer::~Writer()
 /********************************************/
 /** Callbacks triggered by external events **/ 
 /********************************************/
+
+bool Writer::handleMessages(MessageNet_t *net)
+{
+    // first extract submessages from msg
+    std::vector<SubmessageBase*> res;
+
+    netParser->getSubmessages(net, &res);
+    
+    // call corresponding submsg handler functions
+    NackFrag* nackFrag;
+    for(auto subMsg : res)
+    {
+        switch (subMsg->subMsgHeader->submessageId)
+        {
+        case NACK_FRAG:
+            nackFrag = (NackFrag*)(subMsg);
+            handleNackFrag(nackFrag);
+            break;
+        default:
+            break;
+        }
+    }
+
+    delete nackFrag;
+    delete net;
+    return true;
+}
+
 
 bool Writer::handleNewSample(SerializedPayload *data)
 {

@@ -145,6 +145,12 @@ void HeartbeatFrag::netToHB(MessageNet_t* msg)
 }
 
 
+
+
+
+
+
+
 void NetMessageParser::getSubmessages(MessageNet_t* msg, std::vector<SubmessageBase*> *res)
 {
     W2RPHeader *w2rpHeader;

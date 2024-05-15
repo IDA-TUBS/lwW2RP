@@ -49,6 +49,12 @@ class Reader
     /// HistoryCache
     WriterProxy *writerProxy;
 
+    /******************/
+    /* Message parser */
+    /******************/
+
+    NetMessageParser *netParser;
+
     /********/
     /* misc */
     /********/
@@ -62,24 +68,24 @@ class Reader
     /**
      * @brief Callback 
      *
-     * @param data frag
-     * @return success
+     * @param net MessageNet_t object containing W2RP submessages
+     * @return true: success, false: failure
      */
-    bool handleMessages(/* TODO msg*/);
+    bool handleMessages(MessageNet_t *net);
 
-    /*
+    /**
      * @brief Callback for processing Data Frag
      *
-     * @param data frag submessage
-     * @return success
+     * @param msg data frag submessage
+     * @return true: success, false: failure
      */
     bool handleDataFrag(DataFrag *msg);
 
     /**
      * @brief Method for reacting to Heartbeatfrags, send Nackfrag in return
      *
-     * @param heartbeat message
-     * @return success
+     * @param msg heartbeat submessage
+     * @return true: success, false: failure
      */
     bool handleHBFrag(HeartbeatFrag *msg);
 

@@ -12,13 +12,16 @@ Reader::Reader()
 
     writerProxy = new WriterProxy(this->config.sizeCache);
 
+    // init net message parser
+    netParser = new NetMessageParser();
+
     this->nackCount = 0;
 }
 
 
 Reader::~Reader()
 {
-    // TODO
+    delete netParser;
 }
 
 
@@ -26,13 +29,36 @@ Reader::~Reader()
 /** Callbacks triggered by external events **/ 
 /********************************************/
 
-bool Reader::handleMessages()
+bool Reader::handleMessages(MessageNet_t *net)
 {
-    // TODO
     // first extract submessages from msg
-    
-    // call corresponding 
+    std::vector<SubmessageBase*> res;
 
+    netParser->getSubmessages(net, &res);
+    
+    // call corresponding submsg handler functions
+    DataFrag* dataFrag;
+    HeartbeatFrag* hbFrag;
+    for(auto subMsg : res)
+    {
+        switch (subMsg->subMsgHeader->submessageId)
+        {
+        case DATA_FRAG:
+            dataFrag = (DataFrag*)(subMsg);
+            handleDataFrag(dataFrag);
+            break;
+        case HEARTBEAT_FRAG:
+            hbFrag = (HeartbeatFrag*)(subMsg);
+            handleHBFrag(hbFrag);
+            break;
+        default:
+            break;
+        }
+    }
+
+    delete dataFrag;
+    delete hbFrag;
+    delete net;
     return true;
 }
 
