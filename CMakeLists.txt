@@ -26,10 +26,11 @@ set(
     ${PROJECT_SOURCE_DIR}/src/w2rp/entities/writer.cpp
     ${PROJECT_SOURCE_DIR}/src/w2rp/entities/reader.cpp
     ${PROJECT_SOURCE_DIR}/src/w2rp/helper/fragmentation.cpp
+    ${PROJECT_SOURCE_DIR}/src/w2rp/messages/messages.cpp
     ${PROJECT_SOURCE_DIR}/src/w2rp/changeForReader.cpp
+    ${PROJECT_SOURCE_DIR}/src/w2rp/changeForWriter.cpp
     ${PROJECT_SOURCE_DIR}/src/w2rp/readerProxy.cpp
     ${PROJECT_SOURCE_DIR}/src/w2rp/writerProxy.cpp
-    ${PROJECT_SOURCE_DIR}/src/w2rp/messages/messages.cpp
 )
 
 ## Define library content
