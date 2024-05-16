@@ -9,9 +9,16 @@ namespace w2rp {
 Writer::Writer()
 {
     // TODO fill writer config
-
-
-    
+    config.fragmentSize = 5;
+    config.deadline =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::seconds(2));
+    config.shapingTime =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::microseconds(10000));
+    config.nackSuppressionDuration =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::microseconds(20000));
+    config.numberReaders = 1;
+    config.readerAddresses.push_back("111.111.111.111");
+    config.sizeCache = 1;
+    config.writerUuid = 0;
+    memcpy(config.guidPrefix, "_GUIDPREFIX_", 12);
+    config.prioMode = ADAPTIVE_HIGH_PDR;
 
     sequenceNumberCnt = 0;
 
@@ -53,6 +60,8 @@ Writer::Writer()
     currentSampleNumber = -1;
     fragmentCounter = 0;
     hbCounter = 0;
+
+    logInfo("[Writer] finished constructor call")
 }
 
 Writer::~Writer()
@@ -104,8 +113,8 @@ bool Writer::handleMessages(MessageNet_t *net)
 
 bool Writer::write(SerializedPayload *data)
 {
+    logInfo("[Writer] new sample received")
     return handleNewSample(data);
-
 }
 
 
@@ -123,14 +132,19 @@ bool Writer::handleNewSample(SerializedPayload *data)
 
 bool Writer::addSampleToCache(SerializedPayload *data, std::chrono::system_clock::time_point timestamp)
 {
+    logInfo("[Writer] addSampleToCache")
     // create CacheChange object
     CacheChange *newChange = new CacheChange(sequenceNumberCnt++, data->length, config.fragmentSize, timestamp);
+    logInfo("[Writer] created CacheChange")
 
     // fragment sample
     std::vector<SampleFragment*> *fragments;
     bool compare = false;
     sampleFragmenter->fragmentPayload(data, newChange, fragments, timestamp, compare);
+    logInfo("[Writer] fragmented data")
     newChange->setFragmentArray(fragments);
+    logInfo("[Writer] added fragmented data to change")
+    
 
 
     // add CacheChange to history
@@ -139,6 +153,7 @@ bool Writer::addSampleToCache(SerializedPayload *data, std::chrono::system_clock
         return false;
     }
     historyCache.push_back(newChange);
+    logInfo("[Writer] add change to history")
     
 
     // generate ChangeForReaders based on CacheChange and add to reader proxies (done by ReaderProxy itself)
@@ -146,11 +161,13 @@ bool Writer::addSampleToCache(SerializedPayload *data, std::chrono::system_clock
     {
         rp->addChange(*newChange);
     }
+    logInfo("[Writer] add change to readerProxies")
 
     // start shaping timer for sample transmission to begin
     if(!shapingTimer->isActive())
     {
         shapingTimer->restart_timer();
+        logInfo("[Writer] started shaping timer")
     }
 
     return true;
@@ -159,7 +176,7 @@ bool Writer::addSampleToCache(SerializedPayload *data, std::chrono::system_clock
 
 void Writer::handleNackFrag(NackFrag *msg)
 {
-    logDebug("handleNackFrag: received NackFrag")
+    logInfo("[Writer] handleNackFrag: received NackFrag")
     uint32_t readerID = msg->readerID;
 
     // assumption and simplifications for PoC: readerID always correspond to index in matchedReaders 
@@ -195,7 +212,7 @@ void Writer::handleNackFrag(NackFrag *msg)
 // };
 
 bool Writer::sendMessage(){
-    logDebug("sendMessage: call")
+    logInfo("[Writer] sendMessage: call")
     // check liveliness of sample in history cache, removes outdated samples
     checkSampleLiveliness();
 
@@ -205,7 +222,7 @@ bool Writer::sendMessage(){
     // if no sample left to transmit: no need to transmit anything or schedule a new transmission
     if(historyCache.size() == 0)
     {
-        logDebug("sendMessage: history empty, halt shaping")
+        logInfo("[Writer] sendMessage: history empty, halt shaping")
         return false;
     }
     
@@ -221,7 +238,7 @@ bool Writer::sendMessage(){
     // 1. scenario: send queue is empty, select a new fragment for tx or retx
     if(sendQueue.empty())
     {
-        logDebug("sendMessage: fill queue for retx")
+        logInfo("[Writer] sendMessage: fill queue for retx")
         // add new fragment to queue
         SampleFragment* sf = nullptr;
         ReaderProxy *rp = nullptr;
@@ -242,7 +259,7 @@ bool Writer::sendMessage(){
     // 2. scenario: send queue not empty (any more)
     if(!sendQueue.empty())
     {
-        logDebug("sendMessage: select fragment for (re)tx")
+        logInfo("[Writer] sendMessage: select fragment for (re)tx")
         auto t_now = std::chrono::system_clock::now();
 
         SampleFragment* sf = sendQueue.front();
@@ -297,7 +314,7 @@ bool Writer::sendMessage(){
     // wait for next sample top arrive
     else
     {
-        logDebug("sendMessage: no fragments available, halt shaping")
+        logInfo("[Writer] sendMessage: no fragments available, halt shaping")
         // ...
         return false;
     }
@@ -435,6 +452,7 @@ void Writer::createHBFrag(SampleFragment* sf, HeartbeatFrag* ret)
 
 void Writer::checkSampleLiveliness()
 {
+    logInfo("[Writer] checkSampleLiveliness")
     if(historyCache.size() == 0)
     {
         while(sendQueue.size() > 0){

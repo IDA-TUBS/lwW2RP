@@ -32,7 +32,7 @@ struct writerCfg
     std::vector<std::string> readerAddresses;
     unsigned int sizeCache;
     uint8_t writerUuid;
-    unsigned char* guidPrefix;
+    unsigned char guidPrefix[12];
     PrioritizationMode prioMode;
 };
 

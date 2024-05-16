@@ -7,6 +7,7 @@
 
 #include <chrono>
 #include <cstring>
+#include <w2rp/log.hpp>
 
 namespace w2rp {
 
@@ -72,7 +73,10 @@ class SampleFragment
         // Relevant for the Reader
         received(false),
         baseChange(baseChange)
-    {};
+    {
+        this->data = (unsigned char*)malloc(dataSize * sizeof(unsigned char));
+        memset(this->data, 0, dataSize * sizeof(unsigned char));
+    };
 
     /**
      * @brief copy constructor
@@ -150,10 +154,11 @@ class SampleFragment
      */
     void setData(unsigned char* binaryData, uint32_t size, uint32_t fragmentNum, std::chrono::system_clock::time_point sentTime)
     {
-        memcpy(this->data, binaryData, size);
-        this->dataSize = size;
+        logInfo("[SF] " << binaryData << " " << this->dataSize << " ")
         this->fragmentStartingNum = fragmentNum;
         this->sentTime = sentTime;
+
+        memcpy(this->data, binaryData, this->dataSize * sizeof(unsigned char));
     };
 
     /**

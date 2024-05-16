@@ -10,7 +10,7 @@ using namespace w2rp;
 
 Publisher::Publisher()
 {
-    logInfo("[Publisher] started")
+    logInfo("[APP] App started")
 }
 
 Publisher::~Publisher()
@@ -71,4 +71,21 @@ bool Publisher::publish()
         // problem occured
         return false;
     }
+}
+
+
+int main()
+{
+    Publisher myPub;
+    if (myPub.init())
+    {
+        myPub.run();
+    }
+
+    while(true)
+    {
+
+    }
+
+    return 0;
 }
