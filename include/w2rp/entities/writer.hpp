@@ -98,6 +98,13 @@ public:
      */
     ~Writer();
 
+    /**
+     * @brief API to application, receive new samples from app 
+     * 
+     * @param data (in serialized form)
+     */
+    bool write(SerializedPayload* data);
+
 protected:
 
     /********************************************/
@@ -111,6 +118,7 @@ protected:
      * @return true: success, false: failure
      */
     bool handleMessages(MessageNet_t *net);
+
 
     /**
      * @brief Callback for creating new cache change on arrival of new sample from application

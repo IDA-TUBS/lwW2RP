@@ -102,6 +102,13 @@ bool Writer::handleMessages(MessageNet_t *net)
 }
 
 
+bool Writer::write(SerializedPayload *data)
+{
+    return handleNewSample(data);
+
+}
+
+
 bool Writer::handleNewSample(SerializedPayload *data)
 {
     auto timestamp_now = std::chrono::system_clock::now();
@@ -110,6 +117,7 @@ bool Writer::handleNewSample(SerializedPayload *data)
     checkSampleLiveliness();
     addSampleToCache(data, timestamp_now);
 
+    delete data;
     return true;
 }
 
