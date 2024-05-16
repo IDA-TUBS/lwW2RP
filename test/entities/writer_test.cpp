@@ -27,7 +27,7 @@ bool Publisher::init()
 
 void Publisher::runThread(uint32_t number_samples)
 {    
-    logInfo("[APP] Publisher running. Please press enter to stop the Publisher at any time.")
+    logInfo("[APP] Publisher running.")
     for (uint32_t i = 0; i < number_samples; ++i)
     {
         if (!publish())
@@ -49,7 +49,6 @@ void Publisher::run()
 {    
     int number_samples = 100;
     std::thread thread(&Publisher::runThread, this, number_samples);
-    logInfo("[APP] Publisher running. Please press enter to stop the Publisher at any time.")
     
     thread.join();
 }
@@ -71,6 +70,7 @@ bool Publisher::publish()
         // problem occured
         return false;
     }
+    
 }
 
 

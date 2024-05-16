@@ -4,6 +4,8 @@
 
 #include <iostream>
 #include <cstring>
+#include <w2rp/log.hpp>
+
 
 namespace w2rp {
 
@@ -30,6 +32,8 @@ class SerializedPayload
 
     ~SerializedPayload()
     {
+        logInfo("[SerializedPayload] delete")
+        //  TODO buggy, leads to double free or data corruption ...
         this->empty();
     }
 

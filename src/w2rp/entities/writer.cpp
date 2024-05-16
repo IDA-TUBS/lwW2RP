@@ -66,6 +66,7 @@ Writer::Writer()
 
 Writer::~Writer()
 {
+    logInfo("[Writer] delete")
     matchedReaders.clear();
     historyCache.clear();
     sendQueue.clear();
@@ -126,7 +127,6 @@ bool Writer::handleNewSample(SerializedPayload *data)
     checkSampleLiveliness();
     addSampleToCache(data, timestamp_now);
 
-    delete data;
     return true;
 }
 
@@ -138,11 +138,11 @@ bool Writer::addSampleToCache(SerializedPayload *data, std::chrono::system_clock
     logInfo("[Writer] created CacheChange")
 
     // fragment sample
-    std::vector<SampleFragment*> *fragments;
+    std::vector<SampleFragment*> fragments;
     bool compare = false;
-    sampleFragmenter->fragmentPayload(data, newChange, fragments, timestamp, compare);
+    sampleFragmenter->fragmentPayload(data, newChange, &fragments, timestamp, compare);
     logInfo("[Writer] fragmented data")
-    newChange->setFragmentArray(fragments);
+    newChange->setFragmentArray(&fragments);
     logInfo("[Writer] added fragmented data to change")
     
 
@@ -153,7 +153,7 @@ bool Writer::addSampleToCache(SerializedPayload *data, std::chrono::system_clock
         return false;
     }
     historyCache.push_back(newChange);
-    logInfo("[Writer] add change to history")
+    logInfo("[Writer] added change to history")
     
 
     // generate ChangeForReaders based on CacheChange and add to reader proxies (done by ReaderProxy itself)
@@ -161,7 +161,7 @@ bool Writer::addSampleToCache(SerializedPayload *data, std::chrono::system_clock
     {
         rp->addChange(*newChange);
     }
-    logInfo("[Writer] add change to readerProxies")
+    logInfo("[Writer] added change to readerProxies")
 
     // start shaping timer for sample transmission to begin
     if(!shapingTimer->isActive())
@@ -228,6 +228,7 @@ bool Writer::sendMessage(){
     
     if(currentSampleNumber != historyCache.front()->sequenceNumber)
     {
+        logInfo("[Writer] sendMessage: fill send queue with new sample")
         // new sample to transmit
         this->currentSampleNumber = historyCache.front()->sequenceNumber;
         // priming send queue with all fragments of the new sample
@@ -283,31 +284,36 @@ bool Writer::sendMessage(){
 
             //     scheduleAt(simTime() + timeout, nextTimeout);
             // }
-
+        
         // create W2RP header
         W2RPHeader *header = new W2RPHeader(config.guidPrefix);
+        logInfo("[Writer] sendMessage: created W2RP header")
         
         // create submessages: DataFrag and HBFrag
         DataFrag* data;
         HeartbeatFrag* hb;
         
         this->createDataFrag(sf, data);
+        logInfo("[Writer] sendMessage: created dataFrag")
         this->createHBFrag(sf, hb);
+        logInfo("[Writer] sendMessage: created HBFrag")
 
         // serialization (toNet) and concatenation of submessages 
-        MessageNet_t *txMsg;
+        MessageNet_t *txMsg = new MessageNet_t;
         header->headerToNet(txMsg);
         data->dataToNet(txMsg);
         hb->hbToNet(txMsg);
+        logInfo("[Writer] sendMessage: net message from submessages")
 
         // TODO send message
 
 
-
+        
         delete header;
         delete data;
         delete hb;
         delete txMsg;
+        logInfo("[Writer] sendMessage: delete message")
         }
     }
     // if send queue still empty, no need to schedule new fragment transmission, 
