@@ -192,7 +192,7 @@ protected:
      * @param ret pointer to data frag submessage  
      */
 
-    void createDataFrag(SampleFragment* sf, DataFrag* ret);
+    void createDataFrag(SampleFragment* sf, DataFrag*& ret);
 
 
     /**
@@ -202,7 +202,7 @@ protected:
      * @param ret pointer to HeartbeatFrag submessage  
      */
 
-    void createHBFrag(SampleFragment* sf, HeartbeatFrag* ret);
+    void createHBFrag(SampleFragment* sf, HeartbeatFrag*& ret);
 
 
 

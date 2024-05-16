@@ -293,8 +293,10 @@ bool Writer::sendMessage(){
         DataFrag* data;
         HeartbeatFrag* hb;
         
-        this->createDataFrag(sf, data);
+        createDataFrag(sf, data);
         logInfo("[Writer] sendMessage: created dataFrag")
+        data->print();
+
         this->createHBFrag(sf, hb);
         logInfo("[Writer] sendMessage: created HBFrag")
 
@@ -426,7 +428,7 @@ void Writer::fillSendQueueWithSample(uint32_t sequenceNumber)
 }
 
 
-void Writer::createDataFrag(SampleFragment* sf, DataFrag* ret)
+void Writer::createDataFrag(SampleFragment* sf, DataFrag*& ret)
 {   
     // TODO borad/multicast readerID = numeric_limits<uint32_t>::max()? message.h #define ID_BROADCAST numeric_limits<uint32_t>::max()
     uint32_t readerID = 0;
@@ -437,7 +439,7 @@ void Writer::createDataFrag(SampleFragment* sf, DataFrag* ret)
 }
 
 
-void Writer::createHBFrag(SampleFragment* sf, HeartbeatFrag* ret)
+void Writer::createHBFrag(SampleFragment* sf, HeartbeatFrag*& ret)
 {
     // TODO borad/multicast readerID = 0? message.h #define ID_BROADCAST 0
     uint32_t readerID = 0;

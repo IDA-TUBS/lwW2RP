@@ -45,10 +45,6 @@ void SubmessageHeader::netToHeader(MessageNet_t* msg)
     msg->read(&is_last, sizeof(is_last));
 }
 
-
-
-
-
 void DataFrag::dataToNet(MessageNet_t* msg)
 {
     logInfo("[MESSAGE] DataFrag: dataToNet, pos: " << msg->pos)
@@ -71,7 +67,7 @@ void DataFrag::dataToNet(MessageNet_t* msg)
 }
 
 void DataFrag::netToData(MessageNet_t* msg)
-{
+{    
     // read submsg header
     subMsgHeader->netToHeader(msg);
     
@@ -88,6 +84,11 @@ void DataFrag::netToData(MessageNet_t* msg)
     msg->read(&timestamp, sizeof(timestamp));
 }
 
+void DataFrag::print()
+{
+    logInfo("[DataFrag] readerID: " << readerID)
+    logInfo("[DataFrag] writerID: " << writerID)
+}
 
 
 

@@ -140,7 +140,7 @@ class SubmessageHeader
      */
     SubmessageHeader(uint8_t subMsgId, uint32_t subMsgLength, bool isLast): 
         submessageId(subMsgId),
-        submessageLength(0),
+        submessageLength(subMsgLength),
         flags(0),
         is_last(isLast)
     {
@@ -206,11 +206,15 @@ class SubmessageBase
      */
     ~SubmessageBase()
     {
-        delete subMsgHeader;
+        if(subMsgHeader)
+        {
+            delete subMsgHeader;
+        }
     };
 
     // contents
-    SubmessageHeader *subMsgHeader;
+    SubmessageHeader *subMsgHeader = nullptr;
+
 };
 
 
@@ -281,7 +285,10 @@ class DataFrag: public SubmessageBase
      */
     ~DataFrag()
     {
-        delete serializedPayload;
+        if(serializedPayload)
+        {
+            delete serializedPayload;
+        }
     };
 
     uint32_t readerID;                  // Identifies the Reader entity that is being informed of the change to the data-object. // TODO require multicast readerID?!
@@ -311,6 +318,8 @@ class DataFrag: public SubmessageBase
      * @param msg char array to store the byte stream
      */
     void netToData(MessageNet_t* msg);
+
+    void print();
 };
 
 
@@ -447,7 +456,6 @@ class HeartbeatFrag: public SubmessageBase
     {};
 
     // contents
-    SubmessageHeader *subMsgHeader;
     uint32_t readerID;          // Identifies the Reader Entity that is being informed of the availability of fragments. Can be set to ENTITYID_UNKNOWN to indicate all readers for the writer that sent the message.
     uint32_t writerID;          // Identifies the Writer Entity that sent the Submessage.
     uint64_t writerSN;          // Identifies the sequence number of the data change for which fragments are available.
