@@ -18,6 +18,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 ### search for local boost
 find_package(Boost 1.73.0 EXACT COMPONENTS thread log log_setup REQUIRED)
+find_package(yaml-cpp)
 
 ### Define library content
 set(
@@ -43,6 +44,7 @@ target_include_directories(w2rp
 )
 
 target_link_libraries(w2rp PUBLIC boost_system boost_log boost_log_setup boost_thread pthread)
+target_link_libraries(w2rp PUBLIC yaml-cpp::yaml-cpp)
 
 target_compile_definitions(w2rp PUBLIC BOOST_LOG_DYN_LINK)
 
@@ -132,14 +134,14 @@ set(SRC_FILES
 )
 
 
-# ## TimedEvent testing
-# add_executable(timer_test_function test/timer/timer_test_function.cpp ${SRC_FILES})
-# target_link_libraries(timer_test_function w2rp)
+## TimedEvent testing
+add_executable(timer_test_function test/timer/timer_test_function.cpp ${SRC_FILES})
+target_link_libraries(timer_test_function w2rp)
 
-# ## TimedEvent testing
-# add_executable(timer_test_object test/timer/timer_test_object.cpp ${SRC_FILES})
-# target_link_libraries(timer_test_object w2rp)
+## TimedEvent testing
+add_executable(timer_test_object test/timer/timer_test_object.cpp ${SRC_FILES})
+target_link_libraries(timer_test_object w2rp)
 
-## Writer testing
-add_executable(writer_test test/entities/writer_test.cpp ${SRC_FILES})
-target_link_libraries(writer_test w2rp)
+# ## Writer testing
+# add_executable(writer_test test/entities/writer_test.cpp ${SRC_FILES})
+# target_link_libraries(writer_test w2rp)
