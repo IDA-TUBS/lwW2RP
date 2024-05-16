@@ -26,17 +26,16 @@ void Fragmentation::fragmentPayload(SerializedPayload* payload, CacheChange *bas
         uint32_t fragmentStart = fragSize * (fragNum - 1);
         // Calculate fragment size. If last fragment, size may be smaller
         uint32_t fragmentSize = fragNum < fragmentCount ? fragSize : payload->length - fragmentStart;
-        unsigned char fragData[this->fragSize];
-        std::memcpy(fragData, &(payload->data[fragmentStart]), fragmentSize);
+        unsigned char fragData[this->fragSize]; // TODO using fragmentSize does not work?!
+        memset(fragData, 0, this->fragSize * sizeof(unsigned char));
+        memcpy(fragData, &(payload->data[fragmentStart]), fragmentSize);
 
         logInfo("[Writer - Fragmentation] fragment " << fragNum << " size: " << fragmentSize << " data: " << fragData)
 
         SampleFragment *fragment = new SampleFragment(baseChange, fragNum - 1, fragmentSize, arrivalTime);
 
         fragment->setData(fragData, fragmentSize, fragNum - 1, arrivalTime);
-        logInfo("[Writer - Fragmentation] frag set data")
         fragment->setBaseChange(baseChange);
-        logInfo("[Writer - Fragmentation] set base change")
         
         // if(compare)
         // {
@@ -44,6 +43,7 @@ void Fragmentation::fragmentPayload(SerializedPayload* payload, CacheChange *bas
         // }
 
         res->push_back(fragment);
+        
     } 
 }
 
