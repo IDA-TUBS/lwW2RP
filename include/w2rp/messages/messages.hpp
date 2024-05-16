@@ -36,7 +36,8 @@ class W2RPHeader
     /**
      * @brief constructor for empty submessage object
      */
-    W2RPHeader();
+    W2RPHeader()
+    {};
 
 
     /**
@@ -127,7 +128,8 @@ class SubmessageHeader
     /**
      * @brief constructor for empty submessage object
      */
-    SubmessageHeader();
+    SubmessageHeader()
+    {};
 
     /**
      * @brief constructor
@@ -197,7 +199,8 @@ class SubmessageBase
     /**
      * @brief constructor for base msg object
      */
-    SubmessageBase();
+    SubmessageBase()
+    {};
 
     /**
      * @brief destructor
@@ -218,7 +221,8 @@ class DataFrag: public SubmessageBase
     /**
      * @brief constructor for empty submessage object
      */
-    DataFrag();
+    DataFrag()
+    {};
 
     /**
      * @brief constructor
@@ -312,7 +316,8 @@ class NackFrag: public SubmessageBase
     /**
     * @brief constructor for empty submessage object
     */
-    NackFrag();
+    NackFrag()
+    {};
 
     /** 
      * @brief constructor
@@ -356,7 +361,8 @@ class NackFrag: public SubmessageBase
     /**
      * @brief default destructor
      */
-    ~NackFrag();
+    ~NackFrag()
+    {};
 
     // contents
     uint32_t readerID;                      // Identifies the Reader entity that requests to receive certain fragments.
@@ -390,7 +396,8 @@ class HeartbeatFrag: public SubmessageBase
     /**
     * @brief constructor for empty submessage object
     */
-    HeartbeatFrag();
+    HeartbeatFrag()
+    {};
 
     /**
      * @brief default constructor
@@ -431,7 +438,8 @@ class HeartbeatFrag: public SubmessageBase
     /**
      * @brief default destructor
      */
-    ~HeartbeatFrag();
+    ~HeartbeatFrag()
+    {};
 
     // contents
     SubmessageHeader *subMsgHeader;
@@ -468,12 +476,14 @@ class NetMessageParser
     /**
     * @brief constructor
     */
-    NetMessageParser();
+    NetMessageParser()
+    {};
 
     /**
     * @brief destructor
     */
-    ~NetMessageParser();
+    ~NetMessageParser()
+    {};
 
 
     void getSubmessages(MessageNet_t* msg, std::vector<SubmessageBase*> *res);

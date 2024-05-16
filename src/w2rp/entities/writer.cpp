@@ -363,6 +363,28 @@ ReaderProxy* Writer::selectReader()
     return nextReader;
 }
 
+SampleFragment* Writer::selectNextFragment(ReaderProxy *rp)
+{
+    // used for retransmissions only
+    // find the unacknowledged fragment and return that fragment for transmission
+    SampleFragment *tmp = nullptr;
+    SampleFragment **fragments = rp->getCurrentChange()->getFragmentArray();
+    for (int i = 0; i < rp->getCurrentChange()->numberFragments; i++)
+    {
+        SampleFragment* sf = fragments[i];
+        if (sf->sent || sf->acked) {
+            continue;
+        }
+
+        // take the first unsent and unacknowledged fragment
+        tmp = sf;
+        break;
+    }
+    return tmp;
+}
+
+
+
 void Writer::fillSendQueueWithSample(uint32_t sequenceNumber)
 {
     // for multicast all readers need the same data. Just take the first reader here,

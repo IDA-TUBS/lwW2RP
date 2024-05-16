@@ -2,8 +2,6 @@
 
 #include <thread>
 #include <chrono>
-#include <iostream>
-#include <tinyxml2.h>
 
 #include "writer_test.hpp"
 #include <w2rp/log.hpp>
