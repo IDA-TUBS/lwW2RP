@@ -66,6 +66,7 @@ Writer::Writer()
 
 Writer::~Writer()
 {
+    logInfo("[Writer] delete")
     matchedReaders.clear();
     historyCache.clear();
     sendQueue.clear();
@@ -126,7 +127,6 @@ bool Writer::handleNewSample(SerializedPayload *data)
     checkSampleLiveliness();
     addSampleToCache(data, timestamp_now);
 
-    delete data;
     return true;
 }
 
@@ -161,7 +161,7 @@ bool Writer::addSampleToCache(SerializedPayload *data, std::chrono::system_clock
     {
         rp->addChange(*newChange);
     }
-    logInfo("[Writer] add change to readerProxies")
+    logInfo("[Writer] added change to readerProxies")
 
     // start shaping timer for sample transmission to begin
     if(!shapingTimer->isActive())

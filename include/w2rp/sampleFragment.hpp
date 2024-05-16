@@ -74,7 +74,8 @@ class SampleFragment
         received(false),
         baseChange(baseChange)
     {
-        this->data = (unsigned char*)malloc(dataSize * sizeof(unsigned char));
+        // this->data = (unsigned char*)malloc(dataSize * sizeof(unsigned char));
+        this->data = new unsigned char[dataSize];
         memset(this->data, 0, dataSize * sizeof(unsigned char));
     };
 
@@ -93,7 +94,8 @@ class SampleFragment
         received(sf.received),
         baseChange(sf.baseChange)
     {
-        this->data = (unsigned char*)malloc(dataSize * sizeof(unsigned char));
+        // this->data = (unsigned char*)malloc(dataSize * sizeof(unsigned char));
+        this->data = new unsigned char[dataSize];
         memset(this->data, 0, dataSize * sizeof(unsigned char));
         memcpy(this->data, sf.data, this->dataSize);
         logInfo("[SF] copy: fragment " << this->fragmentStartingNum << " size: " << this->dataSize << " data: " << this->data)
@@ -102,7 +104,9 @@ class SampleFragment
     /**
      * @brief empty default destructor
      */
-    ~SampleFragment() {};
+    ~SampleFragment() {
+        logInfo("[SF] delete")
+    };
 
     /**
      * @brief comparison operator

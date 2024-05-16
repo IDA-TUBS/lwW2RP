@@ -122,6 +122,7 @@ class ChangeForReader: public CacheChange
      */
     ~ChangeForReader()
     {
+        logInfo("[ChangeForReader] delete")
         // delete[] sampleFragmentArray; // Leads to conflicts at object destruction
     };
 

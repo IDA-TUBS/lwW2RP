@@ -104,6 +104,7 @@ class CacheChange
      */
     ~CacheChange()
     {
+        logInfo("[CacheChange] delete")
         for(int i = 0; i < numberFragments; i++)
         {
             SampleFragment* fragment = this->sampleFragmentArray[i];

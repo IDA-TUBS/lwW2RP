@@ -3,6 +3,7 @@
  */
 
 #include <w2rp/readerProxy.hpp>
+#include <w2rp/log.hpp>
 
 namespace w2rp {
 
