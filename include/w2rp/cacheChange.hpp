@@ -9,6 +9,7 @@
 #include <chrono>
 #include <vector>
 #include <w2rp/sampleFragment.hpp>
+#include <w2rp/log.hpp>
 
 
 
@@ -64,7 +65,7 @@ class CacheChange
         sequenceNumber(seqNum),
         sampleSize(sampleSize),
         fragmentSize(fragmentSize),
-        numberFragments(int(ceil(sampleSize / fragmentSize))),
+        numberFragments(int(ceil((float)sampleSize / (float)fragmentSize))),
         arrivalTime(timestamp)
     {
         // sampleFragmentArray = new SampleFragment*[this->numberFragments];
@@ -132,10 +133,12 @@ class CacheChange
     void setFragmentArray(std::vector<SampleFragment*> *fragments)
     {
         sampleFragmentArray = new SampleFragment*[this->numberFragments];
+        logInfo("[CacheChange] setFragmentArray")
 
         uint16_t i = 0;
         for (auto sf: *fragments)
         {
+            logInfo("[CacheChange] copy: fragment " << sf->fragmentStartingNum  << " size: " << sf->dataSize << " data: " << sf->data)
             sampleFragmentArray[i] = new SampleFragment(*sf);
             i++;
         }        

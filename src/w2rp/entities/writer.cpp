@@ -138,11 +138,11 @@ bool Writer::addSampleToCache(SerializedPayload *data, std::chrono::system_clock
     logInfo("[Writer] created CacheChange")
 
     // fragment sample
-    std::vector<SampleFragment*> *fragments;
+    std::vector<SampleFragment*> fragments;
     bool compare = false;
-    sampleFragmenter->fragmentPayload(data, newChange, fragments, timestamp, compare);
+    sampleFragmenter->fragmentPayload(data, newChange, &fragments, timestamp, compare);
     logInfo("[Writer] fragmented data")
-    newChange->setFragmentArray(fragments);
+    newChange->setFragmentArray(&fragments);
     logInfo("[Writer] added fragmented data to change")
     
 
@@ -153,7 +153,7 @@ bool Writer::addSampleToCache(SerializedPayload *data, std::chrono::system_clock
         return false;
     }
     historyCache.push_back(newChange);
-    logInfo("[Writer] add change to history")
+    logInfo("[Writer] added change to history")
     
 
     // generate ChangeForReaders based on CacheChange and add to reader proxies (done by ReaderProxy itself)

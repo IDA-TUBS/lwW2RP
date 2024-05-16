@@ -10,6 +10,7 @@
 #include <chrono>
 #include <w2rp/cacheChange.hpp>
 #include <w2rp/sampleFragment.hpp>
+#include <w2rp/log.hpp>
 
 namespace w2rp {
 
@@ -88,9 +89,9 @@ class ChangeForReader: public CacheChange
         sampleFragmentArray = new SampleFragment*[this->numberFragments];
 
         auto sampleArrayRef = change.getFragmentArray();
-
         // copy contents of reference array (CacheChange) to this instance's array
         for(uint32_t i = 0; i < this->numberFragments; i++){
+            logInfo("[ChangeForReader] create sf " << i)
             sampleFragmentArray[i] = new SampleFragment(*sampleArrayRef[i]);
         }
     };

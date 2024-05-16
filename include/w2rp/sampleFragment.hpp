@@ -87,13 +87,17 @@ class SampleFragment
         fragmentStartingNum(sf.fragmentStartingNum),
         sendCounter(sf.sendCounter),
         dataSize(sf.dataSize),
-        data(sf.data),
         sentTime(sf.sentTime),
         sent(sf.sent),
         acked(sf.acked),
         received(sf.received),
         baseChange(sf.baseChange)
-    {};
+    {
+        this->data = (unsigned char*)malloc(dataSize * sizeof(unsigned char));
+        memset(this->data, 0, dataSize * sizeof(unsigned char));
+        memcpy(this->data, sf.data, this->dataSize);
+        logInfo("[SF] copy: fragment " << this->fragmentStartingNum << " size: " << this->dataSize << " data: " << this->data)
+    };
 
     /**
      * @brief empty default destructor
@@ -154,7 +158,7 @@ class SampleFragment
      */
     void setData(unsigned char* binaryData, uint32_t size, uint32_t fragmentNum, std::chrono::system_clock::time_point sentTime)
     {
-        logInfo("[SF] " << binaryData << " " << this->dataSize << " ")
+        // logInfo("[SF] " << binaryData << " " << this->dataSize << " ")
         this->fragmentStartingNum = fragmentNum;
         this->sentTime = sentTime;
 
