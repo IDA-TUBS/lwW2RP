@@ -5,7 +5,7 @@
 #include <chrono>
 #include <vector>
 #include <w2rp/messages/message_net.hpp>
-
+#include <w2rp/log.hpp>
 
 
 
@@ -239,6 +239,8 @@ class DataFrag: public SubmessageBase
              fragmentSize(fragmentSize),
              timestamp(sampleTimestamp)
     {
+        this->serializedPayload = new unsigned char[fragmentSize];
+        memset(this->serializedPayload, 0, fragmentSize * sizeof(unsigned char));
         memcpy(this->serializedPayload, payload, fragmentSize);
 
         this->length = sizeof(readerID) +
@@ -265,6 +267,10 @@ class DataFrag: public SubmessageBase
         this->fragmentStartingNum = frag.fragmentStartingNum;
         this->fragmentsInSubmessage = frag.fragmentsInSubmessage;
         this->dataSize = frag.dataSize;
+        this->fragmentSize = frag.fragmentSize;
+
+        this->serializedPayload = new unsigned char[fragmentSize];
+        memset(this->serializedPayload, 0, fragmentSize * sizeof(unsigned char));
         memcpy(this->serializedPayload, frag.serializedPayload, frag.fragmentSize);
         this->timestamp = frag.timestamp;
 
