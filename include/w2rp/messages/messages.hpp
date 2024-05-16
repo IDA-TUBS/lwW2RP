@@ -159,7 +159,6 @@ class SubmessageHeader
         this->submessageLength = header.submessageLength;
         this->flags = header.flags;
         this->is_last = header.is_last;
-
         this->length = header.length;
     };
 
