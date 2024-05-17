@@ -30,6 +30,7 @@ struct writerCfg
     std::chrono::system_clock::duration nackSuppressionDuration;
     uint8_t numberReaders;
     std::vector<std::string> readerAddresses;
+    uint16_t port;
     unsigned int sizeCache;
     uint8_t writerUuid;
     unsigned char guidPrefix[12];

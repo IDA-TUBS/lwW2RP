@@ -17,7 +17,8 @@ struct readerCfg
 {
     std::chrono::system_clock::duration deadline;
     std::chrono::system_clock::duration responseDelay;
-    std::string writerAddresses;
+    std::string writerAddress;
+    uint16_t port;
     unsigned int sizeCache;
     uint8_t readerUuid;
     unsigned char guidPrefix[12];

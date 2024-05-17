@@ -27,18 +27,19 @@ bool Publisher::init()
 
 void Publisher::runThread(uint32_t number_samples)
 {    
-    logInfo("[APP] Publisher running.")
+    logInfo("\n[APP] Publisher running.")
     for (uint32_t i = 0; i < number_samples; ++i)
     {
+        logInfo("[APP] - Sending sample with index: " << i)
         if (!publish())
         {
             --i;
         }
         else
         {
-            logInfo("[APP] - Sending sample with index: " << i)
+            // sending worked?!
         }
-        std::this_thread::sleep_for(std::chrono::seconds(2));
+        std::this_thread::sleep_for(std::chrono::seconds(5));
     }
     
 }

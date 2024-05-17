@@ -10,12 +10,13 @@ Writer::Writer()
 {
     // TODO fill writer config
     config.fragmentSize = 5;
-    config.deadline =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::seconds(2));
+    config.deadline =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::seconds(5));
     config.shapingTime =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::microseconds(10000));
     config.nackSuppressionDuration =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::microseconds(20000));
     config.numberReaders = 1;
-    config.readerAddresses.push_back("111.111.111.111");
-    config.sizeCache = 1;
+    config.readerAddresses.push_back("127.0.0.1");
+    config.port = 555;
+    config.sizeCache = 2;
     config.writerUuid = 0;
     memcpy(config.guidPrefix, "_GUIDPREFIX_", 12);
     config.prioMode = ADAPTIVE_HIGH_PDR;
@@ -135,25 +136,26 @@ bool Writer::addSampleToCache(SerializedPayload *data, std::chrono::system_clock
     logInfo("[Writer] addSampleToCache")
     // create CacheChange object
     CacheChange *newChange = new CacheChange(sequenceNumberCnt++, data->length, config.fragmentSize, timestamp);
-    logInfo("[Writer] created CacheChange")
+    // logDebug("[Writer] created CacheChange")
 
     // fragment sample
     std::vector<SampleFragment*> fragments;
     bool compare = false;
     sampleFragmenter->fragmentPayload(data, newChange, &fragments, timestamp, compare);
-    logInfo("[Writer] fragmented data")
+    // logDebug("[Writer] fragmented data")
     newChange->setFragmentArray(&fragments);
-    logInfo("[Writer] added fragmented data to change")
+    // logDebug("[Writer] added fragmented data to change")
     
 
 
     // add CacheChange to history
     if(historyCache.size() == this->config.sizeCache)
     {
+        logDebug("[Writer] history full")
         return false;
     }
     historyCache.push_back(newChange);
-    logInfo("[Writer] added change to history")
+    // logDebug("[Writer] added change to history")
     
 
     // generate ChangeForReaders based on CacheChange and add to reader proxies (done by ReaderProxy itself)
@@ -161,13 +163,13 @@ bool Writer::addSampleToCache(SerializedPayload *data, std::chrono::system_clock
     {
         rp->addChange(*newChange);
     }
-    logInfo("[Writer] added change to readerProxies")
+    // logDebug("[Writer] added change to readerProxies")
 
     // start shaping timer for sample transmission to begin
     if(!shapingTimer->isActive())
     {
         shapingTimer->restart_timer();
-        logInfo("[Writer] started shaping timer")
+        logDebug("[Writer] started shaping timer")
     }
 
     return true;
@@ -212,7 +214,7 @@ void Writer::handleNackFrag(NackFrag *msg)
 // };
 
 bool Writer::sendMessage(){
-    logInfo("[Writer] sendMessage: call")
+    // logDebug("[Writer] sendMessage()")
     // check liveliness of sample in history cache, removes outdated samples
     checkSampleLiveliness();
 
@@ -222,13 +224,13 @@ bool Writer::sendMessage(){
     // if no sample left to transmit: no need to transmit anything or schedule a new transmission
     if(historyCache.size() == 0)
     {
-        logInfo("[Writer] sendMessage: history empty, halt shaping")
+        // logDebug("[Writer] sendMessage: history empty, halt shaping")
         return false;
     }
     
     if(currentSampleNumber != historyCache.front()->sequenceNumber)
     {
-        logInfo("[Writer] sendMessage: fill send queue with new sample")
+        // logDebug("[Writer] sendMessage: fill send queue with new sample")
         // new sample to transmit
         this->currentSampleNumber = historyCache.front()->sequenceNumber;
         // priming send queue with all fragments of the new sample
@@ -239,7 +241,7 @@ bool Writer::sendMessage(){
     // 1. scenario: send queue is empty, select a new fragment for tx or retx
     if(sendQueue.empty())
     {
-        logInfo("[Writer] sendMessage: fill queue for retx")
+        // logDebug("[Writer] sendMessage: fill queue for retx")
         // add new fragment to queue
         SampleFragment* sf = nullptr;
         ReaderProxy *rp = nullptr;
@@ -260,7 +262,7 @@ bool Writer::sendMessage(){
     // 2. scenario: send queue not empty (any more)
     if(!sendQueue.empty())
     {
-        logInfo("[Writer] sendMessage: select fragment for (re)tx")
+        // logDebug("[Writer] sendMessage: select fragment for (re)tx")
         auto t_now = std::chrono::system_clock::now();
 
         SampleFragment* sf = sendQueue.front();
@@ -287,25 +289,26 @@ bool Writer::sendMessage(){
         
         // create W2RP header
         W2RPHeader *header = new W2RPHeader(config.guidPrefix);
-        logInfo("[Writer] sendMessage: created W2RP header")
+        // logDebug("[Writer] sendMessage: created W2RP header")
         
         // create submessages: DataFrag and HBFrag
         DataFrag* data;
         HeartbeatFrag* hb;
         
         createDataFrag(sf, data);
-        logInfo("[Writer] sendMessage: created dataFrag")
-        data->print();
+        // logDebug("[Writer] sendMessage: created dataFrag")
+        // data->print();
+        logInfo("[WRITER] tx fragment " << data->fragmentStartingNum << ": " << data->serializedPayload)
 
         this->createHBFrag(sf, hb);
-        logInfo("[Writer] sendMessage: created HBFrag")
+        // logDebug("[Writer] sendMessage: created HBFrag")
 
         // serialization (toNet) and concatenation of submessages 
         MessageNet_t *txMsg = new MessageNet_t;
         header->headerToNet(txMsg);
         data->dataToNet(txMsg);
         hb->hbToNet(txMsg);
-        logInfo("[Writer] sendMessage: net message from submessages")
+        // logDebug("[Writer] sendMessage: net message from submessages")
 
         // TODO send message
 
@@ -315,7 +318,7 @@ bool Writer::sendMessage(){
         delete data;
         delete hb;
         delete txMsg;
-        logInfo("[Writer] sendMessage: delete message")
+        // logDebug("[Writer] sendMessage: delete message")
         }
     }
     // if send queue still empty, no need to schedule new fragment transmission, 

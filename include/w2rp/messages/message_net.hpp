@@ -67,7 +67,7 @@ struct MessageNet_t
 	 */
 	explicit MessageNet_t(uint32_t size)
 	{   
-        logInfo("[MESSAGE_NET] constructor")
+        // logDebug("[MESSAGE_NET] constructor")
 		pos = 0;
 		length = 0;
 
@@ -109,7 +109,7 @@ struct MessageNet_t
      */
     int add(void* val, unsigned long size)
     {
-        logInfo("[MESSAGE_NET] add " << pos << " + " << size << " <? " << max_size)
+        // logDebug("[MESSAGE_NET] add " << pos << " + " << size << " <? " << max_size)
         if(pos+size < max_size)
         {
             memcpy(buffer+pos, val, size);
@@ -119,7 +119,7 @@ struct MessageNet_t
         }
         else
         {
-            logInfo("[MESSAGE_NET] add: max_size exceeded")
+            // logDebug("[MESSAGE_NET] add: max_size exceeded")
             return -1;
         }
     }

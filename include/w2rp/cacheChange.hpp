@@ -104,7 +104,7 @@ class CacheChange
      */
     ~CacheChange()
     {
-        logInfo("[CacheChange] delete")
+        // logDebug("[CacheChange] delete")
         for(int i = 0; i < numberFragments; i++)
         {
             SampleFragment* fragment = this->sampleFragmentArray[i];
@@ -134,12 +134,12 @@ class CacheChange
     void setFragmentArray(std::vector<SampleFragment*> *fragments)
     {
         sampleFragmentArray = new SampleFragment*[this->numberFragments];
-        logInfo("[CacheChange] setFragmentArray")
+        // logDebug("[CacheChange] setFragmentArray")
 
         uint16_t i = 0;
         for (auto sf: *fragments)
         {
-            logInfo("[CacheChange] copy: fragment " << sf->fragmentStartingNum  << " size: " << sf->dataSize << " data: " << sf->data)
+            // logDebug("[CacheChange] copy: fragment " << sf->fragmentStartingNum  << " size: " << sf->dataSize << " data: " << sf->data)
             sampleFragmentArray[i] = new SampleFragment(*sf);
             i++;
         }        

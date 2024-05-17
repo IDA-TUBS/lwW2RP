@@ -9,7 +9,7 @@ namespace w2rp {
 
 void W2RPHeader::headerToNet(MessageNet_t* msg)
 {
-    logInfo("[MESSAGE] W2RPHeader: headerToNet, pos: " << msg->pos)
+    // logDebug("[MESSAGE] W2RPHeader: headerToNet, pos: " << msg->pos)
     msg->add(&protocol, sizeof(protocol));
     msg->add(&version, sizeof(version));
     msg->add(&vendorID, sizeof(vendorID));
@@ -30,7 +30,7 @@ void W2RPHeader::netToHeader(MessageNet_t* msg)
 
 void SubmessageHeader::headerToNet(MessageNet_t* msg)
 {   
-    logInfo("[MESSAGE] SubmessageHeader: headerToNet, pos: " << msg->pos)
+    // logDebug("[MESSAGE] SubmessageHeader: headerToNet, pos: " << msg->pos)
     msg->add(&submessageId, sizeof(submessageId));
     msg->add(&submessageLength, sizeof(submessageLength));
     msg->add(&flags, sizeof(flags));
@@ -47,7 +47,7 @@ void SubmessageHeader::netToHeader(MessageNet_t* msg)
 
 void DataFrag::dataToNet(MessageNet_t* msg)
 {
-    logInfo("[MESSAGE] DataFrag: dataToNet, pos: " << msg->pos)
+    // logDebug("[MESSAGE] DataFrag: dataToNet, pos: " << msg->pos)
     // add submsg header
     subMsgHeader->headerToNet(msg);
 
@@ -86,8 +86,8 @@ void DataFrag::netToData(MessageNet_t* msg)
 
 void DataFrag::print()
 {
-    logInfo("[DataFrag] readerID: " << readerID)
-    logInfo("[DataFrag] writerID: " << writerID)
+    // logDebug("[DataFrag] readerID: " << readerID)
+    // logDebug("[DataFrag] writerID: " << writerID)
 }
 
 
@@ -95,7 +95,7 @@ void DataFrag::print()
 
 void NackFrag::nackToNet(MessageNet_t* msg)
 {
-    logInfo("[MESSAGE] NackFrag: nackToNet, pos: " << msg->pos)
+    // logDebug("[MESSAGE] NackFrag: nackToNet, pos: " << msg->pos)
     // add submsg header
     subMsgHeader->headerToNet(msg);
 
@@ -128,7 +128,7 @@ void NackFrag::netToNack(MessageNet_t* msg)
 
 void HeartbeatFrag::hbToNet(MessageNet_t* msg)
 {
-    logInfo("[MESSAGE] HeartbeatFrag: hbToNet, pos: " << msg->pos)
+    // logDebug("[MESSAGE] HeartbeatFrag: hbToNet, pos: " << msg->pos)
     // add submsg header
     subMsgHeader->headerToNet(msg);
 
@@ -138,7 +138,7 @@ void HeartbeatFrag::hbToNet(MessageNet_t* msg)
     msg->add(&writerSN, sizeof(writerSN));
     msg->add(&lastFragmentNum, sizeof(lastFragmentNum));
     msg->add(&count, sizeof(count));
-    logInfo("[MESSAGE] HeartbeatFrag: hbToNet 2")
+    // logDebug("[MESSAGE] HeartbeatFrag: hbToNet 2")
 }
 
 void HeartbeatFrag::netToHB(MessageNet_t* msg)

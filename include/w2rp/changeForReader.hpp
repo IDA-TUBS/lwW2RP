@@ -91,7 +91,7 @@ class ChangeForReader: public CacheChange
         auto sampleArrayRef = change.getFragmentArray();
         // copy contents of reference array (CacheChange) to this instance's array
         for(uint32_t i = 0; i < this->numberFragments; i++){
-            logInfo("[ChangeForReader] create sf " << i)
+            // logDebug("[ChangeForReader] create sf " << i)
             sampleFragmentArray[i] = new SampleFragment(*sampleArrayRef[i]);
         }
     };
@@ -122,7 +122,7 @@ class ChangeForReader: public CacheChange
      */
     ~ChangeForReader()
     {
-        logInfo("[ChangeForReader] delete")
+        // logDebug("[ChangeForReader] delete")
         // delete[] sampleFragmentArray; // Leads to conflicts at object destruction
     };
 
