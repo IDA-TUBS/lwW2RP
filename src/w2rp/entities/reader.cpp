@@ -9,6 +9,18 @@ namespace w2rp {
 Reader::Reader()
 {
     // TODo fill reader config
+    config.deadline =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::seconds(5));
+    config.responseDelay =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::microseconds(4000));
+    config.readerAddress = "127.0.0.1";
+    config.readerPort = 50000;
+    config.writerAddress = "127.0.0.1";
+    config.writerPort = 50001;
+    config.sizeCache = 2;
+    config.readerUuid = 1;
+    memcpy(config.guidPrefix, "_GUIDPREFIX_", 12);
+    config.priority = 1;
+
+    // TODO set guid(prefix)
 
     writerProxy = new WriterProxy(this->config.sizeCache);
 
@@ -16,8 +28,8 @@ Reader::Reader()
     netParser = new NetMessageParser();
 
     // init UDPComm object
-    socket_endpoint rx_socketEndpoint(config.writerAddress, config.writerPort);
-    socket_endpoint tx_socketEndpoint(config.readerAddress, config.readerPort);
+    socket_endpoint rx_socketEndpoint(config.readerAddress, config.readerPort);
+    socket_endpoint tx_socketEndpoint(config.writerAddress, config.writerPort);
     CommInterface = new UDPComm(rx_socketEndpoint, tx_socketEndpoint);
 
     // create receive and receive handler threads
