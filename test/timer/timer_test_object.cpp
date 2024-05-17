@@ -53,6 +53,16 @@ int main()
             return true;
         };
 
+        void cancel()
+        {
+            p_event_->cancel();
+        };
+
+        void start()
+        {
+            p_event_->restart();
+        };
+
         private:
         TimerManager serviceHandler;
         TimedEvent<>* t_event_;
@@ -63,6 +73,14 @@ int main()
 
     timerObject myObject;
     
+    sleep(2);
+
+    myObject.cancel();
+
+    sleep(2);
+
+    myObject.start();
+
     while(true)
     {
 

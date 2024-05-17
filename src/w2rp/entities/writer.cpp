@@ -66,7 +66,7 @@ Writer::Writer()
         std::bind(&Writer::sendMessage, this)
     );
     // only start timer once data available, hence stop immediately
-    shapingTimer->cancel_timer();  
+    shapingTimer->cancel();  
 
     timer_manager.start();
 
@@ -209,7 +209,7 @@ bool Writer::addSampleToCache(SerializedPayload *data, std::chrono::system_clock
     // start shaping timer for sample transmission to begin
     if(!shapingTimer->isActive())
     {
-        shapingTimer->restart_timer();
+        shapingTimer->restart();
         logDebug("[Writer] started shaping timer")
     }
 
@@ -234,7 +234,7 @@ void Writer::handleNackFrag(NackFrag *msg)
         // restart shapingTimer if not active any more and sample not yet complete
         if(!shapingTimer->isActive())
         {
-            shapingTimer->restart_timer();
+            shapingTimer->restart();
         }
     }    
 }
