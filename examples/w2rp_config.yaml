@@ -1,0 +1,25 @@
+WRITER:
+  FRAGMENT_SIZE: 1200               # in B
+  DEADLINE: 100000                  # in us
+  SHAPING_TIME: 2000                # in us
+  NACK_SUPPRESSION_DURATION: 5000   # in us
+  NUMBER_READERS: 1
+  READER_ADDRESS: [127.0.0.1]
+  READER_PORT: 1024
+  WRITER_ADDRESS: [127.0.0.1]
+  WRITER_PORT: 1025
+  SIZE_CACHE: 2
+  WRITER_UUID: 0
+  PRIO_MODE : 0
+  
+READER:
+  DEADLINE: 100000                  # in us
+  RESPONSE_DELAY: 500               # in us
+  DEADLINE: 100000                  # in us
+  READER_ADDRESS: [127.0.0.1]
+  READER_PORT: 1024
+  WRITER_ADDRESS: [127.0.0.1]
+  WRITER_PORT: 1025
+  SIZE_CACHE: 2
+  READER_UUID: 0
+  PRIORITY : 0
