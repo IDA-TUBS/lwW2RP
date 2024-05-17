@@ -45,7 +45,7 @@ class CacheChange
     /// status flag for indicating complete transmission of a sample (to a reader)
     bool complete;
 
-    /// array storing the 'data'
+    /// array storing the fragments
     SampleFragment** sampleFragmentArray;
 
     /*

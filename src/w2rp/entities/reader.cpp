@@ -102,7 +102,7 @@ bool Reader::handleDataFrag(DataFrag *msg)
 {
     // DataFrag received, update cache
 
-    // TODO use ReaderID??
+    // TODO check for matching ReaderID??
 
     // first check liveliness of previous samples
     checkSampleLiveliness();
@@ -116,7 +116,17 @@ bool Reader::handleDataFrag(DataFrag *msg)
 
     bool complete = writerProxy->checkSampleCompleteness(change->sequenceNumber);
 
-    // TODO if sample complete, send data up to application
+    // if sample complete, send data up to application
+    if(complete)
+    {
+        // create serializedPayload some sf data
+        auto cfw  = writerProxy->getChange(change->sequenceNumber);
+        SerializedPayload sampleData;
+        buildSerializedSample(cfw, sampleData);
+
+        // push to sampleQueue (application)
+        sampleQueue.enqueue(sampleData);
+    }    
 
     delete change;
 
@@ -167,7 +177,8 @@ bool Reader::handleHBFrag(HeartbeatFrag *msg)
     header->headerToNet(txMsg);
     response->nackToNet(txMsg);
 
-    // TODO transmit Message ...
+    // send message via UDP
+    CommInterface->sendMsg(*txMsg);
     
 
     // delete object
@@ -177,6 +188,58 @@ bool Reader::handleHBFrag(HeartbeatFrag *msg)
 
     return true;
 }
+
+
+/**************/
+/* public API */
+/**************/
+
+ void Reader::retrieveSample(SerializedPayload &data)
+ {
+    // msg to store received data
+    SerializedPayload sample;
+
+    while(true)
+    {              
+        sample = sampleQueue.dequeue();
+        
+        data = sample;
+    }
+ }
+
+
+
+
+/****************************************************/
+/* methods used during hanlding of Data and HBFrags */
+/****************************************************/
+
+
+
+void Reader::buildSerializedSample(ChangeForWriter *cfw, SerializedPayload &sampleData)
+{
+    unsigned char data[cfw->sampleSize];
+
+    uint32_t pos = 0;
+
+    auto fragmentArray = cfw->getFragmentArray();
+    for(uint32_t i = 0; i < cfw->numberFragments; i++)
+    {
+        auto sf = fragmentArray[i];
+        memcpy(data + pos, sf->data, sf->dataSize);
+        pos += sf->dataSize;
+    }
+
+    SerializedPayload payload(data, cfw->sampleSize);
+
+    sampleData = payload;
+}
+
+
+
+
+
+
 
 
 /*************************************************/

@@ -1,4 +1,3 @@
-// file.cpp
 #include <w2rp/helper/fragmentation.hpp>
 #include <w2rp/log.hpp>
 

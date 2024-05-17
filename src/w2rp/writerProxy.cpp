@@ -41,7 +41,7 @@ void WriterProxy::removeChange(uint32_t sequenceNumber)
     }
 }
 
-// TODO also store data!
+
 bool WriterProxy::updateFragmentStatus(fragmentStates status, uint32_t sequenceNumber, uint32_t fragmentNumber, unsigned char *data, uint32_t dataLength)
 {
     // first find change corresponding to the given sequence number
