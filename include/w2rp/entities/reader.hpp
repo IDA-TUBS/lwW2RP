@@ -25,7 +25,6 @@ struct readerCfg
     uint32_t priority;
 };
 
-
 class Reader
 {
   public:
