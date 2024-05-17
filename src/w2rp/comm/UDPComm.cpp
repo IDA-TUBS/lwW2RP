@@ -4,7 +4,7 @@
 #include <bitset>
 
 
-using namespace w2rp;
+namespace w2rp {
 
 /*--------------------------------------- Public -----------------------------------------*/
 
@@ -57,14 +57,14 @@ struct socket_endpoint UDPComm::getEndpoint()
 }
 
 /*--------------------------------------- Private -----------------------------------------*/
-udp::endpoint generate_endpoint(
+udp::endpoint UDPComm::generate_endpoint(
     struct socket_endpoint endpoint
 )
 {
     return udp::endpoint(boost::asio::ip::address::from_string(endpoint.ip_addr), endpoint.port);
 }
 
-udp::endpoint generate_endpoint(
+udp::endpoint UDPComm::generate_endpoint(
     std::string ip_addr,
     int port
 )
@@ -72,7 +72,9 @@ udp::endpoint generate_endpoint(
     return udp::endpoint(boost::asio::ip::address::from_string(ip_addr), port); 
 }
 
-udp::endpoint generate_endpoint(int port)
+udp::endpoint UDPComm::generate_endpoint(int port)
 {
     return udp::endpoint(boost::asio::ip::udp::v4(), port); 
 }
+
+} //end namespace

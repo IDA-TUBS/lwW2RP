@@ -32,6 +32,7 @@ set(
     ${PROJECT_SOURCE_DIR}/src/w2rp/changeForWriter.cpp
     ${PROJECT_SOURCE_DIR}/src/w2rp/readerProxy.cpp
     ${PROJECT_SOURCE_DIR}/src/w2rp/writerProxy.cpp
+    ${PROJECT_SOURCE_DIR}/src/w2rp/comm/UDPComm.cpp
 )
 
 ## Define library content
