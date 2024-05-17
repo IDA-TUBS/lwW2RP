@@ -9,15 +9,20 @@ namespace w2rp {
 /*--------------------------------------- Public -----------------------------------------*/
 
 UDPComm::UDPComm(
-    struct socket_endpoint endpoint
+    struct socket_endpoint endpoint_rx,
+    struct socket_endpoint endpoint_tx
 ):
     comm_context_(),
     socket_(comm_context_),
-    endpoint_(generate_endpoint(endpoint)),
+    rx_endpoint_(generate_endpoint(endpoint_rx)),
+    tx_endpoint_(generate_endpoint(endpoint_tx)),
     send_lock()
 {
-    socket_.open(endpoint_.protocol());
-    socket_.bind(endpoint_);
+    socket_.open(rx_endpoint_.protocol());
+    socket_.bind(rx_endpoint_);
+
+    socket_.open(tx_endpoint_.protocol());
+    socket_.bind(rx_endpoint_);
 };
 
 UDPComm::~UDPComm()
@@ -27,12 +32,11 @@ UDPComm::~UDPComm()
 
 
 void UDPComm::sendMsg(
-    MessageNet_t& msg,
-    udp::endpoint target 
+    MessageNet_t& msg 
 )
 {
     std::lock_guard<std::mutex> lock(send_lock);
-    socket_.send_to(boost::asio::buffer(msg.buffer, msg.length), target);
+    socket_.send_to(boost::asio::buffer(msg.buffer, msg.length), tx_endpoint_);
 }
 
 udp::endpoint UDPComm::receiveMsg(
@@ -51,9 +55,14 @@ udp::endpoint UDPComm::receiveMsg(
     return sender_endpoint;
 }
 
-struct socket_endpoint UDPComm::getEndpoint()
+struct socket_endpoint UDPComm::getRxEndpoint()
 {
-    return socket_endpoint(endpoint_.address().to_string(), endpoint_.port());
+    return socket_endpoint(rx_endpoint_.address().to_string(), rx_endpoint_.port());
+}
+
+struct socket_endpoint UDPComm::getTxEndpoint()
+{
+    return socket_endpoint(tx_endpoint_.address().to_string(), tx_endpoint_.port());
 }
 
 /*--------------------------------------- Private -----------------------------------------*/

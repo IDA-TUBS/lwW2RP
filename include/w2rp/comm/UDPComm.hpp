@@ -23,10 +23,12 @@ class UDPComm
     /**
      * @brief Construct a new UDPComm object
      * 
-     * @param endpoint socket endpoint struct
+     * @param endpoint_rx socket endpoint struct for rx
+     * @param endpoint_rx socket endpoint struct for tx
      */
     UDPComm(
-       struct socket_endpoint endpoint
+        struct socket_endpoint endpoint_rx,
+        struct socket_endpoint endpoint_tx
     );
 
     /**
@@ -36,14 +38,12 @@ class UDPComm
     ~UDPComm();
 
     /**
-     * @brief Sends a UDP datagram to the specified target
+     * @brief Sends a UDP datagram via tx_endpoint
      * 
      * @param msg serialized message_net object to transmit
-     * @param target target endpoint
      */
     void sendMsg(
-        MessageNet_t& msg,
-        udp::endpoint target 
+        MessageNet_t& msg
     );
 
     /**
@@ -61,7 +61,14 @@ class UDPComm
      * 
      * @return struct socket_endpoint 
      */
-    struct socket_endpoint getEndpoint();
+    struct socket_endpoint getRxEndpoint();
+
+    /**
+     * @brief Get the Endpoint object
+     * 
+     * @return struct socket_endpoint 
+     */
+    struct socket_endpoint getTxEndpoint();
 
     private:
     
@@ -98,7 +105,8 @@ class UDPComm
     boost::asio::io_context comm_context_;
 
     udp::socket socket_;
-    udp::endpoint endpoint_;
+    udp::endpoint rx_endpoint_;
+    udp::endpoint tx_endpoint_;
     
     std::mutex send_lock;
 };

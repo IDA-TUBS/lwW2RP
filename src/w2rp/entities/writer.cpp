@@ -14,8 +14,10 @@ Writer::Writer()
     config.shapingTime =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::microseconds(10000));
     config.nackSuppressionDuration =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::microseconds(20000));
     config.numberReaders = 1;
-    config.readerAddresses.push_back("127.0.0.1");
-    config.port = 555;
+    config.readerAddress = "127.0.0.1";
+    config.readerPort = 1024;
+    config.writerAddress = "127.0.0.1";
+    config.writerPort = 1025;
     config.sizeCache = 2;
     config.writerUuid = 0;
     memcpy(config.guidPrefix, "_GUIDPREFIX_", 12);
@@ -44,6 +46,12 @@ Writer::Writer()
 
     // init net message parser
     netParser = new NetMessageParser();
+
+    // init UDPComm object
+    socket_endpoint rx_socketEndpoint(config.writerAddress, config.writerPort);
+    socket_endpoint tx_socketEndpoint(config.readerAddress, config.readerPort);
+    CommInterface = new UDPComm(rx_socketEndpoint, tx_socketEndpoint);
+
 
     // init timers
     std::chrono::microseconds cycle(500000); // TODO take cycle time from writer config
@@ -310,8 +318,8 @@ bool Writer::sendMessage(){
         hb->hbToNet(txMsg);
         // logDebug("[Writer] sendMessage: net message from submessages")
 
-        // TODO send message
-
+        // send message via UDP
+        CommInterface->sendMsg(*txMsg);
 
         
         delete header;

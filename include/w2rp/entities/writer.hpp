@@ -11,6 +11,7 @@
 #include <w2rp/timer/timedEvent.hpp>
 #include <w2rp/timer/periodicEvent.hpp>
 #include <w2rp/timer/timerManager.hpp>
+#include <w2rp/comm/UDPComm.hpp>
 
 namespace w2rp {
 
@@ -29,8 +30,10 @@ struct writerCfg
     std::chrono::system_clock::duration shapingTime;
     std::chrono::system_clock::duration nackSuppressionDuration;
     uint8_t numberReaders;
-    std::vector<std::string> readerAddresses;
-    uint16_t port;
+    std::string readerAddress;
+    uint16_t readerPort;
+    std::string writerAddress;
+    uint16_t writerPort;
     unsigned int sizeCache;
     uint8_t writerUuid;
     unsigned char guidPrefix[12];
@@ -71,11 +74,14 @@ private:
     /// counter for next sample's sequence number
     uint32_t sequenceNumberCnt;
 
-    /******************/
-    /* Message parser */
-    /******************/
-
+    /**************************/
+    /* Comm and message stuff */
+    /**************************/
+    
+    /// (sub)message parser 
     NetMessageParser *netParser;
+    /// UDP Comm abstraction
+    UDPComm *CommInterface;
 
 
     /******************************/
