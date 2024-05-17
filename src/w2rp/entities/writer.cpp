@@ -15,9 +15,9 @@ Writer::Writer()
     config.nackSuppressionDuration =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::microseconds(20000));
     config.numberReaders = 1;
     config.readerAddress = "127.0.0.1";
-    config.readerPort = 1024;
+    config.readerPort = 50000;
     config.writerAddress = "127.0.0.1";
-    config.writerPort = 1025;
+    config.writerPort = 50001;
     config.sizeCache = 2;
     config.writerUuid = 0;
     memcpy(config.guidPrefix, "_GUIDPREFIX_", 12);
