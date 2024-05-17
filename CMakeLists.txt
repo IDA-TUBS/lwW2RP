@@ -146,3 +146,7 @@ target_link_libraries(timer_test_object w2rp)
 ## Writer testing
 add_executable(writer_test test/entities/writer_test.cpp ${SRC_FILES})
 target_link_libraries(writer_test w2rp)
+
+## Reader testing
+add_executable(reader_test test/entities/reader_test.cpp ${SRC_FILES})
+target_link_libraries(reader_test w2rp)

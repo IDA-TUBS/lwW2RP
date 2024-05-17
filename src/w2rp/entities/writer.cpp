@@ -23,6 +23,8 @@ Writer::Writer()
     memcpy(config.guidPrefix, "_GUIDPREFIX_", 12);
     config.prioMode = ADAPTIVE_HIGH_PDR;
 
+    // TODO set guid(prefix)
+
     sequenceNumberCnt = 0;
 
     // initialize sample fragmenter

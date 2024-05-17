@@ -9,6 +9,7 @@
 #include <chrono>
 #include <string>
 #include <w2rp/writerProxy.hpp>
+#include <w2rp/helper/fragmentation.hpp>
 #include <w2rp/helper/safe_queue.hpp>
 #include <w2rp/messages/messages.hpp>
 #include <w2rp/comm/UDPComm.hpp>
@@ -42,6 +43,17 @@ class Reader
      */
     ~Reader();
 
+    /**************/
+    /* Public API */
+    /**************/
+
+    /**
+     * @brief API for app to retrieve new samples once available
+     * 
+     * @param data reference to object where sample data shall be written to
+     */ 
+    void retrieveSample(SerializedPayload &data);
+
   private:
     /// reader configuration
     readerCfg config;
@@ -70,6 +82,9 @@ class Reader
 
     /// receive queue
     SafeQueue<MessageNet_t> receiveQueue;
+
+    /// sample queue for application interface
+    SafeQueue<SerializedPayload> sampleQueue;
 
     /********/
     /* misc */
@@ -119,6 +134,14 @@ class Reader
     /****************************************************/
     /* methods used during hanlding of Data and HBFrags */
     /****************************************************/
+
+    /**
+     * @brief create serialized sample data from all fragments of the sample
+     * 
+     * @param cfw pointer to history cache object (sample)
+     * @param sampleData reference to object where sample data shall be written to
+     */ 
+    void buildSerializedSample(ChangeForWriter *cfw, SerializedPayload &sampleData);
 
 
     /*************************************************/
