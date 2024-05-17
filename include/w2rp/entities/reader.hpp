@@ -9,7 +9,9 @@
 #include <chrono>
 #include <string>
 #include <w2rp/writerProxy.hpp>
+#include <w2rp/helper/safe_queue.hpp>
 #include <w2rp/messages/messages.hpp>
+#include <w2rp/comm/UDPComm.hpp>
 
 namespace w2rp {
 
@@ -52,11 +54,23 @@ class Reader
     /// HistoryCache
     WriterProxy *writerProxy;
 
-    /******************/
-    /* Message parser */
-    /******************/
+    /**************************/
+    /* Comm and message stuff */
+    /**************************/
 
+    /// (sub)message parser and encoder
     NetMessageParser *netParser;
+
+    /// UDP Comm abstraction
+    UDPComm *CommInterface;
+
+    /// socket receive thread
+    std::thread recvThread;
+    /// receive handler thread
+    std::thread handlerThread;
+
+    /// receive queue
+    SafeQueue<MessageNet_t> receiveQueue;
 
     /********/
     /* misc */
@@ -67,6 +81,16 @@ class Reader
     /********************************************/
     /** Callbacks triggered by external events **/ 
     /********************************************/
+
+     /**
+     * @brief Blocking reception of incoming message at socket, put into receiveQueue
+     */
+    void receiveMsg();
+
+    /**
+     * @brief Processing of any message in receiveQueue 
+     */
+    void handleMsg();
 
     /**
      * @brief Callback 

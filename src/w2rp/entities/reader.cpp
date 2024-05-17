@@ -15,6 +15,15 @@ Reader::Reader()
     // init net message parser
     netParser = new NetMessageParser();
 
+    // init UDPComm object
+    socket_endpoint rx_socketEndpoint(config.writerAddress, config.writerPort);
+    socket_endpoint tx_socketEndpoint(config.readerAddress, config.readerPort);
+    CommInterface = new UDPComm(rx_socketEndpoint, tx_socketEndpoint);
+
+    // create receive and receive handler threads
+    recvThread = std::thread{&Reader::receiveMsg, this};
+    handlerThread = std::thread{&Reader::handleMsg, this};
+
     this->nackCount = 0;
 }
 
@@ -28,6 +37,33 @@ Reader::~Reader()
 /********************************************/
 /** Callbacks triggered by external events **/ 
 /********************************************/
+
+void Reader::receiveMsg()
+{      
+    // msg to store received data
+    MessageNet_t msg;
+   
+    while(true)
+    {      
+        CommInterface->receiveMsg(msg);
+
+        receiveQueue.enqueue(msg);
+    }
+}
+
+
+void Reader::handleMsg()
+{    
+    // msg to store received data
+    MessageNet_t msg;
+
+    while(true)
+    {              
+        msg = receiveQueue.dequeue();
+        
+        handleMessages(&msg);
+    }
+}
 
 bool Reader::handleMessages(MessageNet_t *net)
 {

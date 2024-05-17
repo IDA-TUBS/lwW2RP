@@ -52,6 +52,10 @@ Writer::Writer()
     socket_endpoint tx_socketEndpoint(config.readerAddress, config.readerPort);
     CommInterface = new UDPComm(rx_socketEndpoint, tx_socketEndpoint);
 
+    // create receive and receive handler threads
+    recvThread = std::thread{&Writer::receiveMsg, this};
+    handlerThread = std::thread{&Writer::handleMsg, this};
+
 
     // init timers
     std::chrono::microseconds cycle(500000); // TODO take cycle time from writer config
@@ -92,6 +96,35 @@ Writer::~Writer()
 /********************************************/
 /** Callbacks triggered by external events **/ 
 /********************************************/
+
+void Writer::receiveMsg()
+{      
+    // msg to store received data
+    MessageNet_t msg;
+   
+    while(true)
+    {      
+        CommInterface->receiveMsg(msg);
+
+        receiveQueue.enqueue(msg);
+    }
+}
+
+
+void Writer::handleMsg()
+{    
+    // msg to store received data
+    MessageNet_t msg;
+
+    while(true)
+    {              
+        msg = receiveQueue.dequeue();
+        
+        handleMessages(&msg);
+    }
+}
+
+
 
 bool Writer::handleMessages(MessageNet_t *net)
 {
