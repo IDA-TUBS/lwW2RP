@@ -15,9 +15,9 @@ Writer::Writer()
     config.nackSuppressionDuration =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::microseconds(20000));
     config.numberReaders = 1;
     config.readerAddress = "127.0.0.1";
-    config.readerPort = 1024;
+    config.readerPort = 50000;
     config.writerAddress = "127.0.0.1";
-    config.writerPort = 1025;
+    config.writerPort = 50001;
     config.sizeCache = 2;
     config.writerUuid = 0;
     memcpy(config.guidPrefix, "_GUIDPREFIX_", 12);
@@ -51,6 +51,10 @@ Writer::Writer()
     socket_endpoint rx_socketEndpoint(config.writerAddress, config.writerPort);
     socket_endpoint tx_socketEndpoint(config.readerAddress, config.readerPort);
     CommInterface = new UDPComm(rx_socketEndpoint, tx_socketEndpoint);
+
+    // create receive and receive handler threads
+    recvThread = std::thread{&Writer::receiveMsg, this};
+    handlerThread = std::thread{&Writer::handleMsg, this};
 
 
     // init timers
@@ -92,6 +96,35 @@ Writer::~Writer()
 /********************************************/
 /** Callbacks triggered by external events **/ 
 /********************************************/
+
+void Writer::receiveMsg()
+{      
+    // msg to store received data
+    MessageNet_t msg;
+   
+    while(true)
+    {      
+        CommInterface->receiveMsg(msg);
+
+        receiveQueue.enqueue(msg);
+    }
+}
+
+
+void Writer::handleMsg()
+{    
+    // msg to store received data
+    MessageNet_t msg;
+
+    while(true)
+    {              
+        msg = receiveQueue.dequeue();
+        
+        handleMessages(&msg);
+    }
+}
+
+
 
 bool Writer::handleMessages(MessageNet_t *net)
 {

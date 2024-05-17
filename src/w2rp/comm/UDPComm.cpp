@@ -20,9 +20,6 @@ UDPComm::UDPComm(
 {
     socket_.open(rx_endpoint_.protocol());
     socket_.bind(rx_endpoint_);
-
-    socket_.open(tx_endpoint_.protocol());
-    socket_.bind(rx_endpoint_);
 };
 
 UDPComm::~UDPComm()
