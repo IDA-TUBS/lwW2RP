@@ -48,7 +48,6 @@ class TimedEvent
         id = service_.registerTimer(time_point, timerCallback);
         isActive_ = true;
     };
-
     
     /**
      * @brief Destroy the Timed Event object
@@ -56,25 +55,30 @@ class TimedEvent
      */
     ~TimedEvent()
     {
-        service_.unregisterSystemTimer(id);
+        service_.unregisterTimer(id);
     };
 
     /**
      * @brief restart the timed event
      * 
+     * @param time_point next activation time point
      */
-    void restart_timer()
+    void restart(std::chrono::system_clock::time_point time_point)
     {
-        //TBD
+        auto timerCallback = std::bind(&TimedEvent<Args...>::eventCallback, this);
+        time_point_ = time_point;
+        service_.restartTimer(id, time_point_, timerCallback);
+        isActive_ = true;
     };
 
     /**
      * @brief cancel the timed event
      * 
      */
-    void cancel_timer()
+    void cancel()
     {
-        // TBD
+        service_.cancelTimer(id);
+        isActive_ = false;
     };
 
     bool isActive()
@@ -91,7 +95,7 @@ class TimedEvent
     /************************************************************************/
     private:
     
-    size_t id;
+    timerID id;
     TimerManager& service_;
     std::chrono::system_clock::time_point time_point_;
     std::function<void()> callback_;

@@ -32,21 +32,30 @@ class PeriodicEvent
      * @param interval event cycle
      * @param callback handler routine
      * @param service management entity
+     * @param autoStart (true): automatic timer start (false): manual timer start ->restart()
      */
     PeriodicEvent(
         TimerManager& service,
         std::chrono::microseconds interval,
         std::function<bool()> callback,
-        Args... args
+        Args... args,
+        bool autoStart = true
     ):
         service_(service),
         interval_(interval),
         callback_(std::bind(callback, args...)),    
         args_(std::make_tuple(args...))
     {
-        auto timerCallback = [&]() { return eventCallback(); }; /*std::bind(&TimedEvent<Args...>::eventCallback, this);*/
-        id = service_.registerTimer(interval, timerCallback);
-        isActive_ = true;
+        auto timerCallback = [&]() { return eventCallback(); }; 
+        id = service_.registerTimer(interval, timerCallback, autoStart);
+        if(autoStart)
+        {
+            isActive_ = true;  
+        }
+        else
+        {
+            isActive_ = false;
+        }
     };
     
     /**
@@ -55,42 +64,88 @@ class PeriodicEvent
      */
     ~PeriodicEvent()
     {
-        service_.unregisterSteadyTimer(id);
+        service_.unregisterTimer(id);
     };
 
     /**
      * @brief restart the timed event
      * 
      */
-    void restart_timer()
+    void restart()
     {
-        //TBD
+        auto timerCallback = [&]() { return eventCallback(); }; 
+        service_.restartTimer(id, interval_, timerCallback);
+        isActive_ = true;
     };
+
+    /**
+     * @brief restart the timed event
+     * 
+     * @param interval interval for event activation
+     */
+    void restart(std::chrono::microseconds interval)
+    {
+        interval_ = interval;
+        restart();
+    }
 
     /**
      * @brief cancel the timed event
      * 
      */
-    void cancel_timer()
+    void cancel()
     {
-        // TBD
+        service_.cancelTimer(id);
+        isActive_ = false;
     };
 
+    /**
+     * @brief Check whether the event is active
+     * 
+     * @return true active, timer running
+     * @return false inactive, timer holding
+     */
     bool isActive()
     {
         return isActive_;
     }
 
+    /**
+     * @brief Event handler callback. Executed when the event is triggered.
+     * 
+     * @return true restart timer  
+     * @return false do not restart timer
+     */
     bool eventCallback()
     {
         isActive_ = callback_();
         return isActive_;
     }
 
+    /**
+     * @brief Set the Interval object
+     * 
+     * @param interval activation interval in [us]
+     */
+    void setInterval(std::chrono::microseconds interval)
+    {
+        interval_ = interval;
+    };
+
+    /**
+     * @brief Get the Interval object
+     * 
+     * @return std::chrono::microseconds activation interval [us]
+     */
+    std::chrono::microseconds getInterval()
+    {
+        return interval_;
+    }
+
     /************************************************************************/
     private:
     
-    size_t id;
+    timerID id;
     TimerManager& service_;
     std::chrono::microseconds interval_;
     std::function<bool()> callback_;

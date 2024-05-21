@@ -13,6 +13,14 @@
 
 namespace w2rp{
 
+enum TimerType
+{
+    STEADY_TIMER = 0,
+    SYSTEM_TIMER
+};
+
+typedef std::pair<TimerType ,size_t> timerID;
+
 class TimerManager
 {
     /************************************************************************/
@@ -48,116 +56,82 @@ class TimerManager
     /**
      * @brief register a timed event based on steady clock
      * 
-     * @tparam FunctionType generic event handler
-     * @tparam Args generic event handler arguments
      * @param duration timer interval
-     * @param repeat periodic/single shot activation?
      * @param function event handler
-     * @param args handler arguments
-     * @return size_t timer id
+     * @param autoStart [bool] (true): timer allocation + start (false) timer allocation only
+     * @return timerID timer id object
      */
-    size_t registerTimer(const Duration& duration, std::function<bool()> function)
-    {
-        size_t timer_id = assignID();
-       
-        // Create a timer and bind it to the function
-        auto timer = std::make_shared<boost::asio::steady_timer>(timer_io);
-        configureTimer(timer, timer_id, duration, function);        
-
-        // Add the timer to the list of timers
-        std::unique_lock<std::mutex> lock(m_mutex);
-        m_steady_timers.emplace(timer_id, std::move(timer));
-        
-        return timer_id;
-    }
+    timerID registerTimer(
+        const Duration& duration, 
+        std::function<bool()> function,
+        bool autoStart = true
+    );
 
     /**
      * @brief register a timed event based on the system clock
      * 
-     * @tparam FunctionType generic event handler
-     * @tparam Args generic event handler arguments
      * @param time_point trigger time point
      * @param function event handler
-     * @param args handler arguments
-     * @return size_t timer id
+     * @return timerID timer id object
      */
-    size_t registerTimer(const TimePoint& time_point, std::function<void()> function)
-    {
-        size_t timer_id = assignID();
+    timerID registerTimer(
+        const TimePoint& time_point, 
+        std::function<void()> function
+    );
 
-        // Create a timer and bind it to the function
-        auto timer = std::make_shared<boost::asio::system_timer>(timer_io);
-        configureTimer(timer, timer_id, time_point, function);
+    /**
+     * @brief unregister a timer
+     * 
+     * @param timer_id timerID object belonging to the timer to be removed
+     */
+    void unregisterTimer(timerID timer_id);    
 
-        // Add the timer to the list of timers
-        std::unique_lock<std::mutex> lock(m_mutex);
-        m_system_timers.emplace(timer_id, std::move(timer));
-        
-        return timer_id;
-    }
+    /**
+     * @brief cancel a running timer
+     * 
+     * @param timer_id timer ID object of the timer to be cancelled
+     */
+    void cancelTimer(timerID timer_id);
 
     /**
      * @brief restart a registered steady timer 
-     * 
-     * @tparam FunctionType generic event handler
-     * @tparam Args generic event handler arguments
+     *      
+     * @param timerID timer id object
      * @param duration timer interval
      * @param function event handler
-     * @param args handler arguments
-     * @return size_t timer id
      */
-    void restartTimer(size_t timer_id, const Duration& duration, std::function<bool()> function)
-    {
-        std::unique_lock<std::mutex> lock(m_mutex);
-        auto timer = m_steady_timers[timer_id];
-        lock.unlock();
-
-        configureTimer(timer, timer_id, duration, function);
-    };
+    void restartTimer(
+        timerID timer_id, 
+        const Duration& duration, 
+        std::function<bool()> function
+    );
 
     /**
      * @brief restart a registered system timer
      * 
-     * @tparam FunctionType generic event handler
-     * @tparam Args generic event handler arguments
+     * @param timerID timer id object
      * @param time_point trigger time point
      * @param function event handler
-     * @param args handler arguments
-     * @return size_t timer id
      */
-    void restartTimer(size_t timer_id, const TimePoint& time_point, std::function<void()> function)
-    {
-        std::unique_lock<std::mutex> lock(m_mutex);
-        auto timer = m_system_timers[timer_id];
-        lock.unlock();
-
-        configureTimer(timer, timer_id, time_point, function);
-    };
-
-    /**
-     * @brief unregister a steady clock based timed event 
-     * 
-     * @param id timer id
-     */
-    void unregisterSteadyTimer(size_t id);
-
-    /**
-     * @brief unregister a system clock based timed event
-     * 
-     * @param id timer id
-     */
-    void unregisterSystemTimer(size_t id);
-
+    void restartTimer(
+        timerID timer_id, 
+        const TimePoint& time_point, 
+        std::function<void()> function
+    );
 
     /************************************************************************/
     private:
 
+    /*----------------------------- Methods --------------------------*/
+
     /**
      * @brief determine timer id for registration
      * 
+     * @param t_type type of the timer 
+     * 
      * @return size_t timer id
      */
-    size_t assignID();
+    timerID assignID(TimerType t_type);
 
     /**
      * @brief configure steady timer for a registered timed event
@@ -170,26 +144,12 @@ class TimerManager
      * @param function event handler
      * @param args handler arguments
      */
-    void configureTimer(std::shared_ptr<boost::asio::steady_timer> timer, size_t timer_id, Duration duration, std::function<bool()> function)
-    {
-        timer->expires_after(duration);
-        timer->async_wait(
-            [timer, timer_id, function, duration, this](const boost::system::error_code& ec) {
-                if (!ec) {
-                    auto task = std::bind(function);
-                    bool restart_ = task();                
-                    if(restart_ == true)
-                    {
-                        logInfo("Re-register intervall timer: " << timer_id)
-                        configureTimer(timer, timer_id, duration, function);
-                    }
-                }
-                else
-                {
-                    logInfo("Cancel called: " << timer_id)
-                }
-        });
-    };
+    void configureTimer(
+        std::shared_ptr<boost::asio::steady_timer> timer, 
+        size_t timer_id, 
+        Duration duration, 
+        std::function<bool()> function
+    );
 
     /**
      * @brief configure system timer for registered timed event
@@ -202,22 +162,38 @@ class TimerManager
      * @param function event handler
      * @param args handler arguments
      */
-    void configureTimer(std::shared_ptr<boost::asio::system_timer> timer, size_t timer_id, TimePoint time_point, std::function<void()> function)
-    {
-        timer->expires_at(time_point);
-        timer->async_wait(
-            [timer, timer_id, function, this](const boost::system::error_code& ec) {
-            if (!ec) {
-                auto task = std::bind(function);
-                task();                
-            }
-            else
-            {
-                logInfo("Cancel called: " << timer_id)
-            }
-        });
-    };
+    void configureTimer(
+        std::shared_ptr<boost::asio::system_timer> timer, 
+        size_t timer_id, 
+        TimePoint time_point, 
+        std::function<void()> function
+    );
 
+    /**
+     * @brief Get the Steady Timer object
+     * 
+     * @param id 
+     * @return std::shared_ptr<boost::asio::steady_timer> 
+     */
+    std::shared_ptr<boost::asio::steady_timer> getSteadyTimer(size_t id);
+
+    /**
+     * @brief Get the System Timer object
+     * 
+     * @param id 
+     * @return std::shared_ptr<boost::asio::system_timer> 
+     */
+    std::shared_ptr<boost::asio::system_timer> getSystemTimer(size_t id);
+
+    /**
+     * @brief remove a timer from
+     * 
+     * @param timer_id 
+     */
+    void removeTimer(timerID timer_id);
+
+
+    /*----------------------------- Attributes --------------------------*/
     boost::asio::io_service timer_io;
     boost::asio::io_service::work io_work;
     

@@ -27,7 +27,6 @@ UDPComm::~UDPComm()
     socket_.close();
 };
 
-
 void UDPComm::sendMsg(
     MessageNet_t& msg 
 )
