@@ -85,9 +85,9 @@ void DataFrag::netToData(MessageNet_t* msg)
     msg->read(&fragmentsInSubmessage, sizeof(fragmentsInSubmessage));
     msg->read(&dataSize, sizeof(dataSize));
     msg->read(&fragmentSize, sizeof(fragmentSize));
-    logDebug("[DataFrag] 8")
+    // Allocate memory for the payload data
+    this->serializedPayload = new unsigned char[this->fragmentSize];  
     msg->read(serializedPayload, fragmentSize);
-    logDebug("[DataFrag] 9")
     msg->read(&timestamp, sizeof(timestamp));
     
     this->length = sizeof(readerID) +
@@ -185,22 +185,22 @@ void NetMessageParser::getSubmessages(MessageNet_t* msg, std::vector<SubmessageB
     subMsgHeader = new SubmessageHeader();
 
     w2rpHeader->netToHeader(msg);
-    logDebug("[NetMessageParser] Parse packet of length: " << msg->length)
+    // logDebug("[NetMessageParser] Parse packet of length: " << msg->length)
 
     while (true)
     {
-        logDebug("[NetMessageParser] Parse SubmessageHeader, pos: " << msg->pos)
         // check if end of message has been reached
         if(msg->pos >= (msg->length - 1))
         {
             // end of message reached
-            logDebug("[NetMessageParser] end of message reached, pos: " << msg->pos)
+            // logDebug("[NetMessageParser] end of message reached, pos: " << msg->pos)
             break;
         }
+        // logDebug("[NetMessageParser] Parse SubmessageHeader, pos: " << msg->pos)
 
         // parse submessage header
         subMsgHeader->netToHeader(msg);
-        logDebug("[NetMessageParser] SubmessageHeader, length: " << subMsgHeader->length)
+        // logDebug("[NetMessageParser] SubmessageHeader, length: " << subMsgHeader->length)
 
         // based on id, parse corresponding submessage
         switch (subMsgHeader->submessageId)
@@ -208,7 +208,7 @@ void NetMessageParser::getSubmessages(MessageNet_t* msg, std::vector<SubmessageB
         case DATA_FRAG:
             if(msg->movePos(-(subMsgHeader->length)))
             {
-                logDebug("[NetMessageParser] Parse DataFrag, pos: " << msg->pos)
+                // logDebug("[NetMessageParser] Parse DataFrag, pos: " << msg->pos)
                 DataFrag *dataFrag;
                 dataFrag = new DataFrag();
 
@@ -219,14 +219,14 @@ void NetMessageParser::getSubmessages(MessageNet_t* msg, std::vector<SubmessageB
             else
             {
                 // something went wrong
-                logDebug("[NetMessageParser] something went wrong")
+                // logDebug("[NetMessageParser] something went wrong")
                 // TODO handle error
             }
             break;
         case HEARTBEAT_FRAG:
             if(msg->movePos(-(subMsgHeader->length)))
             {
-                logDebug("[NetMessageParser] Parse HeartbeatFrag, pos: " << msg->pos)
+                // logDebug("[NetMessageParser] Parse HeartbeatFrag, pos: " << msg->pos)
                 HeartbeatFrag *hbFrag;
                 hbFrag = new HeartbeatFrag();
 
@@ -237,14 +237,14 @@ void NetMessageParser::getSubmessages(MessageNet_t* msg, std::vector<SubmessageB
             else
             {
                 // something went wrong
-                logDebug("[NetMessageParser] something went wrong")
+                // logDebug("[NetMessageParser] something went wrong")
                 // TODO handle error
             }
             break;
         case NACK_FRAG:
             if(msg->movePos(-(subMsgHeader->length)))
             {
-                logDebug("[NetMessageParser] Parse NackFrag, pos: " << msg->pos)
+                // logDebug("[NetMessageParser] Parse NackFrag, pos: " << msg->pos)
                 NackFrag *nackFrag;
                 nackFrag = new NackFrag();
 
@@ -255,7 +255,7 @@ void NetMessageParser::getSubmessages(MessageNet_t* msg, std::vector<SubmessageB
             else
             {
                 // something went wrong
-                logDebug("[NetMessageParser] something went wrong")
+                // logDebug("[NetMessageParser] something went wrong")
                 // TODO handle error
             }
             break;

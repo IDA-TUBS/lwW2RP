@@ -4,6 +4,7 @@
 
 #include <w2rp/changeForWriter.hpp>
 #include <w2rp/sampleFragment.hpp>
+#include <w2rp/log.hpp>
 
 namespace w2rp {
 
@@ -59,10 +60,15 @@ bool ChangeForWriter::setFragmentData(uint32_t fragmentNumber, unsigned char *da
 
 void ChangeForWriter::getMissingFragments(uint32_t lastfragmentNum, std::vector<uint32_t> *res)
 {
-    for(uint32_t i = 0; i < numberFragments; i++){
+    logDebug("[ChangeForWriter] getMissingFragments")
+    
+    for(uint32_t i = 0; i <= lastfragmentNum; i++){ //lastfragmentNum
+        logDebug("[ChangeForWriter] frag " << i)
         auto frag = sampleFragmentArray[i];
-        if(frag->received) {
+        if(!(frag->received)) {
+            logDebug("[ChangeForWriter] missing " << i)
             res->push_back(i);
+            logDebug("[ChangeForWriter] pushed to vec " << i)
         }
     }
 }

@@ -34,7 +34,7 @@ class SerializedPayload
     {
         logInfo("[SerializedPayload] delete")
         //  TODO buggy, leads to double free or data corruption ...
-        this->empty();
+        // this->empty();
     }
 
     bool operator == (

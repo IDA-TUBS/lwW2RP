@@ -142,8 +142,10 @@ bool Writer::handleMessages(MessageNet_t *net)
         switch (subMsg->subMsgHeader->submessageId)
         {
         case NACK_FRAG:
+            logDebug("[Writer] received NackFrag")
             nackFrag = (NackFrag*)(subMsg);
-            handleNackFrag(nackFrag);
+            // TODO test later
+            // handleNackFrag(nackFrag);
             break;
         default:
             break;

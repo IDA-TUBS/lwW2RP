@@ -105,11 +105,12 @@ class CacheChange
     ~CacheChange()
     {
         // logDebug("[CacheChange] delete")
-        for(int i = 0; i < numberFragments; i++)
-        {
-            SampleFragment* fragment = this->sampleFragmentArray[i];
-            delete fragment;
-        }
+        // for(int i = 0; i < numberFragments; i++)
+        // {
+        //     SampleFragment* fragment = this->sampleFragmentArray[i];
+        //     delete fragment;
+        // }
+        delete this->sampleFragmentArray;
     };
 
     /**

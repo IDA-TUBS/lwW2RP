@@ -164,7 +164,7 @@ struct MessageNet_t
      */
     int read(void* val, unsigned long size)
     {
-        logDebug("[MessageNet_t] read data in [" << pos << "," << pos + size << "]")
+        // logDebug("[MessageNet_t] read() data in [" << pos << "," << pos + size << "]")
         if(pos+size <= length)
         {
             memcpy(val, (buffer+pos), size);
@@ -186,7 +186,7 @@ struct MessageNet_t
      */
     bool movePos(int32_t diff)
     {
-        logDebug("[MessageNet_t] movePos (" << this->pos << ") by diff: " << diff)
+        // logDebug("[MessageNet_t] movePos (" << this->pos << ") by diff: " << diff)
         uint32_t temp = this->pos;
 
         temp += diff;

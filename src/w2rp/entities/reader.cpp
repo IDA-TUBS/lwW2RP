@@ -107,22 +107,23 @@ bool Reader::handleMessages(MessageNet_t *net)
         }
     }
 
-    delete dataFrag;
-    delete hbFrag;
-    delete net;
+    // delete dataFrag;
+    // delete hbFrag;
+    // delete net;
     return true;
 }
 
 bool Reader::handleDataFrag(DataFrag *msg)
 {
     // DataFrag received, update cache
+    logDebug("[Reader] handle  DataFrag")
 
     // TODO check for matching ReaderID??
 
     // first check liveliness of previous samples
     checkSampleLiveliness();
 
-    // create new change
+    // create new change for temporary usage
     auto change = new CacheChange(msg->writerSN, msg->dataSize, msg->fragmentSize, msg->timestamp);
     writerProxy->addChange(*change); // only adds change if new, else WriterProxy does nothing here
 
@@ -150,11 +151,13 @@ bool Reader::handleDataFrag(DataFrag *msg)
 
 bool Reader::handleHBFrag(HeartbeatFrag *msg)
 {
+    
+    logDebug("[Reader] handle HBFrag")
     auto change = writerProxy->getChange(msg->writerSN);
 
     uint32_t lastFragmentNum = msg->lastFragmentNum;
 
-    std::vector<uint32_t> *missingFragments;
+    std::vector<uint32_t> missingFragments;
 
     uint32_t bitmapBase = 0;
     if(msg->lastFragmentNum > 256)
@@ -162,19 +165,23 @@ bool Reader::handleHBFrag(HeartbeatFrag *msg)
         bitmapBase = msg->lastFragmentNum - 256;
     }
 
-    change->getMissingFragments(lastFragmentNum, missingFragments);
+    change->getMissingFragments(lastFragmentNum, &missingFragments);
 
     unsigned char bitmap[8] = {0};
 
-    for(auto fn: *missingFragments)
+    if(missingFragments.size() > 0)
     {
-        // Calculate the index in the bitmap array
-        uint32_t index = (fn - bitmapBase) / 8;
-        // Calculate the bit position within the byte
-        uint32_t bitPosition = (fn - bitmapBase) % 8;
-        // Set the bit at the calculated index and position
-        bitmap[index] |= (1 << bitPosition);
+        for(auto fn: missingFragments)
+        {
+            // Calculate the index in the bitmap array
+            uint32_t index = (fn - bitmapBase) / 8;
+            // Calculate the bit position within the byte
+            uint32_t bitPosition = (fn - bitmapBase) % 8;
+            // Set the bit at the calculated index and position
+            bitmap[index] |= (1 << bitPosition);
+        }
     }
+    // else sent back an empty bitmap    
 
     // create W2RP header
     W2RPHeader *header = new W2RPHeader(config.guidPrefix);
@@ -193,13 +200,13 @@ bool Reader::handleHBFrag(HeartbeatFrag *msg)
     response->nackToNet(txMsg);
 
     // send message via UDP
-    CommInterface->sendMsg(*txMsg);
+    // CommInterface->sendMsg(*txMsg);
     
 
-    // delete object
-    delete header;
-    delete response;
-    delete txMsg;
+    // delete objects
+    // delete header;
+    // delete response;
+    // delete txMsg;
 
     return true;
 }

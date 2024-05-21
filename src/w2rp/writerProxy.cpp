@@ -3,6 +3,7 @@
  */
 
 #include <w2rp/writerProxy.hpp>
+#include <w2rp/log.hpp>
 
 namespace w2rp {
 
@@ -13,11 +14,13 @@ bool WriterProxy::addChange(CacheChange &change)
         // no new sample, no need to add to history
         return false;
     }
-
+    logDebug("[WriterProxy] added change " << change.sequenceNumber << " to history")
     ChangeForWriter* cfr = new ChangeForWriter(change);
 
     history.push_back(cfr);
     highestSequenceNumber = change.sequenceNumber;
+
+
     return true;
 }
 
@@ -59,6 +62,7 @@ bool WriterProxy::updateFragmentStatus(fragmentStates status, uint32_t sequenceN
     {
         bool status_state = tmp->setFragmentStatus(status, fragmentNumber);
         bool status_data = tmp->setFragmentData(fragmentNumber, data, dataLength);
+        logDebug("[WriterProxy] update fragment " << fragmentNumber)
 
         return (status_data && status_state);
     }
