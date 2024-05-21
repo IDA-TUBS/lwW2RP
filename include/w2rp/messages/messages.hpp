@@ -8,7 +8,6 @@
 #include <w2rp/log.hpp>
 
 
-
 namespace w2rp {
 
 enum SUBMESSAGES
@@ -37,7 +36,12 @@ class W2RPHeader
      * @brief constructor for empty submessage object
      */
     W2RPHeader()
-    {};
+    {
+        this->length = sizeof(this->protocol) + 
+                        sizeof(this->version) + 
+                        sizeof(this->vendorID) + 
+                        sizeof(this->guidPrefix);
+    };
 
 
     /**
@@ -129,7 +133,12 @@ class SubmessageHeader
      * @brief constructor for empty submessage object
      */
     SubmessageHeader()
-    {};
+    {
+        this->length = sizeof(this->submessageId) + 
+                        sizeof(this->submessageLength) + 
+                        sizeof(this->flags) + 
+                        sizeof(this->is_last);
+    };
 
     /**
      * @brief constructor
@@ -225,7 +234,9 @@ class DataFrag: public SubmessageBase
      * @brief constructor for empty submessage object
      */
     DataFrag()
-    {};
+    {
+        subMsgHeader = new SubmessageHeader(DATA_FRAG, this->length, false);
+    };
 
     /**
      * @brief constructor
@@ -246,6 +257,8 @@ class DataFrag: public SubmessageBase
         memset(this->serializedPayload, 0, fragmentSize * sizeof(unsigned char));
         memcpy(this->serializedPayload, payload, fragmentSize);
 
+        subMsgHeader = new SubmessageHeader(DATA_FRAG, this->length, false);
+
         this->length = sizeof(readerID) +
                        sizeof(writerID) +
                        sizeof(writerSN) +
@@ -253,8 +266,6 @@ class DataFrag: public SubmessageBase
                        sizeof(fragmentsInSubmessage) +
                        sizeof(timestamp) +
                        fragmentSize;
-
-        subMsgHeader = new SubmessageHeader(DATA_FRAG, this->length, false);
     };
 
     /**
@@ -331,7 +342,16 @@ class NackFrag: public SubmessageBase
     * @brief constructor for empty submessage object
     */
     NackFrag()
-    {};
+    {
+        subMsgHeader = new SubmessageHeader(NACK_FRAG, this->length, false);
+
+        this->length = sizeof(readerID) +
+                       sizeof(writerID) +
+                       sizeof(writerSN) +
+                       sizeof(count) +
+                       fragmentNumberState.size;
+
+    };
 
     /** 
      * @brief constructor
@@ -346,13 +366,13 @@ class NackFrag: public SubmessageBase
         memcpy(this->fragmentNumberState.bitmap, fragmentStates, 8);
         this->fragmentNumberState.bitmapBase = bitmapBase;
 
+        subMsgHeader = new SubmessageHeader(NACK_FRAG, this->length, false);
+
         this->length = sizeof(readerID) +
                        sizeof(writerID) +
                        sizeof(writerSN) +
                        sizeof(count) +
                        fragmentNumberState.size;
-
-        subMsgHeader = new SubmessageHeader(NACK_FRAG, this->length, false);
     };
 
     /**
@@ -411,7 +431,15 @@ class HeartbeatFrag: public SubmessageBase
     * @brief constructor for empty submessage object
     */
     HeartbeatFrag()
-    {};
+    {
+        subMsgHeader = new SubmessageHeader(HEARTBEAT_FRAG, this->length, false);
+
+        this->length = sizeof(readerID) +
+                       sizeof(writerID) +
+                       sizeof(writerSN) +
+                       sizeof(lastFragmentNum) + 
+                       sizeof(count);
+    };
 
     /**
      * @brief default constructor
@@ -424,12 +452,13 @@ class HeartbeatFrag: public SubmessageBase
              lastFragmentNum(lastFragmentNum),
              count(HBFragCount)
     {
+        subMsgHeader = new SubmessageHeader(HEARTBEAT_FRAG, this->length, false);
+
         this->length = sizeof(readerID) +
                        sizeof(writerID) +
                        sizeof(writerSN) +
                        sizeof(lastFragmentNum) + 
                        sizeof(count);
-        subMsgHeader = new SubmessageHeader(HEARTBEAT_FRAG, this->length, false);
     };
 
     /**

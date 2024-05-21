@@ -43,6 +43,11 @@ void SubmessageHeader::netToHeader(MessageNet_t* msg)
     msg->read(&submessageLength, sizeof(submessageLength));
     msg->read(&flags, sizeof(flags));
     msg->read(&is_last, sizeof(is_last));
+
+    this->length = sizeof(this->submessageId) + 
+                        sizeof(this->submessageLength) + 
+                        sizeof(this->flags) + 
+                        sizeof(this->is_last);
 }
 
 void DataFrag::dataToNet(MessageNet_t* msg)
@@ -62,7 +67,7 @@ void DataFrag::dataToNet(MessageNet_t* msg)
     msg->add(&fragmentsInSubmessage, sizeof(fragmentsInSubmessage));
     msg->add(&dataSize, sizeof(dataSize));
     msg->add(&fragmentSize, sizeof(fragmentSize));
-    msg->add(serializedPayload, sizeof(fragmentSize));
+    msg->add(serializedPayload, fragmentSize);
     msg->add(&timestamp, sizeof(timestamp));
 }
 
@@ -80,8 +85,18 @@ void DataFrag::netToData(MessageNet_t* msg)
     msg->read(&fragmentsInSubmessage, sizeof(fragmentsInSubmessage));
     msg->read(&dataSize, sizeof(dataSize));
     msg->read(&fragmentSize, sizeof(fragmentSize));
-    msg->read(serializedPayload, sizeof(fragmentSize));
+    logDebug("[DataFrag] 8")
+    msg->read(serializedPayload, fragmentSize);
+    logDebug("[DataFrag] 9")
     msg->read(&timestamp, sizeof(timestamp));
+    
+    this->length = sizeof(readerID) +
+                sizeof(writerID) +
+                sizeof(writerSN) +
+                sizeof(fragmentStartingNum) +
+                sizeof(fragmentsInSubmessage) +
+                sizeof(timestamp) +
+                fragmentSize;
 }
 
 void DataFrag::print()
@@ -170,25 +185,30 @@ void NetMessageParser::getSubmessages(MessageNet_t* msg, std::vector<SubmessageB
     subMsgHeader = new SubmessageHeader();
 
     w2rpHeader->netToHeader(msg);
+    logDebug("[NetMessageParser] Parse packet of length: " << msg->length)
 
     while (true)
     {
+        logDebug("[NetMessageParser] Parse SubmessageHeader, pos: " << msg->pos)
         // check if end of message has been reached
         if(msg->pos >= (msg->length - 1))
         {
             // end of message reached
+            logDebug("[NetMessageParser] end of message reached, pos: " << msg->pos)
             break;
         }
 
         // parse submessage header
         subMsgHeader->netToHeader(msg);
+        logDebug("[NetMessageParser] SubmessageHeader, length: " << subMsgHeader->length)
 
         // based on id, parse corresponding submessage
         switch (subMsgHeader->submessageId)
         {
         case DATA_FRAG:
-            if(msg->movePos(subMsgHeader->length))
+            if(msg->movePos(-(subMsgHeader->length)))
             {
+                logDebug("[NetMessageParser] Parse DataFrag, pos: " << msg->pos)
                 DataFrag *dataFrag;
                 dataFrag = new DataFrag();
 
@@ -199,12 +219,14 @@ void NetMessageParser::getSubmessages(MessageNet_t* msg, std::vector<SubmessageB
             else
             {
                 // something went wrong
+                logDebug("[NetMessageParser] something went wrong")
                 // TODO handle error
             }
             break;
         case HEARTBEAT_FRAG:
-            if(msg->movePos(subMsgHeader->length))
+            if(msg->movePos(-(subMsgHeader->length)))
             {
+                logDebug("[NetMessageParser] Parse HeartbeatFrag, pos: " << msg->pos)
                 HeartbeatFrag *hbFrag;
                 hbFrag = new HeartbeatFrag();
 
@@ -215,12 +237,14 @@ void NetMessageParser::getSubmessages(MessageNet_t* msg, std::vector<SubmessageB
             else
             {
                 // something went wrong
+                logDebug("[NetMessageParser] something went wrong")
                 // TODO handle error
             }
             break;
         case NACK_FRAG:
-            if(msg->movePos(subMsgHeader->length))
+            if(msg->movePos(-(subMsgHeader->length)))
             {
+                logDebug("[NetMessageParser] Parse NackFrag, pos: " << msg->pos)
                 NackFrag *nackFrag;
                 nackFrag = new NackFrag();
 
@@ -231,6 +255,7 @@ void NetMessageParser::getSubmessages(MessageNet_t* msg, std::vector<SubmessageB
             else
             {
                 // something went wrong
+                logDebug("[NetMessageParser] something went wrong")
                 // TODO handle error
             }
             break;

@@ -54,12 +54,12 @@ void Reader::receiveMsg()
 {      
     // msg to store received data
     MessageNet_t msg;
-   
+
     while(true)
     {      
         CommInterface->receiveMsg(msg);
-
         receiveQueue.enqueue(msg);
+        logDebug("[Reader] received an enqueued message")
     }
 }
 
@@ -72,6 +72,7 @@ void Reader::handleMsg()
     while(true)
     {              
         msg = receiveQueue.dequeue();
+        logDebug("[Reader] read msg from queue")
         
         handleMessages(&msg);
     }
@@ -79,6 +80,7 @@ void Reader::handleMsg()
 
 bool Reader::handleMessages(MessageNet_t *net)
 {
+    logDebug("[Reader] handleMessages")
     // first extract submessages from msg
     std::vector<SubmessageBase*> res;
 
@@ -89,6 +91,7 @@ bool Reader::handleMessages(MessageNet_t *net)
     HeartbeatFrag* hbFrag;
     for(auto subMsg : res)
     {
+        logDebug("[Reader] handle submessage " << subMsg->subMsgHeader->submessageId)
         switch (subMsg->subMsgHeader->submessageId)
         {
         case DATA_FRAG:
