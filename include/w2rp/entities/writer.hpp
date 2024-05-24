@@ -18,7 +18,7 @@ namespace w2rp {
 
 typedef enum
 {
-    NONE,
+    NONE = 0,
     FIXED,
     ADAPTIVE_LOW_PDR,
     ADAPTIVE_HIGH_PDR

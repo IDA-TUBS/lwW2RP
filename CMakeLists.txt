@@ -132,6 +132,8 @@ set(SRC_FILES
   ${ALL_HEADERS}
 
   src/w2rp/timer/timerManager.cpp
+  src/w2rp/config/readerConfig.cpp
+  src/w2rp/config/writerConfig.cpp
 )
 
 
@@ -143,10 +145,14 @@ target_link_libraries(timer_test_function w2rp)
 add_executable(timer_test_object test/timer/timer_test_object.cpp ${SRC_FILES})
 target_link_libraries(timer_test_object w2rp)
 
-## Writer testing
-add_executable(writer_test test/entities/writer_test.cpp ${SRC_FILES})
-target_link_libraries(writer_test w2rp)
+# ## Writer testing
+# add_executable(writer_test test/entities/writer_test.cpp ${SRC_FILES})
+# target_link_libraries(writer_test w2rp)
 
-## Reader testing
-add_executable(reader_test test/entities/reader_test.cpp ${SRC_FILES})
-target_link_libraries(reader_test w2rp)
+# ## Reader testing
+# add_executable(reader_test test/entities/reader_test.cpp ${SRC_FILES})
+# target_link_libraries(reader_test w2rp)
+
+## Config testing
+add_executable(readConfig_test test/config/readConfig_test.cpp ${SRC_FILES})
+target_link_libraries(readConfig_test w2rp)

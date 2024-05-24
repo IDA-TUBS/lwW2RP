@@ -19,7 +19,7 @@ enum TimerType
     SYSTEM_TIMER
 };
 
-typedef std::pair<TimerType ,size_t> timerID;
+typedef std::pair<TimerType,size_t> timerID;
 
 class TimerManager
 {
