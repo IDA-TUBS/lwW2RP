@@ -135,6 +135,8 @@ bool Reader::handleDataFrag(DataFrag *msg)
     // if sample complete, send data up to application
     if(complete)
     {
+        logDebug("[Reader] sample complete")
+
         // create serializedPayload some sf data
         auto cfw  = writerProxy->getChange(change->sequenceNumber);
         SerializedPayload sampleData;
@@ -142,6 +144,9 @@ bool Reader::handleDataFrag(DataFrag *msg)
 
         // push to sampleQueue (application)
         sampleQueue.enqueue(sampleData);
+        
+        logDebug("[Reader] sample enqueued")
+        logDebug(std::endl << std::endl)
     }    
 
     delete change;

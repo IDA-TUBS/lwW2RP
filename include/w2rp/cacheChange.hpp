@@ -66,7 +66,8 @@ class CacheChange
         sampleSize(sampleSize),
         fragmentSize(fragmentSize),
         numberFragments(int(ceil((float)sampleSize / (float)fragmentSize))),
-        arrivalTime(timestamp)
+        arrivalTime(timestamp),
+        sampleFragmentArray(nullptr)
     {
         // sampleFragmentArray = new SampleFragment*[this->numberFragments];
 
@@ -104,13 +105,23 @@ class CacheChange
      */
     ~CacheChange()
     {
-        // logDebug("[CacheChange] delete")
-        // for(int i = 0; i < numberFragments; i++)
-        // {
-        //     SampleFragment* fragment = this->sampleFragmentArray[i];
-        //     delete fragment;
-        // }
-        delete this->sampleFragmentArray;
+        logDebug("[CacheChange] delete")
+
+        if(this->sampleFragmentArray)
+        {
+            logDebug("[sampleFragmentArray] delete")
+            for (uint32_t i = 0; i < this->numberFragments; i++) {
+                logDebug("[sampleFragment] delete: " << i)
+                delete this->sampleFragmentArray[i]; // Free memory for each SampleFragment object
+            }
+            logDebug("[sampleFragmentArray] final delete")
+            delete[] this->sampleFragmentArray; // Free the array itself
+            
+        }
+        else
+        {
+            logDebug("[sampleFragmentArray] nullptr")
+        }
     };
 
     /**
