@@ -59,7 +59,7 @@ void Reader::receiveMsg()
     {      
         CommInterface->receiveMsg(msg);
         receiveQueue.enqueue(msg);
-        logDebug("[Reader] received an enqueued message")
+        logDebug("[Reader] received and enqueued message")
     }
 }
 
@@ -135,8 +135,6 @@ bool Reader::handleDataFrag(DataFrag *msg)
     // if sample complete, send data up to application
     if(complete)
     {
-        logDebug("[Reader] sample complete")
-
         // create serializedPayload some sf data
         auto cfw  = writerProxy->getChange(change->sequenceNumber);
         SerializedPayload sampleData;
@@ -145,7 +143,6 @@ bool Reader::handleDataFrag(DataFrag *msg)
         // push to sampleQueue (application)
         sampleQueue.enqueue(sampleData);
         
-        logDebug("[Reader] sample enqueued")
         logDebug(std::endl << std::endl)
     }    
 
@@ -200,12 +197,15 @@ bool Reader::handleHBFrag(HeartbeatFrag *msg)
 
 
     // serialization (toNet) and concatenation of submessages 
-    MessageNet_t *txMsg;
-    header->headerToNet(txMsg);
-    response->nackToNet(txMsg);
+    MessageNet_t *nackFrag = new MessageNet_t;
+    logDebug("[Reader] Adding NackFrag Header")
+    header->headerToNet(nackFrag);
+    logDebug("[Reader] Adding NackFrag Response")
+    response->nackToNet(nackFrag);
 
     // send message via UDP
-    // CommInterface->sendMsg(*txMsg);
+    logDebug("[Reader] Sending NackFrag")
+    CommInterface->sendMsg(*nackFrag);
     
 
     // delete objects
@@ -261,12 +261,6 @@ void Reader::buildSerializedSample(ChangeForWriter *cfw, SerializedPayload &samp
 
     sampleData = payload;
 }
-
-
-
-
-
-
 
 
 /*************************************************/
