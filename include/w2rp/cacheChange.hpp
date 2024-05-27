@@ -105,22 +105,16 @@ class CacheChange
      */
     ~CacheChange()
     {
-        logDebug("[CacheChange] delete")
-
         if(this->sampleFragmentArray)
         {
-            logDebug("[sampleFragmentArray] delete")
             for (uint32_t i = 0; i < this->numberFragments; i++) {
-                logDebug("[sampleFragment] delete: " << i)
                 delete this->sampleFragmentArray[i]; // Free memory for each SampleFragment object
             }
-            logDebug("[sampleFragmentArray] final delete")
-            delete[] this->sampleFragmentArray; // Free the array itself
-            
+            delete[] this->sampleFragmentArray; // Free the array itself   
         }
         else
         {
-            logDebug("[sampleFragmentArray] nullptr")
+            // Nothing
         }
     };
 

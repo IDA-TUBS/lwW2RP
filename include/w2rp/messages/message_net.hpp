@@ -67,7 +67,7 @@ struct MessageNet_t
 	 */
 	explicit MessageNet_t(uint32_t size)
 	{   
-        // logDebug("[MESSAGE_NET] constructor")
+        logDebug("[MESSAGE_NET] constructor")
 		pos = 0;
 		length = 0;
 
@@ -119,7 +119,7 @@ struct MessageNet_t
         }
         else
         {
-            // logDebug("[MESSAGE_NET] add: max_size exceeded")
+            logDebug("[MESSAGE_NET] add: max_size exceeded")
             return -1;
         }
     }

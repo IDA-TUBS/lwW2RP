@@ -30,7 +30,7 @@ class ReaderProxy
 
   public:
     /// entity of corresponding reader
-    uint32_t readerID;
+    uint32_t readerID;  
     /// the reader's priority
     uint32_t priority;
 

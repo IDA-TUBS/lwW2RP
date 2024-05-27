@@ -20,7 +20,6 @@ bool WriterProxy::addChange(CacheChange &change)
     history.push_back(cfr);
     highestSequenceNumber = change.sequenceNumber;
 
-
     return true;
 }
 

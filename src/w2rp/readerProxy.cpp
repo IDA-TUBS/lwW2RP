@@ -9,14 +9,17 @@ namespace w2rp {
 
 bool ReaderProxy::addChange(CacheChange &change)
 {
+    logDebug("[ReaderProxy] adding change: " << history.size())
     if(history.size() == historySize)
     {
         // cannot add a new change the history
+        logDebug("[ReaderProxy] cannot add a new change the history")
         return false;
     }
     ChangeForReader* cfr = new ChangeForReader(this->readerID, change);
 
     history.push_back(cfr);
+    logDebug("[ReaderProxy] adding change complete: " << history.size())
     return true;
 }
 
@@ -75,6 +78,8 @@ bool ReaderProxy::updateFragmentStatus (fragmentStates status, uint32_t sequence
 
 bool ReaderProxy::processNack(NackFrag *msg) 
 {
+    logDebug("[ReaderProxy - processNack]: " << readerID)
+    
     auto t_now = std::chrono::system_clock::now();
     // to be called by writer NackFrag reception callback
     
@@ -86,10 +91,12 @@ bool ReaderProxy::processNack(NackFrag *msg)
         return false;
     }
 
+    logDebug("[ReaderProxy - processNack] traversing history: " << history.size())
     // access change with the given sequence number
     ChangeForReader* change = nullptr;
     for(auto cfr: history)
     {
+        logDebug("[ReaderProxy - processNack] checking change: " << cfr->lastSentFN)
         if (cfr->sequenceNumber == sequenceNumber)
         {
             change = cfr;

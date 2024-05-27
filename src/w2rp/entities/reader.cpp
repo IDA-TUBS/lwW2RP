@@ -16,7 +16,7 @@ Reader::Reader()
     config.writerAddress = "127.0.0.1";
     config.writerPort = 50001;
     config.sizeCache = 2;
-    config.readerUuid = 1;
+    config.readerUuid = 0;
     memcpy(config.guidPrefix, "_GUIDPREFIX_", 12);
     config.priority = 1;
 
@@ -197,15 +197,15 @@ bool Reader::handleHBFrag(HeartbeatFrag *msg)
 
 
     // serialization (toNet) and concatenation of submessages 
-    MessageNet_t *nackFrag = new MessageNet_t;
+    MessageNet_t *txMsg = new MessageNet_t;
     logDebug("[Reader] Adding NackFrag Header")
-    header->headerToNet(nackFrag);
+    header->headerToNet(txMsg);
     logDebug("[Reader] Adding NackFrag Response")
-    response->nackToNet(nackFrag);
+    response->nackToNet(txMsg);
 
     // send message via UDP
     logDebug("[Reader] Sending NackFrag")
-    CommInterface->sendMsg(*nackFrag);
+    CommInterface->sendMsg(*txMsg);
     
 
     // delete objects
