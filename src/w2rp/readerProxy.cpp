@@ -5,6 +5,8 @@
 #include <w2rp/readerProxy.hpp>
 #include <w2rp/log.hpp>
 
+#include <bitset>
+
 namespace w2rp {
 
 bool ReaderProxy::addChange(CacheChange &change)
@@ -78,8 +80,6 @@ bool ReaderProxy::updateFragmentStatus (fragmentStates status, uint32_t sequence
 
 bool ReaderProxy::processNack(NackFrag *msg) 
 {
-    logDebug("[ReaderProxy - processNack]: " << readerID)
-    
     auto t_now = std::chrono::system_clock::now();
     // to be called by writer NackFrag reception callback
     
@@ -91,12 +91,10 @@ bool ReaderProxy::processNack(NackFrag *msg)
         return false;
     }
 
-    logDebug("[ReaderProxy - processNack] traversing history: " << history.size())
     // access change with the given sequence number
     ChangeForReader* change = nullptr;
     for(auto cfr: history)
     {
-        logDebug("[ReaderProxy - processNack] checking change: " << cfr->lastSentFN)
         if (cfr->sequenceNumber == sequenceNumber)
         {
             change = cfr;
@@ -114,6 +112,9 @@ bool ReaderProxy::processNack(NackFrag *msg)
     uint32_t smallestFN = bitmapStruct.bitmapBase;
     uint32_t highestFN = msg->count;
 
+    logDebug("[ReaderProxy] min FN: " << unsigned(smallestFN) << " max FN: " << unsigned(highestFN))
+    logDebug("[ReaderProxy] bitmap: " << std::bitset<8>(bitmap[0]))
+
     // iterate over all relevant bits of the NackFrag bitmap
     for(uint32_t i = 0; i <= highestFN - smallestFN; i++)
     {
@@ -123,17 +124,25 @@ bool ReaderProxy::processNack(NackFrag *msg)
 
         if(currentFragment->acked){
             // skip processing of already acknowledged fragments
+            logDebug("[ReaderProxy] Fragment " << currentFragment->fragmentStartingNum << " acked")
             continue;
         }
         
+        logDebug("[ReaderProxy] Fragment " << currentFragment->fragmentStartingNum << " not acked")
+
         // Calculate the index of the byte containing the current bit
         int byte_index = i / 8;
         // Calculate the position of the bit within the byte
-        int bit_position = 7 - (i % 8);
+        // int bit_position = 7 - (i % 8);
+
+        int bit_position = i % 8;
+
+        logDebug("[ReaderProxy] byte index: " << byte_index << " bit position: " << bit_position) 
 
         // Check if the bit is set
-        if (!bitmap[byte_index] & (1 << bit_position)) {
+        if (!(bitmap[byte_index] & (1 >> bit_position))) {
             // fragment not noted as missing -> consider as acked
+            logDebug("[ReaderProxy] Fragment " << currentFragment->fragmentStartingNum << " update acked")
             this->updateFragmentStatus(ACKED, sequenceNumber, fragmentNum, t_now);
         } else {
             // fragment noted as missing

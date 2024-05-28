@@ -151,8 +151,6 @@ bool Writer::handleMessages(MessageNet_t *net)
         }
     }
 
-    delete nackFrag;
-    delete net;
     return true;
 }
 
@@ -190,7 +188,6 @@ bool Writer::addSampleToCache(SerializedPayload *data, std::chrono::system_clock
     newChange->setFragmentArray(&fragments);
     // logDebug("[Writer] added fragmented data to change")
     
-
 
     // add CacheChange to history
     if(historyCache.size() == this->config.sizeCache)

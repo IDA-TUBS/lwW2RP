@@ -67,7 +67,6 @@ struct MessageNet_t
 	 */
 	explicit MessageNet_t(uint32_t size)
 	{   
-        logDebug("[MESSAGE_NET] constructor")
 		pos = 0;
 		length = 0;
 

@@ -143,6 +143,7 @@ bool Reader::handleDataFrag(DataFrag *msg)
         // push to sampleQueue (application)
         sampleQueue.enqueue(sampleData);
         
+        logInfo("[Reader] sample complete")
         logDebug(std::endl << std::endl)
     }    
 
