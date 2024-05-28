@@ -205,6 +205,8 @@ bool ReaderProxy::checkSampleCompleteness(uint32_t sequenceNumber)
     {
         // remove sample from history? maybe just remove if expired or all readers completed reception of a given sample
         // done elsewhere
+        // TODO really??
+        logDebug("[ReaderProxy] sample acknowledged completely.\n----------------------------------------------------------------------------------------------")
     }
     return complete;
 }

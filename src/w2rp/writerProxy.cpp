@@ -61,7 +61,6 @@ bool WriterProxy::updateFragmentStatus(fragmentStates status, uint32_t sequenceN
     {
         bool status_state = tmp->setFragmentStatus(status, fragmentNumber);
         bool status_data = tmp->setFragmentData(fragmentNumber, data, dataLength);
-        logDebug("[WriterProxy] update fragment " << fragmentNumber)
 
         return (status_data && status_state);
     }

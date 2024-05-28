@@ -143,8 +143,10 @@ bool Reader::handleDataFrag(DataFrag *msg)
         // push to sampleQueue (application)
         sampleQueue.enqueue(sampleData);
         
-        logInfo("[Reader] sample complete")
-        logDebug(std::endl << std::endl)
+        logDebug("[Reader] sample complete: " << sampleData.data << "\n----------------------------------------------------------------------------------------------")
+        // logDebug(std::endl << std::endl)
+
+        // TODO remove sample from history?
     }    
 
     delete change;
@@ -228,10 +230,11 @@ bool Reader::handleHBFrag(HeartbeatFrag *msg)
     SerializedPayload sample;
 
     while(true)
-    {              
+    {               
         sample = sampleQueue.dequeue();
-        
+
         data = sample;
+        logInfo("[Reader] sampleQueue dequeue - length:" << sample.length << " data: " << sample.data);
     }
  }
 
@@ -256,9 +259,12 @@ void Reader::buildSerializedSample(ChangeForWriter *cfw, SerializedPayload &samp
         auto sf = fragmentArray[i];
         memcpy(data + pos, sf->data, sf->dataSize);
         pos += sf->dataSize;
+        logDebug("[Reader] buildSerializedSample: " << sf->data <<  "(size: " << sf->dataSize << ") - " << data)
     }
 
     SerializedPayload payload(data, cfw->sampleSize);
+    logDebug("[Reader] buildSerializedSample: " << sampleData.data)
+    // TODO some stuff at the end of data
 
     sampleData = payload;
 }

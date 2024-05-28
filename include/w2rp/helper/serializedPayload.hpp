@@ -30,6 +30,20 @@ class SerializedPayload
     {
     }
 
+    // /**
+    //  * @brief copy constructor
+    //  *
+    //  * @param sp reference to object to be copied
+    //  */
+    // SerializedPayload(SerializedPayload &sp): 
+    //                         length(sp.length),
+    //                         max_size(sp.length)
+    // {
+    //     this->reserve(length);
+    //     memset(this->data, 0, length * sizeof(unsigned char));
+    //     memcpy(this->data, sp.data, this->length);
+    // }
+
     ~SerializedPayload()
     {
         logInfo("[SerializedPayload] delete")

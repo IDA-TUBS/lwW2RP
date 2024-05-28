@@ -52,6 +52,7 @@ bool ChangeForWriter::setFragmentData(uint32_t fragmentNumber, unsigned char *da
     {
         auto t = std::chrono::system_clock::now();
         frag->setData(data, dataLength, fragmentNumber, t);
+        // logDebug("[ChangeForWriter] update fragment " << fragmentNumber << ": " << frag->data)
     }
 
     
