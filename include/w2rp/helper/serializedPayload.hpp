@@ -31,7 +31,7 @@ class SerializedPayload
     }
 
     // /**
-    //  * @brief copy constructor
+    //  * @brief copy constructor //TODO leads to "error: binding reference of type ‘w2rp::SerializedPayload&’ to ‘const w2rp::SerializedPayload’ discards qualifiers"
     //  *
     //  * @param sp reference to object to be copied
     //  */
@@ -39,7 +39,7 @@ class SerializedPayload
     //                         length(sp.length),
     //                         max_size(sp.length)
     // {
-    //     this->reserve(length);
+    //     this->data = new unsigned char[length];
     //     memset(this->data, 0, length * sizeof(unsigned char));
     //     memcpy(this->data, sp.data, this->length);
     // }
@@ -58,52 +58,53 @@ class SerializedPayload
                (0 == memcmp(data, other.data, length)));
     }
 
-    bool copy(
-            const SerializedPayload* serData,
-            bool with_limit = true)
-    {
-        length = serData->length;
+    // bool copy(
+    //         const SerializedPayload* serData,
+    //         bool with_limit = true)
+    // {
+    //     logInfo("[SerializedPayload] copy")
+    //     length = serData->length;
         
-        this->reserve(serData->length);
+    //     this->reserve(serData->length);
     
-        memcpy(data, serData->data, length);
-        return true;
-    }
+    //     memcpy(data, serData->data, length);
+    //     return true;
+    // }
 
-    void empty()
-    {
-        length = 0;
-        if (data != nullptr)
-        {
-            free(data);
-        }
-        data = nullptr;
-    }
+    // void empty()
+    // {
+    //     length = 0;
+    //     if (data != nullptr)
+    //     {
+    //         free(data);
+    //     }
+    //     data = nullptr;
+    // }
 
-    void reserve(
-            uint32_t new_size)
-    {
-        if (data == nullptr)
-        {
-            data = (unsigned char*)calloc(new_size, sizeof(unsigned char));
-            if (!data)
-            {
-                throw std::bad_alloc();
-            }
-        }
-        else
-        {
-            void* old_data = data;
-            data = (unsigned char*)realloc(data, new_size);
-            if (!data)
-            {
-                free(old_data);
-                throw std::bad_alloc();
-            }
-            memset(data + max_size, 0, (new_size - max_size) * sizeof(unsigned char));
-        }
-        max_size = new_size;
-    }
+    // void reserve(
+    //         uint32_t new_size)
+    // {
+    //     if (data == nullptr)
+    //     {
+    //         data = (unsigned char*)calloc(new_size, sizeof(unsigned char));
+    //         if (!data)
+    //         {
+    //             throw std::bad_alloc();
+    //         }
+    //     }
+    //     else
+    //     {
+    //         void* old_data = data;
+    //         data = (unsigned char*)realloc(data, new_size);
+    //         if (!data)
+    //         {
+    //             free(old_data);
+    //             throw std::bad_alloc();
+    //         }
+    //         memset(data + max_size, 0, (new_size - max_size) * sizeof(unsigned char));
+    //     }
+    //     max_size = new_size;
+    // }
 };
 
 }; // end namespace
