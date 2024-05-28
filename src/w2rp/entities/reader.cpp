@@ -249,7 +249,7 @@ bool Reader::handleHBFrag(HeartbeatFrag *msg)
 
 void Reader::buildSerializedSample(ChangeForWriter *cfw, SerializedPayload &sampleData)
 {
-    unsigned char data[cfw->sampleSize];
+    unsigned char* data = new unsigned char[cfw->sampleSize]{0};
 
     uint32_t pos = 0;
 
