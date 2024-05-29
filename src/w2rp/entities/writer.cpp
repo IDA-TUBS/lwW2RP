@@ -13,6 +13,7 @@ Writer::Writer()
     config.deadline =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::seconds(5));
     config.shapingTime =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::microseconds(10000));
     config.nackSuppressionDuration =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::microseconds(20000));
+    config.timeout =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::microseconds(20000));
     config.numberReaders = 1;
     config.readerAddress = "127.0.0.1";
     config.readerPort = 50000;
@@ -69,6 +70,14 @@ Writer::Writer()
     );
     // only start timer once data available, hence stop immediately
     shapingTimer->cancel();  
+
+    timeoutTimer = new TimedEvent(
+        this->timer_manager,
+        std::bind(&Writer::handleTimeout, this)
+    );
+    // only start timer if timeout situation occurs, hence stop immediately
+    timeoutTimer->cancel();
+
 
     timer_manager.start();
 
@@ -249,11 +258,6 @@ void Writer::handleNackFrag(NackFrag *msg)
 /* methods used during fragment transmission */
 /*********************************************/
 
-// bool Writer::timerHandler()
-// {
-//     logInfo("Test")
-//     return true;
-// };
 
 bool Writer::sendMessage(){
     // logDebug("[Writer] sendMessage()")
@@ -314,20 +318,22 @@ bool Writer::sendMessage(){
         {
             rp->updateFragmentStatus(SENT, sf->baseChange->sequenceNumber, sf->fragmentStartingNum, t_now);
 
-            // TODO timeout stuff
-            // // check for timeout situation: reader has no fragments in state 'UNSENT' left
-            // if(rp->checkForTimeout(sf->baseChange->sequenceNumber) && !(rp->timeoutActive))
-            // {
-            //     rp->timeoutActive = true;
-            //     // trigger timeout
-            //     auto nextTimeout = new Timeout("timeoutEvent");
-            //     nextTimeout->setId(rp->getReaderId());
-            //     nextTimeout->setSequenceNumber(sf->baseChange->sequenceNumber);
+            // check for timeout situation: reader has no fragments in state 'UNSENT' left
+            if(rp->checkForTimeout(sf->baseChange->sequenceNumber))
+            {
+                // timeout needed
 
-            //     activeTimeouts++;
+                // determine TO time of fragment
+                auto toTS = t_now + config.timeout;
+                rp->setTimeoutTimestamp(toTS);
 
-            //     scheduleAt(simTime() + timeout, nextTimeout);
-            // }
+                timeoutQueue.push(rp);
+
+                if(!timeoutTimer->isActive())
+                {
+                    timeoutTimer->restart(toTS);
+                }
+            }
         
         // create W2RP header
         W2RPHeader *header = new W2RPHeader(config.guidPrefix);
@@ -650,6 +656,10 @@ void Writer::removeCompleteSamples()
 /* timeout related functions */ 
 /*****************************/
 
+void Writer::handleTimeout()
+{
+    logDebug("[Writer] timeout!")
+}
 
 
 

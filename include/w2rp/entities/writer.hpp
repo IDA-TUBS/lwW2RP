@@ -30,6 +30,7 @@ struct writerCfg
     std::chrono::system_clock::duration deadline;
     std::chrono::system_clock::duration shapingTime;
     std::chrono::system_clock::duration nackSuppressionDuration;
+    std::chrono::system_clock::duration timeout;
     uint8_t numberReaders;
     std::string readerAddress;
     uint16_t readerPort;
@@ -68,7 +69,7 @@ private:
 
     TimerManager timer_manager;
     /// Timed Event for resetting fragments
-    // TimedEvent *timeoutTimer;
+    TimedEvent<> *timeoutTimer;
     /// Timed Event for periodic shaping and sample transmissions
     PeriodicEvent<> *shapingTimer;
 
@@ -91,6 +92,13 @@ private:
 
     /// receive queue
     SafeQueue<MessageNet_t> receiveQueue;
+
+
+    /********************/
+    /* Timeout handling */
+    /********************/
+
+    std::queue<ReaderProxy*> timeoutQueue;
 
 
 

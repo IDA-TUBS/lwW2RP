@@ -36,6 +36,8 @@ class ReaderProxy
 
     /// flag signaling a timeout is active - used for WiMEP
     bool timeoutActive;
+    /// timestamp of next TO if active
+    std::chrono::system_clock::time_point timeoutTS;
 
     /**
      * @brief default constructor
@@ -190,6 +192,18 @@ class ReaderProxy
      * @param sequenceNumber seq number of sample that shall be updated
      */
     void resetTimeoutedFragments(uint32_t sequenceNumber);
+
+
+    /**
+     * @brief set timeout timestamp of reader proxy
+     *
+     * @param timestamp timestamp for when to trigger timeout
+     */
+    void setTimeoutTimestamp(std::chrono::system_clock::time_point timestamp)
+    {
+        this->timeoutActive = true;
+        this->timeoutTS = timestamp;
+    }
 
 };
 
