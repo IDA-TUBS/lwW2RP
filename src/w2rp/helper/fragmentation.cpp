@@ -17,7 +17,7 @@ Fragmentation::~Fragmentation()
 void Fragmentation::fragmentPayload(SerializedPayload* payload, CacheChange *baseChange, std::vector<SampleFragment*>* res, std::chrono::system_clock::time_point arrivalTime, bool compare)
 {
     uint32_t fragmentCount = (payload->length + this->fragSize - 1) / this->fragSize;
-    logInfo("[Writer - Fragmentation] fragments needed: " << fragmentCount)
+    // logDebug("[Writer - Fragmentation] fragments needed: " << fragmentCount)
 
     for (uint32_t fragNum = 1; fragNum <= fragmentCount; fragNum++)
     {
@@ -29,7 +29,7 @@ void Fragmentation::fragmentPayload(SerializedPayload* payload, CacheChange *bas
         memset(fragData, 0, this->fragSize * sizeof(unsigned char));
         memcpy(fragData, &(payload->data[fragmentStart]), fragmentSize);
 
-        logInfo("[Writer - Fragmentation] fragment " << fragNum << " size: " << fragmentSize << " data: " << fragData)
+        // logDebug("[Writer - Fragmentation] fragment " << fragNum << " size: " << fragmentSize << " data: " << fragData)
 
         SampleFragment *fragment = new SampleFragment(baseChange, fragNum - 1, fragmentSize, arrivalTime);
 

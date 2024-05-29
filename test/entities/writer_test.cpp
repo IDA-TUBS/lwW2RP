@@ -30,7 +30,7 @@ void Publisher::runThread(uint32_t number_samples)
     logInfo("\n[APP] Publisher running.")
     for (uint32_t i = 0; i < number_samples; ++i)
     {
-        logInfo("[APP] - Sending sample with index: " << i)
+        logInfo("\n----------------------------------------------------------------------------------------\n[APP] - Sending sample with index: " << i << "\n----------------------------------------------------------------------------------------\n")
         if (!publish())
         {
             --i;

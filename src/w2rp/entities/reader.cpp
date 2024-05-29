@@ -37,6 +37,9 @@ Reader::Reader()
     handlerThread = std::thread{&Reader::handleMsg, this};
 
     this->nackCount = 0;
+
+
+    this->debugCnt = 0;
 }
 
 
@@ -59,20 +62,20 @@ void Reader::receiveMsg()
     {      
         CommInterface->receiveMsg(msg);
         receiveQueue.enqueue(msg);
-        logDebug("[Reader] received and enqueued message")
+        // logDebug("[Reader] received and enqueued message")
     }
 }
 
 
 void Reader::handleMsg()
-{    
+{   
     // msg to store received data
     MessageNet_t msg;
 
     while(true)
     {              
         msg = receiveQueue.dequeue();
-        logDebug("[Reader] read msg from queue")
+        // logDebug("[Reader] read msg from queue")
         
         handleMessages(&msg);
     }
@@ -80,7 +83,18 @@ void Reader::handleMsg()
 
 bool Reader::handleMessages(MessageNet_t *net)
 {
-    logDebug("[Reader] handleMessages")
+    // debug only:
+    if((debugCnt == 1))//|| (debugCnt == 2))
+    {
+        debugCnt++;
+        logDebug("[Reader] lost message")
+        return false;
+    }
+    debugCnt++;
+    // TODO remove previous block
+
+
+    // logDebug("[Reader] handleMessages")
     // first extract submessages from msg
     std::vector<SubmessageBase*> res;
 
@@ -91,7 +105,7 @@ bool Reader::handleMessages(MessageNet_t *net)
     HeartbeatFrag* hbFrag;
     for(auto subMsg : res)
     {
-        logDebug("[Reader] handle submessage " << subMsg->subMsgHeader->submessageId)
+        // logDebug("[Reader] handle submessage " << subMsg->subMsgHeader->submessageId)
         switch (subMsg->subMsgHeader->submessageId)
         {
         case DATA_FRAG:
@@ -143,8 +157,7 @@ bool Reader::handleDataFrag(DataFrag *msg)
         // push to sampleQueue (application)
         sampleQueue.enqueue(sampleData);
         
-        logDebug("[Reader] sample complete: " << sampleData.data << "\n----------------------------------------------------------------------------------------------")
-        // logDebug(std::endl << std::endl)
+        // logDebug("[Reader] sample complete: " << sampleData.data << "\n----------------------------------------------------------------------------------------------")
 
         // TODO remove sample from history?
     }    
@@ -181,7 +194,7 @@ bool Reader::handleHBFrag(HeartbeatFrag *msg)
             // Calculate the index in the bitmap array
             uint32_t index = (fn - bitmapBase) / 8;
             // Calculate the bit position within the byte
-            uint32_t bitPosition = (fn - bitmapBase) % 8;
+            uint32_t bitPosition = 7 - (fn - bitmapBase) % 8;
             // Set the bit at the calculated index and position
             bitmap[index] |= (1 << bitPosition);
         }
@@ -201,9 +214,7 @@ bool Reader::handleHBFrag(HeartbeatFrag *msg)
 
     // serialization (toNet) and concatenation of submessages 
     MessageNet_t *txMsg = new MessageNet_t;
-    logDebug("[Reader] Adding NackFrag Header")
     header->headerToNet(txMsg);
-    logDebug("[Reader] Adding NackFrag Response")
     response->nackToNet(txMsg);
 
     // send message via UDP
@@ -228,7 +239,7 @@ bool Reader::handleHBFrag(HeartbeatFrag *msg)
  {    
     sample = sampleQueue.dequeue();
 
-    logInfo("[Reader] sampleQueue dequeue - length:" << sample.length << " data: " << sample.data);
+    // logDebug("[Reader] sampleQueue dequeue - length:" << sample.length << " data: " << sample.data);
  }
 
 
@@ -252,11 +263,9 @@ void Reader::buildSerializedSample(ChangeForWriter *cfw, SerializedPayload &samp
         auto sf = fragmentArray[i];
         memcpy(data + pos, sf->data, sf->dataSize);
         pos += sf->dataSize;
-        logDebug("[Reader] buildSerializedSample: " << sf->data <<  "(size: " << sf->dataSize << ") - " << data)
     }
 
     sampleData = SerializedPayload(data, cfw->sampleSize);
-    logDebug("[Reader] buildSerializedSample: " << sampleData.data)
     // TODO some stuff at the end of data
 }
 

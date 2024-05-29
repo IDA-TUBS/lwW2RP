@@ -64,12 +64,10 @@ void ChangeForWriter::getMissingFragments(uint32_t lastfragmentNum, std::vector<
     logDebug("[ChangeForWriter] getMissingFragments")
     
     for(uint32_t i = 0; i <= lastfragmentNum; i++){ //lastfragmentNum
-        logDebug("[ChangeForWriter] frag " << i)
         auto frag = sampleFragmentArray[i];
         if(!(frag->received)) {
             logDebug("[ChangeForWriter] missing " << i)
             res->push_back(i);
-            logDebug("[ChangeForWriter] pushed to vec " << i)
         }
     }
 }

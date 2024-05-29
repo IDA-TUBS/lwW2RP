@@ -46,7 +46,7 @@ class SerializedPayload
 
     ~SerializedPayload()
     {
-        logInfo("[SerializedPayload] delete")
+        // logDebug("[SerializedPayload] delete")
         //  TODO buggy, leads to double free or data corruption ...
         // this->empty();
     }

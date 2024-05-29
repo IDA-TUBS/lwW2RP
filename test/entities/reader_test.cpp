@@ -33,7 +33,7 @@ void Subscriber::rxThread()
     while (true)
     {
         reader->retrieveSample(payload);
-        logInfo("[APP] Received sample: " << payload.data);
+        logInfo("\n----------------------------------------------------------------------------------------\n[APP] Received sample: " << payload.data << "\n----------------------------------------------------------------------------------------\n");
     }
     
     
