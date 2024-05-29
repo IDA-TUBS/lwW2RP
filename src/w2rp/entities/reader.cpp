@@ -224,18 +224,11 @@ bool Reader::handleHBFrag(HeartbeatFrag *msg)
 /* public API */
 /**************/
 
- void Reader::retrieveSample(SerializedPayload &data)
- {
-    // msg to store received data
-    SerializedPayload sample;
+ void Reader::retrieveSample(SerializedPayload &sample)
+ {    
+    sample = sampleQueue.dequeue();
 
-    while(true)
-    {               
-        sample = sampleQueue.dequeue();
-
-        data = sample;
-        logInfo("[Reader] sampleQueue dequeue - length:" << sample.length << " data: " << sample.data);
-    }
+    logInfo("[Reader] sampleQueue dequeue - length:" << sample.length << " data: " << sample.data);
  }
 
 
@@ -249,7 +242,7 @@ bool Reader::handleHBFrag(HeartbeatFrag *msg)
 
 void Reader::buildSerializedSample(ChangeForWriter *cfw, SerializedPayload &sampleData)
 {
-    unsigned char data[cfw->sampleSize];
+    unsigned char* data = new unsigned char[cfw->sampleSize]{0};
 
     uint32_t pos = 0;
 
@@ -262,11 +255,9 @@ void Reader::buildSerializedSample(ChangeForWriter *cfw, SerializedPayload &samp
         logDebug("[Reader] buildSerializedSample: " << sf->data <<  "(size: " << sf->dataSize << ") - " << data)
     }
 
-    SerializedPayload payload(data, cfw->sampleSize);
+    sampleData = SerializedPayload(data, cfw->sampleSize);
     logDebug("[Reader] buildSerializedSample: " << sampleData.data)
     // TODO some stuff at the end of data
-
-    sampleData = payload;
 }
 
 
