@@ -75,8 +75,6 @@ Writer::Writer()
         this->timer_manager,
         std::bind(&Writer::handleTimeout, this)
     );
-    // only start timer if timeout situation occurs, hence stop immediately
-    timeoutTimer->cancel();
 
 
     timer_manager.start();
@@ -307,6 +305,9 @@ bool Writer::sendMessage(){
         auto t_now = std::chrono::system_clock::now();
 
         SampleFragment* sf = sendQueue.front();
+        // update currentSN
+        currentChange = sf->baseChange;
+
         sendQueue.pop_front();
         // update fragment status (at all reader proxies if multicast is used)
         for(auto rp: matchedReaders)
@@ -329,6 +330,8 @@ bool Writer::sendMessage(){
                     timeoutTimer->restart(toTS);
                 }
             }
+
+        
         
         // create W2RP header
         W2RPHeader *header = new W2RPHeader(config.guidPrefix);
@@ -653,7 +656,64 @@ void Writer::removeCompleteSamples()
 
 void Writer::handleTimeout()
 {
-    logDebug("[Writer] timeout!")
+    // current timestamp
+    auto t_now = std::chrono::system_clock::now();
+
+    ReaderProxy *timeoutedReader = timeoutQueue.front();
+    if(timeoutedReader)
+    {
+        // current (first) change in readerProxy
+        timeoutedReader->resetTimeoutedFragments(this->currentChange->sequenceNumber);
+        timeoutedReader->timeoutActive = false;
+        timeoutQueue.pop();
+
+        if(!shapingTimer->isActive())
+        {
+            shapingTimer->restart();
+        }
+    }
+
+
+    while(!timeoutQueue.empty())
+    {
+        // reader with the next timeout
+        ReaderProxy *nextReader = timeoutQueue.front();
+
+        // first check whether resetting still necessary or whether all fragments are acked by now
+        if(nextReader->getAckCount(this->currentChange->sequenceNumber) == this->currentChange->numberFragments) {
+            timeoutQueue.pop();
+            continue;
+        }
+
+        auto t_nextTimeout = nextReader->getTimeoutTimestamp();
+
+        if(t_nextTimeout <= t_now)
+        {
+            if(nextReader)
+            {
+                // current (first) change in readerProxy
+                nextReader->resetTimeoutedFragments(this->currentChange->sequenceNumber);
+                nextReader->timeoutActive = false;
+                timeoutQueue.pop();
+
+                if(!shapingTimer->isActive())
+                {
+                    shapingTimer->restart();
+                }
+            }
+        }
+        else
+        {
+            // timeout may become relevant in the future, restart timedEvent accordingly
+            if(!timeoutTimer->isActive())
+            {
+                timeoutTimer->restart(t_nextTimeout); 
+            }
+        }
+        
+        
+        break;
+    }
 }
 
 

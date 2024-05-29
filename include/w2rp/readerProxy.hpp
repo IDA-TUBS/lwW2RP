@@ -205,6 +205,25 @@ class ReaderProxy
         this->timeoutTS = timestamp;
     }
 
+    /**
+     * @brief set timeout timestamp of reader proxy
+     *
+     * @param timestamp timestamp for when to trigger timeout
+     */
+    std::chrono::system_clock::time_point getTimeoutTimestamp()
+    {
+        return this->timeoutTS;
+    }
+
+    /**
+     * @brief return the number of acknowledged fragments from the
+     * respective sample with corresponding sequence number
+     *
+     * @param sequenceNumber relevant sample sequence number
+     */
+    uint32_t getAckCount(uint32_t sequenceNumber);
+
+
 };
 
 }; // end namespace

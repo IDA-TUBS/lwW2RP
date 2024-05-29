@@ -100,6 +100,8 @@ private:
 
     std::queue<ReaderProxy*> timeoutQueue;
 
+    CacheChange* currentChange;
+
 
 
     /******************************/

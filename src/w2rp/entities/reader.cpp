@@ -83,14 +83,14 @@ void Reader::handleMsg()
 
 bool Reader::handleMessages(MessageNet_t *net)
 {
-    // debug only: test nackfrag, retx and timeout
-    if((debugCnt == 3))//|| (debugCnt == 2))
-    {
-        debugCnt++;
-        logDebug("[Reader] lost message")
-        return false;
-    }
-    debugCnt++;
+    // // debug only: test nackfrag, retx and timeout
+    // if((debugCnt == 3))//|| (debugCnt == 2))
+    // {
+    //     debugCnt++;
+    //     logDebug("[Reader] lost message")
+    //     return false;
+    // }
+    // debugCnt++;
     // TODO remove previous block
 
 
