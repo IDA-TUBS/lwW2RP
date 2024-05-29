@@ -29,6 +29,27 @@ class TimedEvent
     /**
      * @brief Construct a new single shot Timed Event object
      * 
+     * @param callback handler routine
+     * @param service management entity
+     */
+    TimedEvent(
+        TimerManager& service,
+        std::function<void()> callback,
+        Args... args
+    ):
+        service_(service),
+        time_point_(),
+        callback_(std::bind(callback, args...)),
+        args_(std::make_tuple(args...))
+    {
+        auto timerCallback = std::bind(&TimedEvent<Args...>::eventCallback, this);
+        id = service_.registerTimer(time_point, timerCallback);
+        isActive_ = false;
+    };
+    
+    /**
+     * @brief Construct a new single shot Timed Event object
+     * 
      * @param time_point trigger time point
      * @param callback handler routine
      * @param service management entity

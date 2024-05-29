@@ -58,7 +58,10 @@ timerID TimerManager::registerTimer(const TimePoint& time_point, std::function<v
 
     // Create a timer and bind it to the function
     auto timer = std::make_shared<boost::asio::system_timer>(timer_io);
-    configureTimer(timer, timer_id.second, time_point, function);
+    if(time_point > std::chrono::system_clock::time_point::min())
+    {
+        configureTimer(timer, timer_id.second, time_point, function);
+    }
 
     // Add the timer to the list of timers
     std::unique_lock<std::mutex> lock(m_mutex);
