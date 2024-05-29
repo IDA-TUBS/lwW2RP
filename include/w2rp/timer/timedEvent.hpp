@@ -43,7 +43,7 @@ class TimedEvent
         args_(std::make_tuple(args...))
     {
         auto timerCallback = std::bind(&TimedEvent<Args...>::eventCallback, this);
-        id = service_.registerTimer(time_point, timerCallback);
+        id = service_.registerTimer(time_point_, timerCallback);
         isActive_ = false;
     };
     
