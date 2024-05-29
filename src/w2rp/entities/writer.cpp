@@ -197,7 +197,7 @@ bool Writer::addSampleToCache(SerializedPayload *data, std::chrono::system_clock
     // generate ChangeForReaders based on CacheChange and add to reader proxies (done by ReaderProxy itself)
     for (auto rp: matchedReaders)
     {
-        logDebug("[Writer] adding change to readerProxy: " << unsigned(rp->readerID))
+        // logDebug("[Writer] adding change to readerProxy: " << unsigned(rp->readerID))
         rp->addChange(*newChange);
     }
     logDebug("[Writer] added change to readerProxies")
@@ -215,10 +215,9 @@ bool Writer::addSampleToCache(SerializedPayload *data, std::chrono::system_clock
 
 void Writer::handleNackFrag(NackFrag *msg)
 {
-    logInfo("[Writer] handleNackFrag: received NackFrag")
+    logDebug("[Writer] handleNackFrag: received NackFrag - readerID: " << unsigned(msg->readerID))
     uint32_t readerID = msg->readerID;
 
-    logDebug("[Writer] [handleNackFrag] readerID: " << unsigned(readerID))
     // assumption and simplifications for PoC: readerID always correspond to index in matchedReaders 
     auto rp = matchedReaders[readerID];
 
@@ -501,7 +500,7 @@ void Writer::createHBFrag(SampleFragment* sf, HeartbeatFrag*& ret)
 
 void Writer::checkSampleLiveliness()
 {
-    logInfo("[Writer] checkSampleLiveliness")
+    // logDebug("[Writer] checkSampleLiveliness")
     if(historyCache.size() == 0)
     {
         while(sendQueue.size() > 0){
@@ -623,6 +622,7 @@ void Writer::removeCompleteSamples()
                 }
 
             }
+            logDebug("[Writer] delete change " << change->sequenceNumber << " from history")
             delete change;
         }
         else

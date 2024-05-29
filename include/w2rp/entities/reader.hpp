@@ -92,6 +92,8 @@ class Reader
 
     uint32_t nackCount;
 
+    uint32_t debugCnt;
+
     /********************************************/
     /** Callbacks triggered by external events **/ 
     /********************************************/

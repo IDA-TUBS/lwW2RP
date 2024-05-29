@@ -11,7 +11,7 @@ namespace w2rp {
 
 bool ReaderProxy::addChange(CacheChange &change)
 {
-    logDebug("[ReaderProxy] adding change: " << history.size())
+    logDebug("[ReaderProxy] adding change")
     if(history.size() == historySize)
     {
         // cannot add a new change the history
@@ -21,7 +21,7 @@ bool ReaderProxy::addChange(CacheChange &change)
     ChangeForReader* cfr = new ChangeForReader(this->readerID, change);
 
     history.push_back(cfr);
-    logDebug("[ReaderProxy] adding change complete: " << history.size())
+    // logDebug("[ReaderProxy] adding change complete: " << history.size())
     return true;
 }
 
@@ -133,14 +133,14 @@ bool ReaderProxy::processNack(NackFrag *msg)
         // Calculate the index of the byte containing the current bit
         int byte_index = i / 8;
         // Calculate the position of the bit within the byte
-        // int bit_position = 7 - (i % 8);
+        int bit_position = 7 - (i % 8);
 
-        int bit_position = i % 8;
+        // int bit_position = i % 8;
 
         logDebug("[ReaderProxy] byte index: " << byte_index << " bit position: " << bit_position) 
 
         // Check if the bit is set
-        if (!(bitmap[byte_index] & (1 >> bit_position))) {
+        if (!(bitmap[byte_index] & (1 << bit_position))) { //!(bitmap[byte_index] & (1 >> bit_position)
             // fragment not noted as missing -> consider as acked
             logDebug("[ReaderProxy] Fragment " << currentFragment->fragmentStartingNum << " update acked")
             this->updateFragmentStatus(ACKED, sequenceNumber, fragmentNum, t_now);
