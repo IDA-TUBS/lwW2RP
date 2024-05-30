@@ -3,6 +3,7 @@
 
 #include <w2rp/entities/writer.hpp>
 #include <w2rp/config/config.hpp>
+#include <w2rp/config/setupConfig.hpp>
 #include <w2rp/comm/socketEndpoint.hpp>
 #include <w2rp/log.hpp>
 
@@ -14,6 +15,7 @@ namespace config{
 
 #ifndef DEFAULT_CONFIG
 #define DEFAULT_CONFIG "w2rp_config.yaml"
+#define DEFAULT_SETUP "setup_defines.yaml"
 #endif
 
 class writerCfg
@@ -22,11 +24,19 @@ class writerCfg
     /*--------------------- Constructor/Destructor -----------------------*/
     writerCfg();
 
-    writerCfg(std::string name = WRITER, std::string cfg_path = DEFAULT_CONFIG);
+    writerCfg(
+        std::string name = WRITER, 
+        std::string cfg_path = DEFAULT_CONFIG, 
+        std::string setup_path = DEFAULT_SETUP
+    );
 
     ~writerCfg();
     
-    void load(std::string name = WRITER, std::string cfg_path = DEFAULT_CONFIG);
+    void load(
+        std::string name = WRITER, 
+        std::string cfg_path = DEFAULT_CONFIG,
+        std::string setup_path = DEFAULT_SETUP
+    );
 
     void print();
 
@@ -110,10 +120,10 @@ class writerCfg
     {
         return config[id][name].as<T>();
     }
-
+    
     std::string id;
     YAML::Node config;
-
+    setupConfig setup;
 };
 
 }; // end namespace conifg

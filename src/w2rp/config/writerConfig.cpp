@@ -7,10 +7,11 @@ writerCfg::writerCfg()
 
 };
 
-writerCfg::writerCfg(std::string name, std::string cfg_path)
+writerCfg::writerCfg(std::string name, std::string cfg_path, std::string setup_path)
 :
     id(name),
-    config(YAML::LoadFile(cfg_path))
+    config(YAML::LoadFile(cfg_path)),
+    setup(setup_path)
 {
 
 };
@@ -20,10 +21,11 @@ writerCfg::~writerCfg()
 
 };
 
-void writerCfg::load(std::string name, std::string cfg_path)
+void writerCfg::load(std::string name, std::string cfg_path, std::string setup_path)
 {
     id = name;
     config = YAML::LoadFile(cfg_path);
+    setup.load(setup_path);
 }
 
 void writerCfg::print()

@@ -7,10 +7,11 @@ readerCfg::readerCfg()
 
 };
 
-readerCfg::readerCfg(std::string name, std::string cfg_path)
+readerCfg::readerCfg(std::string name, std::string cfg_path, std::string setup_path)
 :
     id(name),
-    config(YAML::LoadFile(cfg_path))
+    config(YAML::LoadFile(cfg_path)),
+    setup(setup_path)
 {
 
 };
@@ -20,10 +21,11 @@ readerCfg::~readerCfg()
 
 };
 
-void readerCfg::load(std::string name, std::string cfg_path)
+void readerCfg::load(std::string name, std::string cfg_path, std::string setup_path)
 {
     id = name;
     config = YAML::LoadFile(cfg_path);
+    setup.load(setup_path);
 }
 
 void readerCfg::print()

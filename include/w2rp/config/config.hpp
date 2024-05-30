@@ -19,7 +19,6 @@ namespace config{
 #define RESPONSE_DELAY "RESPONSE_DELAY"
 #define PRIORITY "PRIORITY"
 
-
 /*********************** Writer ***************************/
 #define FRAGMENT_SIZE "FRAGMENT_SIZE"
 #define SHAPING_TIME "SHAPING_TIME"

@@ -3,6 +3,7 @@
 
 #include <w2rp/entities/reader.hpp>
 #include <w2rp/config/config.hpp>
+#include <w2rp/config/setupConfig.hpp>
 #include <w2rp/comm/socketEndpoint.hpp>
 
 #include <yaml-cpp/yaml.h>
@@ -13,6 +14,7 @@ namespace config{
 
 #ifndef DEFAULT_CONFIG
 #define DEFAULT_CONFIG "w2rp_config.yaml"
+#define DEFAULT_SETUP "setup_defines.yaml"
 #endif
 
 
@@ -20,14 +22,49 @@ class readerCfg
 {
     public:
     /*--------------------- Methods -----------------------*/
+    
+    /**
+     * @brief Construct a new empty reader Cfg object
+     * 
+     */
     readerCfg();
 
-    readerCfg(std::string name = READER, std::string cfg_path = DEFAULT_CONFIG);
+    /**
+     * @brief Construct a new reader Cfg object
+     * 
+     * @param name reader name
+     * @param cfg_path path to config file
+     * @param setup_path path to setup file
+     */
+    readerCfg(
+        std::string name = READER, 
+        std::string cfg_path = DEFAULT_CONFIG, 
+        std::string setup_path = DEFAULT_SETUP
+    );
 
+    /**
+     * @brief Destroy the reader Cfg object
+     * 
+     */
     ~readerCfg();
 
-    void load(std::string name = READER, std::string cfg_path = DEFAULT_CONFIG);
+    /**
+     * @brief load a configuration
+     * 
+     * @param name reader name
+     * @param cfg_path path to config file
+     * @param setup_path path to setup file
+     */
+    void load(
+        std::string name = READER, 
+        std::string cfg_path = DEFAULT_CONFIG, 
+        std::string setup_path = DEFAULT_SETUP
+    );
     
+    /**
+     * @brief print the configuration 
+     * 
+     */
     void print();
 
     /*--------------------- Attribute getter Methods -----------------------*/
@@ -83,6 +120,7 @@ class readerCfg
 
     std::string id;
     YAML::Node config;
+    setupConfig setup;
 };
 
 }; // end namespace conifg
