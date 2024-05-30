@@ -24,15 +24,25 @@ find_package(yaml-cpp)
 set(
     LIB_SRC_FILES
     ${PROJECT_SOURCE_DIR}/src/w2rp/timer/timerManager.cpp
+    
     ${PROJECT_SOURCE_DIR}/src/w2rp/entities/writer.cpp
     ${PROJECT_SOURCE_DIR}/src/w2rp/entities/reader.cpp
+    
     ${PROJECT_SOURCE_DIR}/src/w2rp/helper/fragmentation.cpp
+    
     ${PROJECT_SOURCE_DIR}/src/w2rp/messages/messages.cpp
+    
+    ${PROJECT_SOURCE_DIR}/src/w2rp/comm/UDPComm.cpp
+
+    ${PROJECT_SOURCE_DIR}/src/w2rp/config/readerConfig.cpp
+    ${PROJECT_SOURCE_DIR}/src/w2rp/config/writerConfig.cpp
+    ${PROJECT_SOURCE_DIR}/src/w2rp/config/setupConfig.cpp
+
     ${PROJECT_SOURCE_DIR}/src/w2rp/changeForReader.cpp
     ${PROJECT_SOURCE_DIR}/src/w2rp/changeForWriter.cpp
     ${PROJECT_SOURCE_DIR}/src/w2rp/readerProxy.cpp
     ${PROJECT_SOURCE_DIR}/src/w2rp/writerProxy.cpp
-    ${PROJECT_SOURCE_DIR}/src/w2rp/comm/UDPComm.cpp
+    
 )
 
 ## Define library content
@@ -131,9 +141,9 @@ file(GLOB_RECURSE ALL_HEADERS
 set(SRC_FILES 
   ${ALL_HEADERS}
 
-  src/w2rp/timer/timerManager.cpp
-  src/w2rp/config/readerConfig.cpp
-  src/w2rp/config/writerConfig.cpp
+  ${PROJECT_SOURCE_DIR}/src/w2rp/config/readerConfig.cpp
+  ${PROJECT_SOURCE_DIR}/src/w2rp/config/writerConfig.cpp
+  ${PROJECT_SOURCE_DIR}/src/w2rp/config/setupConfig.cpp
 )
 
 
@@ -156,3 +166,8 @@ target_link_libraries(reader_test w2rp)
 ## Config testing
 add_executable(readConfig_test test/config/readConfig_test.cpp ${SRC_FILES})
 target_link_libraries(readConfig_test w2rp)
+
+## GUID testing
+add_executable(guid_test test/guid/guid_test.cpp ${SRC_FILES})
+target_link_libraries(guid_test w2rp)
+
