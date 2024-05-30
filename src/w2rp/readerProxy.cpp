@@ -255,4 +255,31 @@ void ReaderProxy::resetTimeoutedFragments(uint32_t sequenceNumber)
     }
 }
 
+
+uint32_t ReaderProxy::getAckCount(uint32_t sequenceNumber)
+{
+    // access change with the given sequence number
+    ChangeForReader* change = nullptr;
+    for (auto cfr: history)
+    {
+        if (cfr->sequenceNumber == sequenceNumber)
+        {
+            change = cfr;
+            break;
+        }
+    }
+
+    if(change)
+    {
+        return change->ackCount();
+    }
+    else
+    {
+        // TODO handle problem
+        return 0;
+    }
+    
+}
+
+
 }; // end namespace
