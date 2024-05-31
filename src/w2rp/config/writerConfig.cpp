@@ -1,4 +1,5 @@
 #include <w2rp/config/writerConfig.hpp>
+#include <stdexcept>
 
 using namespace w2rp::config;
 
@@ -13,7 +14,7 @@ writerCfg::writerCfg(std::string name, std::string cfg_path, std::string setup_p
     config(YAML::LoadFile(cfg_path)),
     setup(setup_path)
 {
-
+    check();
 };
 
 writerCfg::~writerCfg()
@@ -26,6 +27,7 @@ void writerCfg::load(std::string name, std::string cfg_path, std::string setup_p
     id = name;
     config = YAML::LoadFile(cfg_path);
     setup.load(setup_path);
+    check();
 }
 
 void writerCfg::print()
@@ -37,7 +39,7 @@ void writerCfg::print()
     logInfo("# nack suppression duration: " << nackSuppressionDuration().count() << "us")
     logInfo("# number of readers: " << numberReaders())
     logInfo("# cache size: " << unsigned(sizeCache()))
-    logInfo("# UUID: " << unsigned(uuid()))
+    logInfo("# host ID: " << unsigned(host_id()))
     logInfo("# prioritization mode: " << prioMode())
     logInfo("#---------------------------------------------#")
 }
@@ -72,14 +74,11 @@ std::chrono::microseconds writerCfg::nackSuppressionDuration()
 
 size_t writerCfg::numberReaders()
 {
-    // return (config[WRITER][READERS].as<std::vector<std::string>>()).size();
     return getAttribute<std::vector<std::string>>(READERS).size();
 }
 
 w2rp::socket_endpoint writerCfg::readerEndpoint(int index)
 {
-    // std::string name = config[WRITER][READERS].as<std::vector<std::string>>().at(index);
-
     std::string name = getAttribute<std::vector<std::string>>(READERS).at(index);
 
     std::string address = config[name][ADDRESS].as<std::string>();
@@ -92,7 +91,6 @@ std::vector<w2rp::socket_endpoint> writerCfg::readerEndpoints()
 {
     std::vector<socket_endpoint> readers;
 
-    // std::vector<std::string> reader_names = config[WRITER][READERS].as<std::vector<std::string>>();
     std::vector<std::string> reader_names = getAttribute<std::vector<std::string>>(READERS);
 
     for(auto it = reader_names.begin(); it != reader_names.end(); it++)
@@ -107,13 +105,13 @@ std::vector<w2rp::socket_endpoint> writerCfg::readerEndpoints()
 
 unsigned int writerCfg::sizeCache()
 {
-    // return config[WRITER][SIZE_CACHE].as<unsigned int>();
     return getAttribute<unsigned int>(SIZE_CACHE);
 }
 
-uint8_t writerCfg::uuid()
+uint32_t writerCfg::host_id()
 {
-    return getAttribute<uint8_t>(UUID);
+    std::string host = getAttribute<std::string>(HOST);
+    return setup.get_hostID(host);
 }
 
 w2rp::PrioritizationMode writerCfg::prioMode()
@@ -121,4 +119,39 @@ w2rp::PrioritizationMode writerCfg::prioMode()
     // yaml-cpp does not support direct conversion to custom types by default
     int prioMode = getAttribute<int>(PRIO_MODE);
     return static_cast<w2rp::PrioritizationMode>(prioMode);
+}
+
+/*------------------------------------- Private -----------------------------------------*/
+bool writerCfg::check()
+{
+    // Check Writer ID
+    if(!config[id])
+    {
+        logError("No configuration found for " << id)
+        throw std::invalid_argument(id + " not found");
+        return false;
+    }
+
+    // Check Reader IDs
+    std::vector<std::string> reader_names = getAttribute<std::vector<std::string>>(READERS);
+    for(auto it = reader_names.begin(); it != reader_names.end(); it++)
+    {
+        if(!config[*it])
+        {
+            logError("No configuration found for assigned reader " << *it)
+            throw std::invalid_argument(*it + " not found");
+            return  false;
+        }
+    }
+    
+    // Check Host
+    std::string name = getAttribute<std::string>(HOST);
+    if(!setup.check(name))
+    {
+        logError("No configuration for assigned host " << name)
+        throw std::invalid_argument(name + " not found");
+        return false;
+    }
+
+    return true;
 }

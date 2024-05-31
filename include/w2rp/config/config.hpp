@@ -8,7 +8,7 @@ namespace config{
 /********************** General ***************************/
 #define DEADLINE "DEADLINE"
 #define SIZE_CACHE "SIZE_CACHE"
-#define UUID "UUID"
+#define HOST "HOST"
 #define ADDRESS "ADDRESS"
 #define PORT "PORT"
 #define READER "READER"

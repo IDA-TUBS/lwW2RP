@@ -97,11 +97,11 @@ class readerCfg
     unsigned int sizeCache();
 
     /**
-     * @brief get reader uuid
+     * @brief get host ID
      * 
-     * @return uint8_t 
+     * @return uint32_t 
      */
-    uint8_t uuid();
+    uint32_t host_id();
 
     /**
      * @brief get reader priority
@@ -111,6 +111,8 @@ class readerCfg
     uint32_t priority();
 
     private:
+
+    bool check();
 
     template<typename T>
     T getAttribute(std::string name)

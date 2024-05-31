@@ -3,6 +3,8 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include <w2rp/log.hpp>
+
 namespace w2rp{
 namespace config{
 
@@ -50,12 +52,29 @@ class setupConfig
      */
     uint32_t get_hostID(std::string name);
 
+    /**
+     * @brief Check if host with specified name exists
+     * 
+     * @param name host name
+     * @return true configuration exists
+     * @return false no configuration available
+     */
+    bool check(std::string name);
+
     private:
 
     template<typename T>
     T getAttribute(std::string name, std::string attr)
     {
-        return config[name][attr].as<T>();
+        if(config[name])
+        {
+            return config[name][attr].as<T>();
+        }
+        else
+        {
+            logError("Host " << name << " does not exist")
+            return T();
+        }
     }
 
     YAML::Node config;

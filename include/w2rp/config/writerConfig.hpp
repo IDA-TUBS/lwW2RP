@@ -100,11 +100,11 @@ class writerCfg
     unsigned int sizeCache();
     
     /**
-     * @brief get writer UUID
+     * @brief get host ID
      * 
-     * @return uint8_t 
+     * @return uint32_t 
      */
-    uint8_t uuid();
+    uint32_t host_id();
     
     /**
      * @brief get prioritization mode
@@ -114,6 +114,8 @@ class writerCfg
     PrioritizationMode prioMode();
 
     private:
+
+    bool check();
 
     template<typename T>
     T getAttribute(std::string name)

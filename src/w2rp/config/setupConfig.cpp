@@ -14,10 +14,36 @@ setupConfig::setupConfig(std::string cfg_path)
 
 uint32_t setupConfig::get_hostID(std::string name)
 {
-    return getAttribute<uint32_t>(name, HOST_ID);
+    std::string hex_string = getAttribute<std::string>(name, HOST_ID);
+
+    if(!hex_string.empty())
+    {
+        // Remove the "0x" prefix if present
+        if (hex_string.find("0x") == 0 || hex_string.find("0X") == 0) {
+            hex_string = hex_string.substr(2);
+        }
+        
+        return std::stoul(hex_string, nullptr, 32);
+    }
+    else
+    {
+        return 0;
+    }
 }
 
 void setupConfig::load(std::string cfg_path)
 {
     config = YAML::LoadFile(cfg_path);
+}
+
+bool setupConfig::check(std::string name)
+{
+    if(config[name])
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
