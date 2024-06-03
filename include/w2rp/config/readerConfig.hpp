@@ -1,7 +1,6 @@
 #ifndef W2RP_READER_CONFIG_h
 #define W2RP_READER_CONFIG_h
 
-#include <w2rp/entities/reader.hpp>
 #include <w2rp/config/config.hpp>
 #include <w2rp/config/setupConfig.hpp>
 #include <w2rp/comm/socketEndpoint.hpp>
@@ -37,7 +36,7 @@ class readerCfg
      * @param setup_path path to setup file
      */
     readerCfg(
-        std::string name = READER, 
+        std::string name, 
         std::string cfg_path = DEFAULT_CONFIG, 
         std::string setup_path = DEFAULT_SETUP
     );
@@ -68,6 +67,14 @@ class readerCfg
     void print();
 
     /*--------------------- Attribute getter Methods -----------------------*/
+
+    /**
+     * @brief get reader endpoint <ip, port>
+     * 
+     * @return socket_endpoint struct{ip, port}
+     */
+    w2rp::socket_endpoint endpoint();
+
     /**
      * @brief get deadline
      * 

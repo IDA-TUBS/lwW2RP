@@ -215,8 +215,8 @@ inline std::istream& operator >>(
 }
 
 /*********************************** Available Entity IDs *******************************************/
-const EntityID_t entityID_reader = ENTITYID_READER;
-const EntityID_t entityID_writer = ENTITYID_WRITER;
+const EntityID_t c_entityID_reader = ENTITYID_READER;
+const EntityID_t c_entityID_writer = ENTITYID_WRITER;
 
 
 }; // end namespace w2rp

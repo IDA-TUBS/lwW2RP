@@ -43,6 +43,13 @@ void readerCfg::print()
 
 /*----------------------------------- Attribute getter Methods --------------------------------------*/
 
+w2rp::socket_endpoint readerCfg::endpoint()
+{
+    std::string address = getAttribute<std::string>(ADDRESS);
+    int port = getAttribute<int>(PORT);
+    return socket_endpoint(address, port);
+}
+
 std::chrono::microseconds readerCfg::deadline()
 {
     // yaml-cpp does not support direct conversion to std::chrono(!)
@@ -110,6 +117,9 @@ bool readerCfg::check()
         throw std::invalid_argument(name + " not found");
         return false;
     }
+
+    // print attributes to validate configuration parameters (availability+type)
+    print();
 
     return true;
 }

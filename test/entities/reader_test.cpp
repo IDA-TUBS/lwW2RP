@@ -54,6 +54,10 @@ void Subscriber::run()
 
 int main()
 {
+    
+
+    
+    
     Subscriber mySub;
     if (mySub.init())
     {

@@ -1,7 +1,7 @@
 #ifndef W2RP_WRITER_CONFIG_h
 #define W2RP_WRITER_CONFIG_h
 
-#include <w2rp/entities/writer.hpp>
+#include <w2rp/qos/qos.hpp>
 #include <w2rp/config/config.hpp>
 #include <w2rp/config/setupConfig.hpp>
 #include <w2rp/comm/socketEndpoint.hpp>
@@ -25,7 +25,7 @@ class writerCfg
     writerCfg();
 
     writerCfg(
-        std::string name = WRITER, 
+        std::string name, 
         std::string cfg_path = DEFAULT_CONFIG, 
         std::string setup_path = DEFAULT_SETUP
     );
@@ -42,6 +42,13 @@ class writerCfg
 
     /*--------------------- Attribute getter Methods -----------------------*/
     
+    /**
+     * @brief get writer endpoint <ip, port>
+     * 
+     * @return socket_endpoint struct{ip, port}
+     */
+    w2rp::socket_endpoint endpoint();
+
     /**
      * @brief get fragment size
      * 
@@ -69,7 +76,14 @@ class writerCfg
      * @return std::chrono::microseconds 
      */
     std::chrono::microseconds nackSuppressionDuration();
-    
+
+    /**
+     * @brief get timeout duration
+     * 
+     * @return std::chrono::microseconds 
+     */
+    std::chrono::microseconds timeout();
+
     /**
      * @brief get number of readers
      * 

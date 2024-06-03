@@ -7,7 +7,7 @@ using namespace w2rp;
 int main()
 {
     std::string cfg_path = std::string(getenv("HOME")) + "/lightweightW2RP/examples/w2rp_config.yaml";
-    std::string setup_path = std::string(getenv("HOME")) + "/lightweightW2RP/examples/w2rp_config.yaml";
+    std::string setup_path = std::string(getenv("HOME")) + "/lightweightW2RP/examples/setup_defines.yaml";
 
     logInfo("CFG Path: " << cfg_path)
     logInfo("Setup Path: " << setup_path)

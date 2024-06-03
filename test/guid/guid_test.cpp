@@ -21,7 +21,7 @@ int main()
     uint32_t host_id = setup.get_hostID("TELEMETRY");
     uint16_t participant_id = 0x0101;
 
-    EntityID_t reader(entityID_reader);
+    EntityID_t reader(c_entityID_reader);
 
     GuidPrefix_t prefix;
     guidPrefixManager::instance().create(host_id, participant_id, prefix);

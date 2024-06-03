@@ -20,7 +20,7 @@ namespace w2rp
  */
 struct GUID_t
 {
-    GuidPrefix_t guidPrefix;
+    GuidPrefix_t prefix;
     EntityID_t entityID;
 
     /**
@@ -40,7 +40,7 @@ struct GUID_t
     GUID_t(
         const GuidPrefix_t& guid_prefix,
         uint32_t id) noexcept
-        : guidPrefix(guid_prefix)
+        : prefix(guid_prefix)
         , entityID(id)
     {
     }
@@ -54,7 +54,7 @@ struct GUID_t
     GUID_t(
             const GuidPrefix_t& guid_prefix,
             const EntityID_t& entity_id) noexcept
-        : guidPrefix(guid_prefix)
+        : prefix(guid_prefix)
         , entityID(entity_id)
     {
     }
@@ -69,7 +69,7 @@ struct GUID_t
     bool is_on_same_host_as(
             const GUID_t& other_guid) const
     {
-        return memcmp(guidPrefix.value, other_guid.guidPrefix.value, VENDOR_ID_LEN+HOST_ID_LEN) == 0;
+        return memcmp(prefix.value, other_guid.prefix.value, VENDOR_ID_LEN+HOST_ID_LEN) == 0;
     }
 
     /**
@@ -82,7 +82,7 @@ struct GUID_t
     bool is_on_same_process_as(
             const GUID_t& other_guid) const
     {
-        return memcmp(guidPrefix.value, other_guid.guidPrefix.value, VENDOR_ID_LEN+HOST_ID_LEN+PROCESS_ID_LEN) == 0;
+        return memcmp(prefix.value, other_guid.prefix.value, VENDOR_ID_LEN+HOST_ID_LEN+PROCESS_ID_LEN) == 0;
     }
 
     static GUID_t unknown() noexcept
@@ -103,7 +103,7 @@ inline bool operator ==(
         const GUID_t& g1,
         const GUID_t& g2)
 {
-    if (g1.guidPrefix == g2.guidPrefix && g1.entityID == g2.entityID)
+    if (g1.prefix == g2.prefix && g1.entityID == g2.entityID)
     {
         return true;
     }
@@ -123,7 +123,7 @@ inline bool operator !=(
         const GUID_t& g1,
         const GUID_t& g2)
 {
-    if (g1.guidPrefix != g2.guidPrefix || g1.entityID != g2.entityID)
+    if (g1.prefix != g2.prefix || g1.entityID != g2.entityID)
     {
         return true;
     }
@@ -139,11 +139,11 @@ inline bool operator <(
 {
     for (uint8_t i = 0; i < 12; ++i)
     {
-        if (g1.guidPrefix.value[i] < g2.guidPrefix.value[i])
+        if (g1.prefix.value[i] < g2.prefix.value[i])
         {
             return true;
         }
-        else if (g1.guidPrefix.value[i] > g2.guidPrefix.value[i])
+        else if (g1.prefix.value[i] > g2.prefix.value[i])
         {
             return false;
         }
@@ -176,7 +176,7 @@ inline std::ostream& operator <<(
 {
     if (guid != Guid_Unknown)
     {
-        output << guid.guidPrefix << "|" << guid.entityID;
+        output << guid.prefix << "|" << guid.entityID;
     }
     else
     {
@@ -206,7 +206,7 @@ inline std::istream& operator >>(
             input.exceptions(excp_mask | std::ios_base::failbit | std::ios_base::badbit);
 
             char sep;
-            input >> guid.guidPrefix >> sep >> guid.entityID;
+            input >> guid.prefix >> sep >> guid.entityID;
 
             if (sep != '|')
             {

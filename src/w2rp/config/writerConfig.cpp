@@ -6,7 +6,7 @@ using namespace w2rp::config;
 writerCfg::writerCfg()
 {
 
-};
+}
 
 writerCfg::writerCfg(std::string name, std::string cfg_path, std::string setup_path)
 :
@@ -15,12 +15,12 @@ writerCfg::writerCfg(std::string name, std::string cfg_path, std::string setup_p
     setup(setup_path)
 {
     check();
-};
+}
 
 writerCfg::~writerCfg()
 {
 
-};
+}
 
 void writerCfg::load(std::string name, std::string cfg_path, std::string setup_path)
 {
@@ -45,6 +45,13 @@ void writerCfg::print()
 }
 
 /*----------------------------------- Attribute getter Methods --------------------------------------*/
+
+w2rp::socket_endpoint writerCfg::endpoint()
+{
+    std::string address = getAttribute<std::string>(ADDRESS);
+    int port = getAttribute<int>(PORT);
+    return socket_endpoint(address, port);
+}
 
 uint32_t writerCfg::fragmentSize()
 {
@@ -72,6 +79,13 @@ std::chrono::microseconds writerCfg::nackSuppressionDuration()
     return std::chrono::microseconds(duration);
 }
 
+std::chrono::microseconds writerCfg::timeout()
+{
+    // yaml-cpp does not support direct conversion to std::chrono(!)
+    int duration = getAttribute<int>(TIMEOUT);
+    return std::chrono::microseconds(duration);
+}
+
 size_t writerCfg::numberReaders()
 {
     return getAttribute<std::vector<std::string>>(READERS).size();
@@ -89,7 +103,7 @@ w2rp::socket_endpoint writerCfg::readerEndpoint(int index)
 
 std::vector<w2rp::socket_endpoint> writerCfg::readerEndpoints()
 {
-    std::vector<socket_endpoint> readers;
+    std::vector<w2rp::socket_endpoint> readers;
 
     std::vector<std::string> reader_names = getAttribute<std::vector<std::string>>(READERS);
 
@@ -152,6 +166,9 @@ bool writerCfg::check()
         throw std::invalid_argument(name + " not found");
         return false;
     }
+
+    // print attributes to validate configuration parameters (availability+type)
+    print();
 
     return true;
 }

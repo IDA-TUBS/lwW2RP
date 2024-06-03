@@ -3,33 +3,49 @@
  */
 
 #include <w2rp/entities/reader.hpp>
+#include <stdexcept>
 
 namespace w2rp {
 
 Reader::Reader()
 {
-    // TODo fill reader config
-    config.deadline =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::seconds(5));
-    config.responseDelay =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::microseconds(4000));
-    config.readerAddress = "127.0.0.1";
-    config.readerPort = 50000;
-    config.writerAddress = "127.0.0.1";
-    config.writerPort = 50001;
-    config.sizeCache = 2;
-    config.readerUuid = 0;
-    memcpy(config.guidPrefix, "_GUIDPREFIX_", 12);
-    config.priority = 1;
+    logInfo("[Reader] empty constructor call")
+}
 
-    // TODO set guid(prefix)
+Reader::Reader(uint16_t participant_id, config::readerCfg &cfg)
+:
+    config(cfg)
+{
+    init(participant_id);
+    logInfo("[Reader] finished constructor call")
+}
 
-    writerProxy = new WriterProxy(this->config.sizeCache);
+Reader::~Reader()
+{
+    delete netParser;
+}
+
+void Reader::init(uint16_t participant_id)
+{
+    //generate guid prefix
+    GuidPrefix_t guidPrefix;
+    guidPrefixManager::instance().create(
+        config.host_id(), 
+        participant_id, 
+        guidPrefix
+    );
+
+    // set guid
+    guid = GUID_t(guidPrefix, c_entityID_reader);
+
+    writerProxy = new WriterProxy(this->config.sizeCache());
 
     // init net message parser
     netParser = new NetMessageParser();
 
     // init UDPComm object
-    socket_endpoint rx_socketEndpoint(config.readerAddress, config.readerPort);
-    socket_endpoint tx_socketEndpoint(config.writerAddress, config.writerPort);
+    socket_endpoint rx_socketEndpoint = config.endpoint();
+    socket_endpoint tx_socketEndpoint  = config.writer();
     CommInterface = new UDPComm(rx_socketEndpoint, tx_socketEndpoint);
 
     // create receive and receive handler threads
@@ -38,16 +54,18 @@ Reader::Reader()
 
     this->nackCount = 0;
 
-
     this->debugCnt = 0;
+
+    initialized = true;
+
+    logInfo("[Reader] finished initialization")
 }
 
-
-Reader::~Reader()
+void Reader::init(uint16_t participant_id, config::readerCfg &cfg)
 {
-    delete netParser;
+    setConfig(cfg);
+    init(participant_id);
 }
-
 
 /********************************************/
 /** Callbacks triggered by external events **/ 
@@ -202,15 +220,14 @@ bool Reader::handleHBFrag(HeartbeatFrag *msg)
     // else sent back an empty bitmap    
 
     // create W2RP header
-    W2RPHeader *header = new W2RPHeader(config.guidPrefix);
+    W2RPHeader *header = new W2RPHeader(guid.prefix);
 
     // create NackFrag submessage
     // TODO writerID?
     uint32_t writerID = 0;
-    NackFrag *response = new NackFrag(config.guidPrefix, config.readerUuid, writerID,
+    NackFrag *response = new NackFrag(c_entityID_reader.to_uint32(), c_entityID_writer.to_uint32(),
                                         msg->writerSN, bitmapBase, bitmap, lastFragmentNum); // this->nackCount replaced with lastFragmentNum
     this->nackCount++;
-
 
     // serialization (toNet) and concatenation of submessages 
     MessageNet_t *txMsg = new MessageNet_t;
@@ -237,7 +254,15 @@ bool Reader::handleHBFrag(HeartbeatFrag *msg)
 
  void Reader::retrieveSample(SerializedPayload &sample)
  {    
-    sample = sampleQueue.dequeue();
+    if(initialized)
+    {
+        sample = sampleQueue.dequeue();        
+    }
+    else
+    {
+        logError("Reader is uninitialized, no config available")
+        throw std::invalid_argument("initialization missing, config not found");
+    }
 
     // logDebug("[Reader] sampleQueue dequeue - length:" << sample.length << " data: " << sample.data);
  }
@@ -291,7 +316,7 @@ void Reader::checkSampleLiveliness()
     {
         auto change = writerProxy->getCurrentChange();
 
-        if(!change->isValid(this->config.deadline))
+        if(!change->isValid(this->config.deadline()))
         {
             deprecatedSNs.push_back(change->sequenceNumber);
             writerProxy->removeChange(change->sequenceNumber);
@@ -305,6 +330,15 @@ void Reader::checkSampleLiveliness()
             break;
         }
     }
+}
+
+/***************************/
+/* miscellaneous functions */ 
+/***************************/
+
+void Reader::setConfig(config::readerCfg &cfg)
+{
+    config = cfg;
 }
 
 

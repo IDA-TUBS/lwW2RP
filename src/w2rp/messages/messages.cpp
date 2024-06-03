@@ -13,7 +13,7 @@ void W2RPHeader::headerToNet(MessageNet_t* msg)
     msg->add(&protocol, sizeof(protocol));
     msg->add(&version, sizeof(version));
     msg->add(&vendorID, sizeof(vendorID));
-    msg->add(guidPrefix, 12);
+    msg->add(guidPrefix.value, guidPrefix.size);
 }
 
 void W2RPHeader::netToHeader(MessageNet_t* msg)
@@ -21,7 +21,7 @@ void W2RPHeader::netToHeader(MessageNet_t* msg)
     msg->read(&protocol, sizeof(protocol));
     msg->read(&version, sizeof(version));
     msg->read(&vendorID, sizeof(vendorID));
-    msg->read(guidPrefix, 12);
+    msg->read(guidPrefix.value, guidPrefix.size);
 }
 
 

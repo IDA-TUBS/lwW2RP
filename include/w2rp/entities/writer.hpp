@@ -5,7 +5,9 @@
 #include <math.h>
 #include <chrono>
 #include <string>
+
 #include <w2rp/readerProxy.hpp>
+#include <w2rp/qos/qos.hpp>
 #include <w2rp/helper/fragmentation.hpp>
 #include <w2rp/helper/safe_queue.hpp>
 #include <w2rp/messages/messages.hpp>
@@ -13,41 +15,25 @@
 #include <w2rp/timer/periodicEvent.hpp>
 #include <w2rp/timer/timerManager.hpp>
 #include <w2rp/comm/UDPComm.hpp>
+#include <w2rp/config/writerConfig.hpp>
+#include <w2rp/guid/guid.hpp>
+#include <w2rp/guid/guidPrefix.hpp>
+#include <w2rp/guid/guidPrefixManager.hpp>
 
 namespace w2rp {
-
-typedef enum
-{
-    NONE = 0,
-    FIXED,
-    ADAPTIVE_LOW_PDR,
-    ADAPTIVE_HIGH_PDR
-} PrioritizationMode;
-
-struct writerCfg
-{
-    uint32_t fragmentSize;
-    std::chrono::system_clock::duration deadline;
-    std::chrono::system_clock::duration shapingTime;
-    std::chrono::system_clock::duration nackSuppressionDuration;
-    std::chrono::system_clock::duration timeout;
-    uint8_t numberReaders;
-    std::string readerAddress;
-    uint16_t readerPort;
-    std::string writerAddress;
-    uint16_t writerPort;
-    unsigned int sizeCache;
-    uint8_t writerUuid;
-    unsigned char guidPrefix[12];
-    PrioritizationMode prioMode;
-};
-
 
 class Writer
 {
 private:
-    /// writer configuration
-    writerCfg config;
+    
+    // init state
+    bool initialized = false;
+    
+    // writer configuration
+    config::writerCfg config;
+
+    // rtps guid
+    GUID_t guid;
 
     /// sample fragmenter
     Fragmentation *sampleFragmenter;
@@ -119,6 +105,14 @@ public:
      * @brief empty default constructor
      */ 
     Writer();
+
+    /**
+     * @brief Construct a new Writer object
+     * 
+     * @param participant_id
+     * @param cfg 
+     */
+    Writer(uint16_t participant_id, config::writerCfg &cfg);
 
     /**
      * @brief empty default destructor
@@ -274,7 +268,7 @@ protected:
     /* timeout related functions */ 
     /*****************************/
 
-    /*
+    /**
      * @brief callback for handling of timeouts
      */
     void handleTimeout();
@@ -290,6 +284,28 @@ protected:
     /***************************/
     /* miscellaneous functions */ 
     /***************************/
+    
+    /**
+     * @brief Set the Config object
+     * 
+     * @param cfg writer config object
+     */
+    void setConfig(config::writerCfg &cfg);
+
+    /**
+     * @brief 
+     * 
+     * @param participant_id 
+     */
+    void init(uint16_t participant_id);
+
+    /**
+     * @brief 
+     * 
+     * @param participant_id 
+     * @param cfg 
+     */
+    void init(uint16_t participant_id, config::writerCfg &cfg);
 
 };
 

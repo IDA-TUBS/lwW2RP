@@ -8,35 +8,35 @@
 #include <math.h>
 #include <chrono>
 #include <string>
+
 #include <w2rp/writerProxy.hpp>
 #include <w2rp/helper/fragmentation.hpp>
 #include <w2rp/helper/safe_queue.hpp>
 #include <w2rp/messages/messages.hpp>
+#include <w2rp/comm/socketEndpoint.hpp>
 #include <w2rp/comm/UDPComm.hpp>
+#include <w2rp/config/readerConfig.hpp>
+#include <w2rp/guid/guidPrefix.hpp>
+#include <w2rp/guid/guidPrefixManager.hpp>
+#include <w2rp/guid/guid.hpp>
 
 namespace w2rp {
-
-struct readerCfg
-{
-    std::chrono::system_clock::duration deadline;
-    std::chrono::system_clock::duration responseDelay;
-    std::string readerAddress;
-    uint16_t readerPort;
-    std::string writerAddress;
-    uint16_t writerPort;
-    unsigned int sizeCache;
-    uint8_t readerUuid;
-    unsigned char guidPrefix[12];
-    uint32_t priority;
-};
 
 class Reader
 {
   public:
     /**
-     * @brief default constructor
+     * @brief empty default constructor
+     */ 
+    Reader();
+
+    /**
+     * @brief Construct a new Writer object
+     * 
+     * @param participant_id
+     * @param cfg 
      */
-    Reader(/* args */);
+    Reader(uint16_t participant_id, config::readerCfg &cfg);
 
     /**
      * @brief default destructor
@@ -55,8 +55,15 @@ class Reader
     void retrieveSample(SerializedPayload &data);
 
   private:
-    /// reader configuration
-    readerCfg config;
+
+    // init state
+    bool initialized = false;
+
+    // reader configuration
+    config::readerCfg config;
+
+    // rtps guid
+    GUID_t guid;
 
     /**********************************/
     /* protocol management structures */
@@ -155,6 +162,35 @@ class Reader
      * Handles removing of sample in case of elapsed deadline
      */
     void checkSampleLiveliness();
+
+  
+    /***************************/
+    /* miscellaneous functions */ 
+    /***************************/
+    
+    /**
+     * @brief Set the Config object
+     * 
+     * @param cfg writer config object
+     */
+    void setConfig(config::readerCfg &cfg);
+
+    /**
+     * @brief 
+     * 
+     * @param participant_id 
+     */
+    void init(uint16_t participant_id);
+
+    /**
+     * @brief 
+     * 
+     * @param participant_id 
+     * @param cfg 
+     */
+    void init(uint16_t participant_id, config::readerCfg &cfg);
+
+
 };
 
 

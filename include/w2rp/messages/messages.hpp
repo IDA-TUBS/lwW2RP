@@ -6,6 +6,8 @@
 #include <vector>
 #include <w2rp/messages/message_net.hpp>
 #include <w2rp/log.hpp>
+#include <w2rp/guid/guid.hpp>
+#include <w2rp/guid/guidPrefix.hpp>
 
 
 namespace w2rp {
@@ -49,21 +51,18 @@ class W2RPHeader
      *
      * @param 12 byte guid prefix
      */
-    W2RPHeader(unsigned char *guidPrefix)
+    W2RPHeader(GuidPrefix_t &prefix)
     {
         this->protocol = this->encode("W2RP");
         this->version = 1;
-        this->vendorID = 2;
+        this->vendorID = vendorID_IDA;
 
-        if (strlen((char*)guidPrefix) == 12) {
-            // Copy the contents of guidPrefix into this->pre
-            memcpy(this->guidPrefix, guidPrefix, 12);
-        }
+        guidPrefix = prefix;
 
         this->length = sizeof(this->protocol) + 
                         sizeof(this->version) + 
                         sizeof(this->vendorID) + 
-                        sizeof(this->guidPrefix);
+                        sizeof(this->guidPrefix.value);
     };
 
     /**
@@ -87,7 +86,7 @@ class W2RPHeader
     uint32_t protocol;              // Identifies the message as an W2RP message.
     uint16_t version;               // Identifies the version of the W2RP protocol.
     uint16_t vendorID;              // Indicates the vendor that provides the implementation of the W2RP protocol.
-    unsigned char guidPrefix[12];   // Defines a default prefix to use for all GUIDs that appear in the message.
+    GuidPrefix_t guidPrefix;   // Defines a default prefix to use for all GUIDs that appear in the message.
 
     // misc information
     uint32_t length;    
@@ -241,9 +240,10 @@ class DataFrag: public SubmessageBase
     /**
      * @brief constructor
      */
-    DataFrag(unsigned char* guidPrefix, uint32_t readerID, uint32_t writerID,
+    DataFrag(uint32_t readerID, uint32_t writerID,
              uint64_t writerSN, uint32_t fragmentStartingNum, 
-             uint32_t dataSize, uint16_t fragmentSize, unsigned char *payload, std::chrono::system_clock::time_point sampleTimestamp):
+             uint32_t dataSize, uint16_t fragmentSize, unsigned char *payload, std::chrono::system_clock::time_point sampleTimestamp
+    ):
              readerID(readerID),
              writerID(writerID), 
              writerSN(writerSN),
@@ -356,7 +356,7 @@ class NackFrag: public SubmessageBase
     /** 
      * @brief constructor
      */
-    NackFrag(unsigned char* guidPrefix, uint32_t readerID, uint32_t writerID,
+    NackFrag(uint32_t readerID, uint32_t writerID,
              uint64_t writerSN, uint16_t bitmapBase, unsigned char *fragmentStates, uint32_t NackFragCount):
              readerID(readerID),
              writerID(writerID),
@@ -444,8 +444,8 @@ class HeartbeatFrag: public SubmessageBase
     /**
      * @brief default constructor
      */
-    HeartbeatFrag(unsigned char* guidPrefix, uint32_t readerID, uint32_t writerID,
-             uint64_t writerSN, uint32_t lastFragmentNum, uint32_t HBFragCount):
+    HeartbeatFrag(uint32_t readerID, uint32_t writerID,
+                uint64_t writerSN, uint32_t lastFragmentNum, uint32_t HBFragCount):
              readerID(readerID),
              writerID(writerID),
              writerSN(writerSN),
