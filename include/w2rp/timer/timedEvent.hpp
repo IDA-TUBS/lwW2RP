@@ -38,7 +38,7 @@ class TimedEvent
         Args... args
     ):
         service_(service),
-        time_point_(),
+        time_point_(std::chrono::system_clock::time_point::min()),
         callback_(std::bind(callback, args...)),
         args_(std::make_tuple(args...))
     {

@@ -33,6 +33,8 @@ void readerCfg::load(std::string name, std::string cfg_path, std::string setup_p
 void readerCfg::print()
 {
     logInfo("#---------- Reader Configuration -------------#")
+    logInfo("# Address: " << endpoint().ip_addr)
+    logInfo("# Port: " << endpoint().port)
     logInfo("# deadline: " << deadline().count() << "us")
     logInfo("# response delay: " << responseDelay().count() << "us")
     logInfo("# cache size: " << unsigned(sizeCache()))

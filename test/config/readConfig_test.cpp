@@ -12,11 +12,8 @@ int main()
     logInfo("CFG Path: " << cfg_path)
     logInfo("Setup Path: " << setup_path)
 
-    // config::readerCfg reader("READER_01", cfg_path, setup_path);
-    config::writerCfg writer("WRITER_01", cfg_path, setup_path);
-
-    // reader.print();
-    writer.print();
+    config::readerCfg reader("READER_01", cfg_path, setup_path);
+    // config::writerCfg writer("WRITER_01", cfg_path, setup_path);
 
     return 0;
 }

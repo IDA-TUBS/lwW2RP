@@ -2,6 +2,7 @@
 #define WRITERTEST_H
 
 #include <w2rp/entities/writer.hpp>
+#include <w2rp/config/writerConfig.hpp>
 
 using namespace w2rp;
 
@@ -13,7 +14,7 @@ public:
 
     virtual ~Publisher();
 
-    bool init();
+    bool init(uint16_t participant_id ,std::string cfg, std::string setup);
 
     void run();
 

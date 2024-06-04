@@ -18,9 +18,11 @@ Publisher::~Publisher()
     
 }
 
-bool Publisher::init()
+bool Publisher::init(uint16_t participant_id ,std::string cfg, std::string setup)
 {
-    writer = new Writer();
+    config::writerCfg w_config("WRITER_01", cfg, setup);
+    
+    writer = new Writer(participant_id, w_config);
     return true;
 }
 
@@ -77,8 +79,12 @@ bool Publisher::publish()
 
 int main()
 {
+    uint16_t p_id = 0x8517;
+    std::string cfg_path = std::string(getenv("HOME")) + "/lightweightW2RP/examples/w2rp_config.yaml";
+    std::string setup_path = std::string(getenv("HOME")) + "/lightweightW2RP/examples/setup_defines.yaml";
+    
     Publisher myPub;
-    if (myPub.init())
+    if (myPub.init(p_id, cfg_path, setup_path))
     {
         myPub.run();
     }

@@ -33,6 +33,8 @@ void writerCfg::load(std::string name, std::string cfg_path, std::string setup_p
 void writerCfg::print()
 {
     logInfo("#---------- Writer Configuration -------------#")
+    logInfo("# Address: " << endpoint().ip_addr)
+    logInfo("# Port: " << endpoint().port)
     logInfo("# fragment size: " << fragmentSize())
     logInfo("# deadline: " << deadline().count() << "us")
     logInfo("# shaping time: " << shapingTime().count() << "us")

@@ -5,6 +5,7 @@
 
 #include "reader_test.hpp"
 #include <w2rp/log.hpp>
+ 
 
 using namespace w2rp;
 
@@ -17,10 +18,12 @@ Subscriber::~Subscriber()
 {
     
 }
-
-bool Subscriber::init()
+ 
+bool Subscriber::init(uint16_t participant_id ,std::string cfg, std::string setup)
 {
-    reader = new Reader();
+    config::readerCfg r_config("READER_01", cfg, setup);
+
+    reader = new Reader(participant_id, r_config);
     return true;
 }
 
@@ -35,8 +38,6 @@ void Subscriber::rxThread()
         reader->retrieveSample(payload);
         logInfo("\n----------------------------------------------------------------------------------------\n[APP] Received sample: " << payload.data << "\n----------------------------------------------------------------------------------------\n");
     }
-    
-    
 }
 
 
@@ -54,12 +55,12 @@ void Subscriber::run()
 
 int main()
 {
-    
+    uint16_t p_id = 0x5340;
+    std::string cfg_path = std::string(getenv("HOME")) + "/lightweightW2RP/examples/w2rp_config.yaml";
+    std::string setup_path = std::string(getenv("HOME")) + "/lightweightW2RP/examples/setup_defines.yaml";
 
-    
-    
     Subscriber mySub;
-    if (mySub.init())
+    if (mySub.init(p_id, cfg_path, setup_path))
     {
         mySub.run();
     }

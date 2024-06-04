@@ -96,6 +96,7 @@ void Writer::init(uint16_t participant_id)
     );
 
     timer_manager.start();
+    logDebug("[WRITER] TimerManager active")
 
     currentSampleNumber = -1;
     fragmentCounter = 0;
@@ -685,13 +686,15 @@ void Writer::removeCompleteSamples()
 
 void Writer::handleTimeout()
 {
+    logDebug("[WRITER] handleTimeout")
+    
     // current timestamp
     auto t_now = std::chrono::system_clock::now();
 
-    ReaderProxy *timeoutedReader = timeoutQueue.front();
-    if(timeoutedReader)
+    if(!timeoutQueue.empty())
     {
         // current (first) change in readerProxy
+        ReaderProxy *timeoutedReader = timeoutQueue.front();
         timeoutedReader->resetTimeoutedFragments(this->currentChange->sequenceNumber);
         timeoutedReader->timeoutActive = false;
         timeoutQueue.pop();
