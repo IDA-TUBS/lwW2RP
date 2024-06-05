@@ -30,7 +30,7 @@ class ReaderProxy
     std::chrono::system_clock::duration nackSuppressionDuration;
 
   public:
-    /// entity of corresponding reader
+    /// entity of corresponding reader -> Simplification: host ID
     uint32_t readerID;  
     /// the reader's priority
     uint32_t priority;

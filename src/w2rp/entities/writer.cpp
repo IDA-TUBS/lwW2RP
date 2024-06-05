@@ -13,7 +13,9 @@ Writer::Writer()
     logInfo("[Writer] empty constructor call")
 }
 
-Writer::Writer(uint16_t participant_id/*, config::writerCfg cfg*/)
+Writer::Writer(uint16_t participant_id, config::writerCfg cfg)
+:
+    config(cfg)
 {
     init(participant_id);
     logInfo("[Writer] finished constructor call")
@@ -31,25 +33,22 @@ Writer::~Writer()
 
 void Writer::init(uint16_t participant_id)
 {
-        // TODO fill writer config
-    config_s.fragmentSize = 5;
-    config_s.deadline =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::seconds(5));
-    config_s.shapingTime =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::microseconds(10000));
-    config_s.nackSuppressionDuration =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::microseconds(20000));
-    config_s.timeout =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::microseconds(20000));
-    config_s.numberReaders = 1;
-    config_s.readerAddress = "127.0.0.1";
-    config_s.readerPort = 50000;
-    config_s.writerAddress = "127.0.0.1";
-    config_s.writerPort = 50001;
-    config_s.sizeCache = 2;
-    config_s.writerUuid = 0;
-    memcpy(config_s.guidPrefix, "_GUIDPREFIX_", 12);
-    config_s.prioMode = ADAPTIVE_HIGH_PDR;
+    // TODO fill writer config
+    // config.fragmentSize = 5;
+    // config.deadline =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::seconds(5));
+    // config.shapingTime =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::microseconds(10000));
+    // config.nackSuppressionDuration =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::microseconds(20000));
+    // config.timeout =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::microseconds(20000));
+    // config.numberReaders = 1;
+    // config.readerAddress = "127.0.0.1";
+    // config.readerPort = 50000;
+    // config.writerAddress = "127.0.0.1";
+    // config.writerPort = 50001;
+    // config.sizeCache = 2;
+    // config.writerUuid = 0;
+    // memcpy(config.guidPrefix, "_GUIDPREFIX_", 12);
+    // config.prioMode = ADAPTIVE_HIGH_PDR;
 
-    
-    
-    
     // generate guid prefix
     GuidPrefix_t guidPrefix;
     guidPrefixManager::instance().create(
@@ -60,27 +59,36 @@ void Writer::init(uint16_t participant_id)
 
     // set guid
     guid = GUID_t(guidPrefix, c_entityID_writer);
+    logDebug("[WRITER] GUID: " << guid);
 
     sequenceNumberCnt = 0;
 
     // initialize sample fragmenter
-    sampleFragmenter = new Fragmentation(config_s.fragmentSize);
+    sampleFragmenter = new Fragmentation(config.fragmentSize());
 
+
+    /*****************************************************************************************************************/
+    /***************************** (!) Needs major overhaul for Multicast extension (!) ******************************/
+    /*****************************************************************************************************************/
     // reader proxy initialization
-    for(uint32_t i = 0; i < config_s.numberReaders; i++) {
+    for(uint32_t id: config.reader_id()) {
         // the app's reader IDs are in the range of [appID * maxNumberReader + 1, (appID + 1) * maxNumberReader - 1]
 
         ReaderProxy* rp = nullptr;
-        if(config_s.nackSuppressionDuration != std::chrono::system_clock::duration::zero())
+        if(config.nackSuppressionDuration() != std::chrono::system_clock::duration::zero())
         {
-            rp = new ReaderProxy(i, this->config_s.sizeCache, config_s.nackSuppressionDuration);
+            rp = new ReaderProxy(id, this->config.sizeCache(), config.nackSuppressionDuration());
         }
         else
         {
-            rp = new ReaderProxy(i, this->config_s.sizeCache);
+            rp = new ReaderProxy(id, this->config.sizeCache());
         }
         matchedReaders.push_back(rp);
     }
+    /*****************************************************************************************************************/
+    /*****************************************************************************************************************/
+
+
 
     // init net message parser
     netParser = new NetMessageParser();
@@ -88,10 +96,12 @@ void Writer::init(uint16_t participant_id)
     // init UDPComm object
 
 
-    // socket_endpoint rx_socketEndpoint = config.endpoint();
-    // socket_endpoint tx_socketEndpoint = config.readerEndpoint(0);
-    socket_endpoint rx_socketEndpoint(config_s.writerAddress, config_s.writerPort);
-    socket_endpoint tx_socketEndpoint(config_s.readerAddress, config_s.readerPort);
+    socket_endpoint rx_socketEndpoint = config.endpoint();
+    socket_endpoint tx_socketEndpoint = config.readerEndpoint(0);
+    // socket_endpoint rx_socketEndpoint(config.writerAddress, config.writerPort);
+    // socket_endpoint tx_socketEndpoint(config.readerAddress, config.readerPort);
+
+    logDebug("Writer: " << rx_socketEndpoint.ip_addr << ":" << rx_socketEndpoint.port)
 
     CommInterface = new UDPComm(rx_socketEndpoint, tx_socketEndpoint);
 
@@ -100,7 +110,7 @@ void Writer::init(uint16_t participant_id)
     handlerThread = std::thread{&Writer::handleMsg, this};
 
     // init timers
-    // std::chrono::microseconds cycle = config_s.shapingTime; // TODO take cycle time from writer config
+    // std::chrono::microseconds cycle = config.shapingTime; // TODO take cycle time from writer config
 
     // init timers
     std::chrono::microseconds cycle(500000); // TODO take cycle time from writer config
@@ -171,6 +181,9 @@ void Writer::handleMsg()
 
 bool Writer::handleMessages(MessageNet_t *net)
 {
+    W2RPHeader header;
+    header.netToHeader(net);
+    
     // first extract submessages from msg
     std::vector<SubmessageBase*> res;
 
@@ -182,13 +195,13 @@ bool Writer::handleMessages(MessageNet_t *net)
     {
         switch (subMsg->subMsgHeader->submessageId)
         {
-        case NACK_FRAG:
-            logDebug("[Writer] received NackFrag")
-            nackFrag = (NackFrag*)(subMsg);
-            handleNackFrag(nackFrag);
-            break;
-        default:
-            break;
+            case NACK_FRAG:
+                logDebug("[Writer] received NackFrag")
+                nackFrag = (NackFrag*)(subMsg);
+                handleNackFrag(&header, nackFrag);
+                break;
+            default:
+                break;
         }
     }
 
@@ -227,7 +240,7 @@ bool Writer::addSampleToCache(SerializedPayload *data, std::chrono::system_clock
 {
     logInfo("[Writer] addSampleToCache")
     // create CacheChange object
-    CacheChange *newChange = new CacheChange(sequenceNumberCnt++, data->length, config_s.fragmentSize, timestamp);
+    CacheChange *newChange = new CacheChange(sequenceNumberCnt++, data->length, config.fragmentSize(), timestamp);
     // logDebug("[Writer] created CacheChange")
 
     // fragment sample
@@ -240,13 +253,13 @@ bool Writer::addSampleToCache(SerializedPayload *data, std::chrono::system_clock
 
 
     // add CacheChange to history
-    if(historyCache.size() == this->config_s.sizeCache)
+    if(historyCache.size() == this->config.sizeCache())
     {
         logDebug("[Writer] history full")
         return false;
     }
     historyCache.push_back(newChange);
-    // logDebug("[Writer] added change to history")
+    logDebug("[Writer] added change to history")
 
 
     // generate ChangeForReaders based on CacheChange and add to reader proxies (done by ReaderProxy itself)
@@ -268,24 +281,34 @@ bool Writer::addSampleToCache(SerializedPayload *data, std::chrono::system_clock
 }
 
 
-void Writer::handleNackFrag(NackFrag *msg)
+void Writer::handleNackFrag(W2RPHeader *header, NackFrag *msg)
 {
-    logDebug("[Writer] handleNackFrag: received NackFrag - readerID: " << unsigned(msg->readerID))
-    uint32_t readerID = msg->readerID;
+    logDebug("[WRITER] handleNackFrag: received NackFrag - readerID: " << header->guidPrefix)
+    
+    // Simplification: One reader per host -> Identify matched readers based on host ID
+    uint32_t readerID;
+    memcpy(&readerID, &(header->guidPrefix.value[HOST_ID_OFFSET]), HOST_ID_LEN);
+
+    logDebug("[WRITER] handleNackFrag: reader host ID: " << unsigned(readerID))
 
     // assumption and simplifications for PoC: readerID always correspond to index in matchedReaders
-    auto rp = matchedReaders[readerID];
-
-    // only handle NackFrag if sample still in history, if already complete or expired just ignore NackFrag
-    if(rp->processNack(msg))
+    for(ReaderProxy* rp: matchedReaders)
     {
-        unsigned int sequenceNumber = msg->writerSN;
-        bool complete = rp->checkSampleCompleteness(sequenceNumber);
-
-        // restart shapingTimer if not active any more and sample not yet complete
-        if(!shapingTimer->isActive())
+        if(rp->readerID == readerID)
         {
-            shapingTimer->restart();
+            // only handle NackFrag if sample still in history, if already complete or expired just ignore NackFrag
+            if(rp->processNack(msg))
+            {
+                unsigned int sequenceNumber = msg->writerSN;
+                bool complete = rp->checkSampleCompleteness(sequenceNumber);
+
+                // restart shapingTimer if not active any more and sample not yet complete
+                if(!shapingTimer->isActive())
+                {
+                    shapingTimer->restart();
+                }
+            }
+            break; // corresponding reader found, exit loop
         }
     }
 }
@@ -368,7 +391,7 @@ bool Writer::sendMessage(){
                 // timeout needed
 
                 // determine TO time of fragment
-                auto toTS = t_now + config_s.timeout;
+                auto toTS = t_now + config.timeout();
                 rp->setTimeoutTimestamp(toTS);
 
                 timeoutQueue.push(rp);
@@ -445,7 +468,7 @@ ReaderProxy* Writer::selectReader()
         // check whether the remaining slot suffice for transmitting sending all
         // remaining fragments: N_f,rem >= N_f,missing
 
-        if(config_s.prioMode == FIXED)
+        if(config.prioMode() == FIXED)
         {
             // Prio Mode 1: Using fixed priorities
 
@@ -457,7 +480,7 @@ ReaderProxy* Writer::selectReader()
                 highestPriority = rp->priority;
             }
         }
-        else if(config_s.prioMode == ADAPTIVE_LOW_PDR)
+        else if(config.prioMode() == ADAPTIVE_LOW_PDR)
         {
             // Prio Mode 2: Use adaptive prioritization based on packet delivery rate (PDR)
             // select the reader with the most negatively acknowledged fragments
@@ -469,7 +492,7 @@ ReaderProxy* Writer::selectReader()
             }
 
         }
-        else if(config_s.prioMode == ADAPTIVE_HIGH_PDR)
+        else if(config.prioMode() == ADAPTIVE_HIGH_PDR)
         {
             // Prio Mode 3: Use adaptive prioritization based on packet delivery rate (PDR)
             // select the reader with the least amount of negatively acknowledged fragments
@@ -580,7 +603,7 @@ void Writer::checkSampleLiveliness()
     auto* change = historyCache.front();
     while(1)
     {
-        if(!change->isValid(this->config_s.deadline))
+        if(!change->isValid(this->config.deadline()))
         {
             deprecatedSNs.push_back(change->sequenceNumber);
             historyCache.pop_front();

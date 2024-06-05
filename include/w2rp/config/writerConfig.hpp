@@ -123,6 +123,13 @@ class writerCfg
      * @return uint32_t 
      */
     uint32_t host_id();
+
+    /**
+     * @brief get reader IDs
+     *  
+     * @return uint32_t 
+     */
+    std::vector<uint32_t> reader_id();
     
     /**
      * @brief get prioritization mode

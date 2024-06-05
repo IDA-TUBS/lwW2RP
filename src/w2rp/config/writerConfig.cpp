@@ -136,6 +136,24 @@ uint32_t writerCfg::host_id()
     return setup.get_hostID(host);
 }
 
+std::vector<uint32_t> writerCfg::reader_id()
+{
+    std::vector<uint32_t> readerList;
+
+    // get readers child node
+    auto reader_names = config.get_child(id + "." + READERS);
+    for(auto it = reader_names.begin(); it != reader_names.end(); it++)
+    {
+        std::string reader = it->second.get_value<std::string>();
+        logDebug("[WRITER] getting reader: " << reader)
+        std::string host = config.get<std::string>(reader + "." + HOST);
+        logDebug("[WRITER] getting host: " << host)
+        uint32_t id = setup.get_hostID(host);
+        readerList.push_back(id);
+    }   
+    return readerList;
+}
+
 w2rp::PrioritizationMode writerCfg::prioMode()
 {
     // yaml-cpp does not support direct conversion to custom types by default

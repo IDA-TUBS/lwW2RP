@@ -8,11 +8,9 @@
 
 using namespace w2rp;
 
-Publisher::Publisher(uint16_t participant_id)
-:
-    writer(participant_id)
+Publisher::Publisher()
 {
-    logInfo("[APP] App started")
+
 }
 
 Publisher::~Publisher()
@@ -24,7 +22,7 @@ bool Publisher::init(uint16_t participant_id ,std::string cfg, std::string setup
 {
     config::writerCfg w_config("WRITER_01", cfg, setup);
     
-    // writer = new Writer(participant_id, w_config);
+    writer = new Writer(participant_id, w_config);
     // writer = new Writer(participant_id);
     // writer = Writer(participant_id);
     return true;
@@ -68,7 +66,7 @@ bool Publisher::publish()
     
     SerializedPayload *payload = new SerializedPayload(data, dataSize);
     // if(writer->write(payload))
-    if(writer.write(payload))
+    if(writer->write(payload))
     {
         // sample transmitted successfully
         return true;
@@ -85,10 +83,10 @@ bool Publisher::publish()
 int main()
 {
     uint16_t p_id = 0x8517;
-    std::string cfg_path = std::string(getenv("HOME")) + "/lightweightW2RP/examples/w2rp_config.yaml";
-    std::string setup_path = std::string(getenv("HOME")) + "/lightweightW2RP/examples/setup_defines.yaml";
+    std::string cfg_path = std::string(getenv("HOME")) + "/lightweightW2RP/examples/w2rp_config.json";
+    std::string setup_path = std::string(getenv("HOME")) + "/lightweightW2RP/examples/setup_defines.json";
     
-    Publisher myPub(p_id);
+    Publisher myPub;
     if (myPub.init(p_id, cfg_path, setup_path))
     {
         myPub.run();

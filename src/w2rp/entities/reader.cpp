@@ -38,6 +38,8 @@ void Reader::init(uint16_t participant_id)
     // set guid
     guid = GUID_t(guidPrefix, c_entityID_reader);
 
+    logDebug("[READER] GUID: " << guid);
+
     writerProxy = new WriterProxy(this->config.sizeCache());
 
     // init net message parser
@@ -46,6 +48,9 @@ void Reader::init(uint16_t participant_id)
     // init UDPComm object
     socket_endpoint rx_socketEndpoint = config.endpoint();
     socket_endpoint tx_socketEndpoint  = config.writer();
+
+    logDebug("Reader: " << rx_socketEndpoint.ip_addr << ":" << rx_socketEndpoint.port)
+
     CommInterface = new UDPComm(rx_socketEndpoint, tx_socketEndpoint);
 
     // create receive and receive handler threads

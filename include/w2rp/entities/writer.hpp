@@ -23,23 +23,23 @@
 namespace w2rp {
 
 
-struct writerCfg
-{
-    uint32_t fragmentSize;
-    std::chrono::system_clock::duration deadline;
-    std::chrono::system_clock::duration shapingTime;
-    std::chrono::system_clock::duration nackSuppressionDuration;
-    std::chrono::system_clock::duration timeout;
-    uint8_t numberReaders;
-    std::string readerAddress;
-    uint16_t readerPort;
-    std::string writerAddress;
-    uint16_t writerPort;
-    unsigned int sizeCache;
-    uint8_t writerUuid;
-    unsigned char guidPrefix[12];
-    PrioritizationMode prioMode;
-};
+// struct writerCfg
+// {
+//     uint32_t fragmentSize;
+//     std::chrono::system_clock::duration deadline;
+//     std::chrono::system_clock::duration shapingTime;
+//     std::chrono::system_clock::duration nackSuppressionDuration;
+//     std::chrono::system_clock::duration timeout;
+//     uint8_t numberReaders;
+//     std::string readerAddress;
+//     uint16_t readerPort;
+//     std::string writerAddress;
+//     uint16_t writerPort;
+//     unsigned int sizeCache;
+//     uint8_t writerUuid;
+//     unsigned char guidPrefix[12];
+//     PrioritizationMode prioMode;
+// };
 
 
 
@@ -49,12 +49,9 @@ private:
     
     // init state
     bool initialized = false;
-    
-    // writer struct config
-    writerCfg config_s;
 
     // writer configuration
-    // config::writerCfg config;
+    config::writerCfg config;
 
     // rtps guid
     GUID_t guid;
@@ -136,7 +133,7 @@ public:
      * @param participant_id
      * @param cfg 
      */
-    Writer(uint16_t participant_id/*, config::writerCfg cfg*/);
+    Writer(uint16_t participant_id, config::writerCfg cfg);
 
     /**
      * @brief empty default destructor
@@ -185,9 +182,10 @@ protected:
     /**
      * @brief Method for reacting to NackFrags received from readers
      *
+     * @param header  message header containing identification data
      * @param msg message containing the nack bitmap
      */
-    void handleNackFrag(NackFrag *msg);
+    void handleNackFrag(W2RPHeader *header, NackFrag *msg);
 
 
     /**
