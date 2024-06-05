@@ -18,6 +18,7 @@ class SampleFragment;
 class ReaderProxy
 {
   private:
+    uint32_t mem_guard = 0;
     /// history story all samples
     std::list<ChangeForReader*> history;
     /// max size of history
@@ -46,8 +47,12 @@ class ReaderProxy
         readerID(id),
         historySize(historySize),
         nackSuppressionEnabled(false),
-        timeoutActive(false)
-    {};
+        timeoutActive(false),
+        history()
+    {
+        logDebug("Historysize: " << historySize)
+        logDebug("History: " << history.size())
+    };
 
     /**
      * @brief overloaded constructor, enable NACK suppression
@@ -57,8 +62,12 @@ class ReaderProxy
         historySize(historySize),
         nackSuppressionEnabled(true),
         nackSuppressionDuration(nackSuppressionDuration),
-        timeoutActive(false)
-    {};
+        timeoutActive(false),
+        history()
+    {
+        logDebug("Historysize: " << historySize)
+        logDebug("History: " << history.size())
+    };
 
     /**
      * @brief overloaded constructor, add first change to history

@@ -1,19 +1,21 @@
 #ifndef W2RP_READER_CONFIG_h
 #define W2RP_READER_CONFIG_h
 
+
 #include <w2rp/config/config.hpp>
 #include <w2rp/config/setupConfig.hpp>
 #include <w2rp/comm/socketEndpoint.hpp>
 
-#include <yaml-cpp/yaml.h>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp> 
 #include <chrono>
 
 namespace w2rp{
 namespace config{
 
 #ifndef DEFAULT_CONFIG
-#define DEFAULT_CONFIG "w2rp_config.yaml"
-#define DEFAULT_SETUP "setup_defines.yaml"
+#define DEFAULT_CONFIG "w2rp_config.json"
+#define DEFAULT_SETUP "setup_defines.json"
 #endif
 
 
@@ -124,11 +126,11 @@ class readerCfg
     template<typename T>
     T getAttribute(std::string name)
     {
-        return config[id][name].as<T>();
+        return config.get<T>(id + "." + name);
     }
 
     std::string id;
-    YAML::Node config;
+    boost::property_tree::ptree config;
     setupConfig setup;
 };
 

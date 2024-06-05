@@ -9,12 +9,8 @@ readerCfg::readerCfg()
 };
 
 readerCfg::readerCfg(std::string name, std::string cfg_path, std::string setup_path)
-:
-    id(name),
-    config(YAML::LoadFile(cfg_path)),
-    setup(setup_path)
 {
-    check();
+    load(name, cfg_path, setup_path);
 };
 
 readerCfg::~readerCfg()
@@ -25,7 +21,7 @@ readerCfg::~readerCfg()
 void readerCfg::load(std::string name, std::string cfg_path, std::string setup_path)
 {
     id = name;
-    config = YAML::LoadFile(cfg_path);
+    boost::property_tree::read_json(cfg_path, config);     
     setup.load(setup_path);
     check();
 }
@@ -70,8 +66,8 @@ w2rp::socket_endpoint readerCfg::writer()
 {
     std::string name = getAttribute<std::string>(WRITER);
 
-    std::string address = config[name][ADDRESS].as<std::string>();
-    int port = config[name][PORT].as<int>();
+    std::string address = config.get<std::string>(name + "." + ADDRESS);
+    int port = config.get<int>(name + "." + PORT);
     return w2rp::socket_endpoint(address, port);
 }
 
@@ -95,32 +91,32 @@ uint32_t readerCfg::priority()
 bool readerCfg::check()
 {
     // Check Reader ID
-    if(!config[id])
+    if(config.find(id) == config.not_found())
     {
-        logError("No configuration found for " << id)
+        logError("No configuration found for " << id);
         throw std::invalid_argument(id + " not found");
         return false;
     }
 
     // Check Writer ID
-    std::string name = getAttribute<std::string>(WRITER);
-    if(!config[name])
+    std::string writerName = getAttribute<std::string>(WRITER);
+    if(config.find(writerName) == config.not_found())
     {
-        logError("No configuration for assigned writer " << name)
-        throw std::invalid_argument(name + " not found");
+        logError("No configuration for assigned writer " << writerName);
+        throw std::invalid_argument(writerName + " not found");
         return false;
     }
 
     // Check Host
-    name = getAttribute<std::string>(HOST);
-    if(!setup.check(name))
+    std::string hostName = getAttribute<std::string>(HOST);
+    if(!setup.check(hostName))
     {
-        logError("No configuration for assigned host " << name)
-        throw std::invalid_argument(name + " not found");
+        logError("No configuration for assigned host " << hostName);
+        throw std::invalid_argument(hostName + " not found");
         return false;
     }
 
-    // print attributes to validate configuration parameters (availability+type)
+    // Print attributes to validate configuration parameters (availability+type)
     print();
 
     return true;

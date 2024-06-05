@@ -9,12 +9,8 @@ writerCfg::writerCfg()
 }
 
 writerCfg::writerCfg(std::string name, std::string cfg_path, std::string setup_path)
-:
-    id(name),
-    config(YAML::LoadFile(cfg_path)),
-    setup(setup_path)
 {
-    check();
+    load(name, cfg_path, setup_path);
 }
 
 writerCfg::~writerCfg()
@@ -24,8 +20,8 @@ writerCfg::~writerCfg()
 
 void writerCfg::load(std::string name, std::string cfg_path, std::string setup_path)
 {
-    id = name;
-    config = YAML::LoadFile(cfg_path);
+    id = name;    
+    boost::property_tree::read_json(cfg_path, config);     
     setup.load(setup_path);
     check();
 }
@@ -90,29 +86,39 @@ std::chrono::microseconds writerCfg::timeout()
 
 size_t writerCfg::numberReaders()
 {
-    return getAttribute<std::vector<std::string>>(READERS).size();
+    return config.get_child(id + "." + READERS).size();
 }
 
 w2rp::socket_endpoint writerCfg::readerEndpoint(int index)
 {
-    std::string name = getAttribute<std::vector<std::string>>(READERS).at(index);
+    // get readers child node
+    auto readers = config.get_child(id + "." + READERS);
 
-    std::string address = config[name][ADDRESS].as<std::string>();
-    int port = config[name][PORT].as<int>();
+    // Access by index
+    auto reader_it = readers.begin();
+    std::advance(reader_it, index);
 
-    return socket_endpoint(address, port);
+    // get reader name
+    std::string name = reader_it->second.get_value<std::string>();
+    
+    // Access reader config
+    std::string address = config.get<std::string>(name + "." + ADDRESS);
+    int port = config.get<int>(name + "." + PORT);
+    
+    return w2rp::socket_endpoint(address, port);
 }
 
 std::vector<w2rp::socket_endpoint> writerCfg::readerEndpoints()
 {
     std::vector<w2rp::socket_endpoint> readers;
 
-    std::vector<std::string> reader_names = getAttribute<std::vector<std::string>>(READERS);
-
+    // get readers child node
+    auto reader_names = config.get_child(id + "." + READERS);
     for(auto it = reader_names.begin(); it != reader_names.end(); it++)
     {
-        std::string address = config[*it][ADDRESS].as<std::string>();
-        int port = config[*it][PORT].as<int>();
+        std::string reader = it->second.get_value<std::string>();
+        std::string address = config.get<std::string>(reader + "." + ADDRESS);
+        int port = config.get<int>(reader + "." + PORT);
         readers.push_back(socket_endpoint(address, port));
     }
 
@@ -141,31 +147,32 @@ w2rp::PrioritizationMode writerCfg::prioMode()
 bool writerCfg::check()
 {
     // Check Writer ID
-    if(!config[id])
+    if(config.find(id) == config.not_found())
     {
-        logError("No configuration found for " << id)
+        logError("No configuration found for " << id);
         throw std::invalid_argument(id + " not found");
         return false;
     }
 
     // Check Reader IDs
-    std::vector<std::string> reader_names = getAttribute<std::vector<std::string>>(READERS);
+    auto reader_names = config.get_child(id + "." + READERS);
     for(auto it = reader_names.begin(); it != reader_names.end(); it++)
     {
-        if(!config[*it])
+        std::string reader = it->second.get_value<std::string>();
+        if(config.find(reader) == config.not_found())
         {
-            logError("No configuration found for assigned reader " << *it)
-            throw std::invalid_argument(*it + " not found");
+            logError("No configuration found for assigned reader " << reader)
+            throw std::invalid_argument(reader + " not found");
             return  false;
         }
     }
-    
+
     // Check Host
-    std::string name = getAttribute<std::string>(HOST);
-    if(!setup.check(name))
+    std::string hostName = getAttribute<std::string>(HOST);
+    if(!setup.check(hostName))
     {
-        logError("No configuration for assigned host " << name)
-        throw std::invalid_argument(name + " not found");
+        logError("No configuration for assigned host " << hostName);
+        throw std::invalid_argument(hostName + " not found");
         return false;
     }
 

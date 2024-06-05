@@ -1,7 +1,8 @@
 #ifndef SETUP_CONFIG_h
 #define SETUP_CONFIG_h
 
-#include <yaml-cpp/yaml.h>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp> 
 
 #include <w2rp/log.hpp>
 
@@ -9,7 +10,7 @@ namespace w2rp{
 namespace config{
 
 #ifndef DEFAULT_CONFIG
-#define DEFAULT_SETUP "setup_defines.yaml"
+#define DEFAULT_SETUP "setup_defines.json"
 #endif
 
 
@@ -66,18 +67,19 @@ class setupConfig
     template<typename T>
     T getAttribute(std::string name, std::string attr)
     {
-        if(config[name])
+        auto node = config.find(name);
+        if (node != config.not_found())
         {
-            return config[name][attr].as<T>();
+            return config.get<T>(name + "." + attr);
         }
         else
         {
-            logError("Host " << name << " does not exist")
-            return T();
+            logError("Host " << name << " does not exist");
+            throw std::invalid_argument("Host " + name + " does not exist");
         }
     }
 
-    YAML::Node config;
+    boost::property_tree::ptree config;
 };
 
 };  // end namespace config

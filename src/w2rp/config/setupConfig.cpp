@@ -7,9 +7,8 @@ setupConfig::setupConfig()
 }
 
 setupConfig::setupConfig(std::string cfg_path)
-:
-    config(YAML::LoadFile(cfg_path))
 {
+    boost::property_tree::read_json(cfg_path, config);     
 }
 
 uint32_t setupConfig::get_hostID(std::string name)
@@ -33,17 +32,17 @@ uint32_t setupConfig::get_hostID(std::string name)
 
 void setupConfig::load(std::string cfg_path)
 {
-    config = YAML::LoadFile(cfg_path);
+    boost::property_tree::read_json(cfg_path, config);     
 }
 
 bool setupConfig::check(std::string name)
 {
-    if(config[name])
+    if(config.find(name) == config.not_found())
     {
-        return true;
+        return false;
     }
     else
     {
-        return false;
+        return true;
     }
 }

@@ -6,7 +6,7 @@ namespace config{
 
 
 /********************** General ***************************/
-#define DEADLINE "DEADLINE"
+#define DEADLINE "DEADLINE [us]"
 #define SIZE_CACHE "SIZE_CACHE"
 #define HOST "HOST"
 #define ADDRESS "ADDRESS"
@@ -16,14 +16,14 @@ namespace config{
 #define READERS "READERS"
 
 /*********************** Reader ***************************/
-#define RESPONSE_DELAY "RESPONSE_DELAY"
+#define RESPONSE_DELAY "RESPONSE_DELAY [us]"
 #define PRIORITY "PRIORITY"
 
 /*********************** Writer ***************************/
-#define FRAGMENT_SIZE "FRAGMENT_SIZE"
-#define SHAPING_TIME "SHAPING_TIME"
-#define NACK_SUPPRESSION_DURATION "NACK_SUPPRESSION_DURATION"
-#define TIMEOUT "TIMEOUT"
+#define FRAGMENT_SIZE "FRAGMENT_SIZE [Byte]"
+#define SHAPING_TIME "SHAPING_TIME [us]"
+#define NACK_SUPPRESSION_DURATION "NACK_SUPPRESSION_DURATION [us]"
+#define TIMEOUT "TIMEOUT [us]"
 #define NUMBER_READERS "NUMBER_READERS"
 #define PRIO_MODE "PRIO_MODE"
 

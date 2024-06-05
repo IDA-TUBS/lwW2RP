@@ -10,7 +10,7 @@ class Publisher
 {
 public:
 
-    Publisher();
+    Publisher(uint16_t participant_id);
 
     virtual ~Publisher();
 
@@ -22,8 +22,8 @@ public:
 
 private:
 
-    Writer* writer;
-
+    // Writer* writer;
+    Writer writer;
 
     void runThread(uint32_t number_samples);
     int64_t period;
