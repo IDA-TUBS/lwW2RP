@@ -253,7 +253,7 @@ class DataFrag: public SubmessageBase
              fragmentSize(fragmentSize),
              timestamp(sampleTimestamp)
     {
-        this->serializedPayload = new unsigned char[fragmentSize];
+        this->serializedPayload = new unsigned char[fragmentSize]{0};
         memset(this->serializedPayload, 0, fragmentSize * sizeof(unsigned char));
         memcpy(this->serializedPayload, payload, fragmentSize);
 
@@ -283,7 +283,7 @@ class DataFrag: public SubmessageBase
         this->dataSize = frag.dataSize;
         this->fragmentSize = frag.fragmentSize;
 
-        this->serializedPayload = new unsigned char[fragmentSize];
+        this->serializedPayload = new unsigned char[fragmentSize]{0};
         memset(this->serializedPayload, 0, fragmentSize * sizeof(unsigned char));
         memcpy(this->serializedPayload, frag.serializedPayload, frag.fragmentSize);
         this->timestamp = frag.timestamp;

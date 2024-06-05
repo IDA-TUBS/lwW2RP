@@ -378,7 +378,7 @@ bool Writer::sendMessage(){
         SampleFragment* sf = sendQueue.front();
         // update currentSN
         currentChange = sf->baseChange;
-
+        
         sendQueue.pop_front();
         // update fragment status (at all reader proxies if multicast is used)
         for(auto rp: matchedReaders)
@@ -413,7 +413,7 @@ bool Writer::sendMessage(){
         HeartbeatFrag* hb;
 
         createDataFrag(sf, data);
-        // logDebug("[Writer] sendMessage: created dataFrag")
+        // logDebug("[Writer] sendMessage: created dataFrag: " << unsigned(data->fragmentSize))
         // data->print();
         logInfo("[WRITER] tx fragment " << data->fragmentStartingNum << ": " << data->serializedPayload)
 
@@ -554,7 +554,6 @@ void Writer::createDataFrag(SampleFragment* sf, DataFrag*& ret)
     // TODO borad/multicast readerID = numeric_limits<uint32_t>::max()? message.h #define ID_BROADCAST numeric_limits<uint32_t>::max()
     // uint32_t readerID = 0;
     // ????????????????????????????????????????
-
     ret = new DataFrag(c_entityID_reader.to_uint32(), c_entityID_writer.to_uint32(),
                         sf->baseChange->sequenceNumber, sf->fragmentStartingNum,
                         sf->baseChange->sampleSize, sf->dataSize, sf->data, sf->baseChange->arrivalTime);

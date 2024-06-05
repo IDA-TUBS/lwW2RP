@@ -75,7 +75,7 @@ class SampleFragment
         baseChange(baseChange)
     {
         // this->data = (unsigned char*)malloc(dataSize * sizeof(unsigned char));
-        this->data = new unsigned char[dataSize];
+        this->data = new unsigned char[dataSize]{0};
         memset(this->data, 0, dataSize * sizeof(unsigned char));
     };
 
@@ -95,7 +95,7 @@ class SampleFragment
         baseChange(sf.baseChange)
     {
         // this->data = (unsigned char*)malloc(dataSize * sizeof(unsigned char));
-        this->data = new unsigned char[dataSize];
+        this->data = new unsigned char[dataSize]{0};
         memset(this->data, 0, dataSize * sizeof(unsigned char));
         memcpy(this->data, sf.data, this->dataSize);
         // logDebug("[SF] copy: fragment " << this->fragmentStartingNum << " size: " << this->dataSize << " data: " << this->data)
