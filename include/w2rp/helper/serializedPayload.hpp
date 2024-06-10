@@ -107,6 +107,18 @@ class SerializedPayload
     // }
 };
 
+inline std::ostream& operator << (
+    std::ostream& output,
+    SerializedPayload& payload 
+)
+{
+    for(uint32_t i=0; i < payload.length; i++)
+    {
+        output << payload.data[i];
+    }    
+}
+
+
 }; // end namespace
 
 #endif // SERIALIZED_PAYLOAD_H

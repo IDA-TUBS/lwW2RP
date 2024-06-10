@@ -50,8 +50,6 @@ class ReaderProxy
         timeoutActive(false),
         history()
     {
-        logDebug("Historysize: " << historySize)
-        logDebug("History: " << history.size())
     };
 
     /**
@@ -65,8 +63,6 @@ class ReaderProxy
         timeoutActive(false),
         history()
     {
-        logDebug("Historysize: " << historySize)
-        logDebug("History: " << history.size())
     };
 
     /**

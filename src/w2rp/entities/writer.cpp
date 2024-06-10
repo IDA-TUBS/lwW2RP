@@ -10,7 +10,6 @@ namespace w2rp {
 
 Writer::Writer()
 {
-    logInfo("[Writer] empty constructor call")
 }
 
 Writer::Writer(uint16_t participant_id, config::writerCfg cfg)
@@ -18,7 +17,6 @@ Writer::Writer(uint16_t participant_id, config::writerCfg cfg)
     config(cfg)
 {
     init(participant_id);
-    logInfo("[Writer] finished constructor call")
 }
 
 Writer::~Writer()
@@ -33,22 +31,6 @@ Writer::~Writer()
 
 void Writer::init(uint16_t participant_id)
 {
-    // TODO fill writer config
-    // config.fragmentSize = 5;
-    // config.deadline =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::seconds(5));
-    // config.shapingTime =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::microseconds(10000));
-    // config.nackSuppressionDuration =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::microseconds(20000));
-    // config.timeout =  std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::microseconds(20000));
-    // config.numberReaders = 1;
-    // config.readerAddress = "127.0.0.1";
-    // config.readerPort = 50000;
-    // config.writerAddress = "127.0.0.1";
-    // config.writerPort = 50001;
-    // config.sizeCache = 2;
-    // config.writerUuid = 0;
-    // memcpy(config.guidPrefix, "_GUIDPREFIX_", 12);
-    // config.prioMode = ADAPTIVE_HIGH_PDR;
-
     // generate guid prefix
     GuidPrefix_t guidPrefix;
     guidPrefixManager::instance().create(
@@ -59,7 +41,6 @@ void Writer::init(uint16_t participant_id)
 
     // set guid
     guid = GUID_t(guidPrefix, c_entityID_writer);
-    logDebug("[WRITER] GUID: " << guid);
 
     sequenceNumberCnt = 0;
 
@@ -129,7 +110,6 @@ void Writer::init(uint16_t participant_id)
     );
 
     timer_manager.start();
-    logDebug("[WRITER] TimerManager active")
 
     currentSampleNumber = -1;
     fragmentCounter = 0;
@@ -282,14 +262,10 @@ bool Writer::addSampleToCache(SerializedPayload *data, std::chrono::system_clock
 
 
 void Writer::handleNackFrag(W2RPHeader *header, NackFrag *msg)
-{
-    logDebug("[WRITER] handleNackFrag: received NackFrag - readerID: " << header->guidPrefix)
-    
+{    
     // Simplification: One reader per host -> Identify matched readers based on host ID
     uint32_t readerID;
     memcpy(&readerID, &(header->guidPrefix.value[HOST_ID_OFFSET]), HOST_ID_LEN);
-
-    logDebug("[WRITER] handleNackFrag: reader host ID: " << unsigned(readerID))
 
     // assumption and simplifications for PoC: readerID always correspond to index in matchedReaders
     for(ReaderProxy* rp: matchedReaders)
@@ -312,10 +288,6 @@ void Writer::handleNackFrag(W2RPHeader *header, NackFrag *msg)
         }
     }
 }
-
-
-
-
 
 
 /*********************************************/
@@ -415,17 +387,14 @@ bool Writer::sendMessage(){
         createDataFrag(sf, data);
         // logDebug("[Writer] sendMessage: created dataFrag: " << unsigned(data->fragmentSize))
         // data->print();
-        logInfo("[WRITER] tx fragment " << data->fragmentStartingNum << ": " << data->serializedPayload)
 
         this->createHBFrag(sf, hb);
-        // logDebug("[Writer] sendMessage: created HBFrag")
 
         // serialization (toNet) and concatenation of submessages
         MessageNet_t *txMsg = new MessageNet_t;
         header->headerToNet(txMsg);
         data->dataToNet(txMsg);
         hb->hbToNet(txMsg);
-        // logDebug("[Writer] sendMessage: net message from submessages")
 
         // send message via UDP
         CommInterface->sendMsg(*txMsg);

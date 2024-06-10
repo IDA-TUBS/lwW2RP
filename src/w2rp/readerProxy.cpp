@@ -85,15 +85,6 @@ bool ReaderProxy::processNack(NackFrag *msg)
     
     // first get relevant sequence number
     uint32_t sequenceNumber = msg->writerSN;
-    
-    logDebug("mem guard: " << mem_guard)
-    int j = 0;
-    for(auto hst: history)
-    {
-        logDebug("Index: " << j)
-        j++;
-    }
-
 
     if(history.size() == 0)
     {
