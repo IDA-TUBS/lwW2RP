@@ -53,7 +53,8 @@ void Writer::init(uint16_t participant_id)
     /*****************************************************************************************************************/
     // reader proxy initialization
     for(uint32_t id: config.reader_id()) {
-        // the app's reader IDs are in the range of [appID * maxNumberReader + 1, (appID + 1) * maxNumberReader - 1]
+
+
 
         ReaderProxy* rp = nullptr;
         if(config.nackSuppressionDuration() != std::chrono::system_clock::duration::zero())
@@ -75,12 +76,8 @@ void Writer::init(uint16_t participant_id)
     netParser = new NetMessageParser();
 
     // init UDPComm object
-
-
     socket_endpoint rx_socketEndpoint = config.endpoint();
     socket_endpoint tx_socketEndpoint = config.readerEndpoint(0);
-    // socket_endpoint rx_socketEndpoint(config.writerAddress, config.writerPort);
-    // socket_endpoint tx_socketEndpoint(config.readerAddress, config.readerPort);
 
     logDebug("Writer: " << rx_socketEndpoint.ip_addr << ":" << rx_socketEndpoint.port)
 
@@ -91,10 +88,7 @@ void Writer::init(uint16_t participant_id)
     handlerThread = std::thread{&Writer::handleMsg, this};
 
     // init timers
-    // std::chrono::microseconds cycle = config.shapingTime; // TODO take cycle time from writer config
-
-    // init timers
-    std::chrono::microseconds cycle(500000); // TODO take cycle time from writer config
+    std::chrono::microseconds cycle = config.shapingTime(); 
 
     shapingTimer = new PeriodicEvent(
         this->timer_manager,
@@ -152,7 +146,7 @@ void Writer::handleMsg()
     while(true)
     {
         msg = receiveQueue.dequeue();
-
+        logDebug("[Writer] received message")
         handleMessages(&msg);
     }
 }
@@ -168,7 +162,7 @@ bool Writer::handleMessages(MessageNet_t *net)
     std::vector<SubmessageBase*> res;
 
     netParser->getSubmessages(net, &res);
-
+    
     // call corresponding submsg handler functions
     NackFrag* nackFrag;
     for(auto subMsg : res)
@@ -181,6 +175,7 @@ bool Writer::handleMessages(MessageNet_t *net)
                 handleNackFrag(&header, nackFrag);
                 break;
             default:
+                logDebug("[Writer] received unknown message")
                 break;
         }
     }
@@ -264,8 +259,7 @@ bool Writer::addSampleToCache(SerializedPayload *data, std::chrono::system_clock
 void Writer::handleNackFrag(W2RPHeader *header, NackFrag *msg)
 {    
     // Simplification: One reader per host -> Identify matched readers based on host ID
-    uint32_t readerID;
-    memcpy(&readerID, &(header->guidPrefix.value[HOST_ID_OFFSET]), HOST_ID_LEN);
+    uint32_t readerID = header->guidPrefix.get_host();
 
     // assumption and simplifications for PoC: readerID always correspond to index in matchedReaders
     for(ReaderProxy* rp: matchedReaders)

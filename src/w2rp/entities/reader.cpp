@@ -50,6 +50,8 @@ void Reader::init(uint16_t participant_id)
     socket_endpoint tx_socketEndpoint  = config.writer();
 
     logDebug("Reader: " << rx_socketEndpoint.ip_addr << ":" << rx_socketEndpoint.port)
+    logDebug("Writer: " << tx_socketEndpoint.ip_addr << ":" << tx_socketEndpoint.port)
+
 
     CommInterface = new UDPComm(rx_socketEndpoint, tx_socketEndpoint);
 
@@ -226,6 +228,9 @@ bool Reader::handleHBFrag(HeartbeatFrag *msg)
 
     // create W2RP header
     W2RPHeader *header = new W2RPHeader(guid.prefix);
+
+    logDebug("[Reader] Created W2RP Header: " << header->guidPrefix)
+
 
     // create NackFrag submessage
     // TODO writerID?

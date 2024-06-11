@@ -62,7 +62,7 @@ class W2RPHeader
         this->length = sizeof(this->protocol) + 
                         sizeof(this->version) + 
                         sizeof(this->vendorID) + 
-                        sizeof(this->guidPrefix.value);
+                        sizeof(this->guidPrefix);
     };
 
     /**
@@ -73,6 +73,7 @@ class W2RPHeader
         this->protocol = header.protocol;
         this->version = header.version;
         this->vendorID = header.vendorID;
+        this->guidPrefix = header.guidPrefix;
 
         this->length = header.length;
     };
@@ -343,7 +344,7 @@ class NackFrag: public SubmessageBase
     */
     NackFrag()
     {
-        subMsgHeader = new SubmessageHeader(NACK_FRAG, this->length, false);
+        // subMsgHeader = new SubmessageHeader(NACK_FRAG, this->length, false);
 
         this->length = sizeof(readerID) +
                        sizeof(writerID) +
@@ -351,6 +352,7 @@ class NackFrag: public SubmessageBase
                        sizeof(count) +
                        fragmentNumberState.size;
 
+        subMsgHeader = new SubmessageHeader(NACK_FRAG, this->length, false);
     };
 
     /** 
@@ -366,13 +368,15 @@ class NackFrag: public SubmessageBase
         memcpy(this->fragmentNumberState.bitmap, fragmentStates, 8);
         this->fragmentNumberState.bitmapBase = bitmapBase;
 
-        subMsgHeader = new SubmessageHeader(NACK_FRAG, this->length, false);
+        // subMsgHeader = new SubmessageHeader(NACK_FRAG, this->length, false);
 
         this->length = sizeof(readerID) +
                        sizeof(writerID) +
                        sizeof(writerSN) +
                        sizeof(count) +
                        fragmentNumberState.size;
+
+        subMsgHeader = new SubmessageHeader(NACK_FRAG, this->length, false);
     };
 
     /**

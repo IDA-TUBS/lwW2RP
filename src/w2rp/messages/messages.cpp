@@ -25,9 +25,6 @@ void W2RPHeader::netToHeader(MessageNet_t* msg)
 }
 
 
-
-
-
 void SubmessageHeader::headerToNet(MessageNet_t* msg)
 {   
     // logDebug("[MESSAGE] SubmessageHeader: headerToNet, pos: " << msg->pos)
@@ -173,18 +170,20 @@ void HeartbeatFrag::netToHB(MessageNet_t* msg)
 
 
 
-
-
-
 void NetMessageParser::getSubmessages(MessageNet_t* msg, std::vector<SubmessageBase*> *res)
 {
-    W2RPHeader *w2rpHeader;
-    w2rpHeader = new W2RPHeader();
+    // W2RPHeader *w2rpHeader;
+    // w2rpHeader = new W2RPHeader();
 
     SubmessageHeader *subMsgHeader;
     subMsgHeader = new SubmessageHeader();
 
-    w2rpHeader->netToHeader(msg);
+    // w2rpHeader->netToHeader(msg);
+    
+    // Move read head to submessage segment
+    msg->reset();
+    msg->movePos(W2RPHeader().length);
+
     // logDebug("[NetMessageParser] Parse packet of length: " << msg->length)
 
     while (true)
@@ -260,6 +259,7 @@ void NetMessageParser::getSubmessages(MessageNet_t* msg, std::vector<SubmessageB
             }
             break;
         default:
+            logDebug("[NetMessageParser] Unknown sub-message")
             break;
         }
     }

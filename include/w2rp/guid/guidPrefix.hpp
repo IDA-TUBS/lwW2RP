@@ -8,6 +8,8 @@
 #include <iomanip>
 #include <algorithm>
 
+#include <boost/endian/conversion.hpp>
+
 namespace w2rp
 {
 
@@ -56,6 +58,14 @@ struct GuidPrefix_t
     static GuidPrefix_t unknown()
     {
         return GuidPrefix_t();
+    }
+
+    uint32_t get_host()
+    {
+        uint32_t host_ID;
+        memcpy(&host_ID, value+HOST_ID_OFFSET, HOST_ID_LEN);
+        host_ID = boost::endian::big_to_native(host_ID);
+        return host_ID;
     }
 
     /**

@@ -149,6 +149,7 @@ std::vector<uint32_t> writerCfg::reader_id()
         std::string host = config.get<std::string>(reader + "." + HOST);
         logDebug("[WRITER] getting host: " << host)
         uint32_t id = setup.get_hostID(host);
+        logDebug("[WRITER] host id: " << id)
         readerList.push_back(id);
     }   
     return readerList;

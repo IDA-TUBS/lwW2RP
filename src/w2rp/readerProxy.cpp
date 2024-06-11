@@ -88,6 +88,7 @@ bool ReaderProxy::processNack(NackFrag *msg)
 
     if(history.size() == 0)
     {
+        logDebug("[ReaderProxy] history empty")
         return false;
     }
 
@@ -103,6 +104,7 @@ bool ReaderProxy::processNack(NackFrag *msg)
     }
     if(!change)
     {
+        logDebug("[ReaderProxy] change empty")
         return false;
     }
 
