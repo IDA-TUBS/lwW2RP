@@ -21,8 +21,7 @@ uint32_t setupConfig::get_hostID(std::string name)
         if (hex_string.find("0x") == 0 || hex_string.find("0X") == 0) {
             hex_string = hex_string.substr(2);
         }
-        
-        return std::stoul(hex_string, nullptr, 32);
+        return std::stoul(hex_string, nullptr, 16);
     }
     else
     {

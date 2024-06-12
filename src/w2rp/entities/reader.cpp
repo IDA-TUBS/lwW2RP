@@ -38,7 +38,7 @@ void Reader::init(uint16_t participant_id)
     // set guid
     guid = GUID_t(guidPrefix, c_entityID_reader);
 
-    logDebug("[READER] GUID: " << guid);
+    logInfo("[READER] GUID: " << guid);
 
     writerProxy = new WriterProxy(this->config.sizeCache());
 

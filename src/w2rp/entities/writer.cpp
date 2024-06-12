@@ -42,6 +42,9 @@ void Writer::init(uint16_t participant_id)
     // set guid
     guid = GUID_t(guidPrefix, c_entityID_writer);
 
+    logInfo("[WRITER] GUID: " << guid);
+
+
     sequenceNumberCnt = 0;
 
     // initialize sample fragmenter
@@ -53,9 +56,6 @@ void Writer::init(uint16_t participant_id)
     /*****************************************************************************************************************/
     // reader proxy initialization
     for(uint32_t id: config.reader_id()) {
-
-
-
         ReaderProxy* rp = nullptr;
         if(config.nackSuppressionDuration() != std::chrono::system_clock::duration::zero())
         {
