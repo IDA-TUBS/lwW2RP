@@ -19,6 +19,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 ### search for local boost
 find_package(Boost 1.73.0 EXACT COMPONENTS thread log log_setup REQUIRED)
 
+find_package(OpenCV REQUIRED)
+include_directories( ${OpenCV_INCLUDE_DIRS} )
+
 ### Define library content
 set(
     LIB_SRC_FILES
@@ -164,6 +167,16 @@ target_link_libraries(reader_test w2rp)
 ## Config testing
 add_executable(readConfig_test test/config/readConfig_test.cpp ${SRC_FILES})
 target_link_libraries(readConfig_test w2rp)
+
+## Writer testing (video stream)
+add_executable(writer_test_video test/app_videoStream/writer_test.cpp ${SRC_FILES})
+target_link_libraries(writer_test_video w2rp ${OpenCV_LIBS})
+
+## Reader testing (video stream)
+add_executable(reader_test_video test/app_videoStream/reader_test.cpp ${SRC_FILES})
+target_link_libraries(reader_test_video w2rp ${OpenCV_LIBS})
+
+
 
 ## GUID testing
 add_executable(guid_test test/guid/guid_test.cpp ${SRC_FILES})

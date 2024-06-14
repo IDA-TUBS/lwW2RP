@@ -1,8 +1,10 @@
-#ifndef READERTEST_H
-#define READERTEST_H
+#ifndef READERTEST_VIDEO_H
+#define READERTEST_VIDEO_H
 
 #include <w2rp/entities/reader.hpp>
 #include <w2rp/config/readerConfig.hpp>
+
+#include <opencv2/opencv.hpp>
 
 using namespace w2rp;
 
@@ -20,6 +22,8 @@ public:
 
     bool publish();
 
+    struct visualizeData;
+
 private:
 
     Reader* reader;
@@ -27,4 +31,4 @@ private:
     void rxThread();
 };
 
-#endif //READERTEST_H
+#endif //READERTEST_VIDEO_H

@@ -216,7 +216,7 @@ bool Writer::addSampleToCache(SerializedPayload *data, std::chrono::system_clock
     logInfo("[Writer] addSampleToCache")
     // create CacheChange object
     CacheChange *newChange = new CacheChange(sequenceNumberCnt++, data->length, config.fragmentSize(), timestamp);
-    // logDebug("[Writer] created CacheChange")
+    // logDebug("[Writer] created CacheChange comprising " << newChange->numberFragments << " fragments; data length: " << data->length)
 
     // fragment sample
     std::vector<SampleFragment*> fragments;

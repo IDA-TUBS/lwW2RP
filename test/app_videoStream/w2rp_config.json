@@ -1,0 +1,25 @@
+{
+  "WRITER_01": {
+    "ADDRESS": "127.0.0.1",
+    "PORT": 50001,
+    "FRAGMENT_SIZE [Byte]": 1200,
+    "DEADLINE [us]": 100000,
+    "SHAPING_TIME [us]": 1500,
+    "NACK_SUPPRESSION_DURATION [us]": 3500,
+    "TIMEOUT [us]": 3500,
+    "SIZE_CACHE": 2,
+    "PRIO_MODE": 3,
+    "READERS": ["READER_01"],
+    "HOST": "TELEMETRY"
+  },
+  "READER_01": {
+    "ADDRESS": "127.0.0.1",
+    "PORT": 50000,
+    "DEADLINE [us]": 100000,
+    "RESPONSE_DELAY [us]": 500,
+    "SIZE_CACHE": 2,
+    "PRIORITY": 0,
+    "WRITER": "WRITER_01",
+    "HOST": "CLIENT2"
+  }
+}
