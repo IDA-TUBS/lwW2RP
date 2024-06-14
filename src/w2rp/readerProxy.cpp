@@ -126,11 +126,11 @@ bool ReaderProxy::processNack(NackFrag *msg)
 
         if(currentFragment->acked){
             // skip processing of already acknowledged fragments
-            logDebug("[ReaderProxy] Fragment " << currentFragment->fragmentStartingNum << " acked")
+            // logDebug("[ReaderProxy] Fragment " << currentFragment->fragmentStartingNum << " acked")
             continue;
         }
         
-        logDebug("[ReaderProxy] Fragment " << currentFragment->fragmentStartingNum << " not acked")
+        // logDebug("[ReaderProxy] Fragment " << currentFragment->fragmentStartingNum << " not acked")
 
         // Calculate the index of the byte containing the current bit
         int byte_index = i / 8;
@@ -139,12 +139,12 @@ bool ReaderProxy::processNack(NackFrag *msg)
 
         // int bit_position = i % 8;
 
-        logDebug("[ReaderProxy] byte index: " << byte_index << " bit position: " << bit_position) 
+        // logDebug("[ReaderProxy] byte index: " << byte_index << " bit position: " << bit_position) 
 
         // Check if the bit is set
         if (!(bitmap[byte_index] & (1 << bit_position))) { //!(bitmap[byte_index] & (1 >> bit_position)
             // fragment not noted as missing -> consider as acked
-            logDebug("[ReaderProxy] Fragment " << currentFragment->fragmentStartingNum << " update acked")
+            // logDebug("[ReaderProxy] Fragment " << currentFragment->fragmentStartingNum << " update acked")
             this->updateFragmentStatus(ACKED, sequenceNumber, fragmentNum, t_now);
         } else {
             // fragment noted as missing

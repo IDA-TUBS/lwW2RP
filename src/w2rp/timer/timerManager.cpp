@@ -169,7 +169,7 @@ void TimerManager::configureTimer(std::shared_ptr<boost::asio::steady_timer> tim
                 bool restart_ = task();                
                 if(restart_ == true)
                 {
-                    logInfo("Re-register intervall timer: " << timer_id)
+                    // logInfo("Re-register intervall timer: " << timer_id)
                     configureTimer(timer, timer_id, duration, function);
                 }
             }

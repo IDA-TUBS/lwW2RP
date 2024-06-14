@@ -4,7 +4,7 @@
     "PORT": 50001,
     "FRAGMENT_SIZE [Byte]": 5,
     "DEADLINE [us]": 5000000,
-    "SHAPING_TIME [us]": 1000000,
+    "SHAPING_TIME [us]": 10000,
     "NACK_SUPPRESSION_DURATION [us]": 20000,
     "TIMEOUT [us]": 20000,
     "SIZE_CACHE": 2,

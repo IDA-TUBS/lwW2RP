@@ -229,7 +229,7 @@ bool Reader::handleHBFrag(HeartbeatFrag *msg)
     // create W2RP header
     W2RPHeader *header = new W2RPHeader(guid.prefix);
 
-    logDebug("[Reader] Created W2RP Header: " << header->guidPrefix)
+    // logDebug("[Reader] Created W2RP Header: " << header->guidPrefix)
 
 
     // create NackFrag submessage

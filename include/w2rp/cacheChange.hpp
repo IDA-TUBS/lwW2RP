@@ -183,10 +183,10 @@ class CacheChange
     {
        bool tmp = true;
        for(int i = 0; i < this->numberFragments; i++){
-           logDebug("[checkForCompleteness]: " << i)
+        //    logDebug("[checkForCompleteness]: " << i)
            SampleFragment* fragment = this->sampleFragmentArray[i];
            if(!fragment->acked && !fragment->received){
-                logDebug("[checkForCompleteness] - missing: " << i)
+                // logDebug("[checkForCompleteness] - missing: " << i)
                 return false;
            }
        }
