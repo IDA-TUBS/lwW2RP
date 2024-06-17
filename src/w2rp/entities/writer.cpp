@@ -763,6 +763,15 @@ void Writer::handleTimeout()
 }
 
 
+/************************/
+/* RM related functions */ 
+/************************/
+
+void Writer::updateTxEndpoint(struct socket_endpoint endpoint_tx)
+{
+    CommInterface->setTxEndpoint(endpoint_tx);
+}
+
 
 /***************************/
 /* miscellaneous functions */

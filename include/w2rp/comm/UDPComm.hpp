@@ -64,6 +64,14 @@ class UDPComm
     struct socket_endpoint getRxEndpoint();
 
     /**
+     * @brief set the Endpoint object
+     * 
+     * @param struct containing updated socket_endpoint 
+     */
+    void setTxEndpoint(struct socket_endpoint endpoint_tx);
+
+
+    /**
      * @brief Get the Endpoint object
      * 
      * @return struct socket_endpoint 

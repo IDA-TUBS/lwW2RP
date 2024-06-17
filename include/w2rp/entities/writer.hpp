@@ -296,9 +296,14 @@ protected:
     void handleTimeout();
 
 
+    /************************/
+    /* RM related functions */ 
+    /************************/
 
-
-
+    /**
+     * @brief callback for handling of timeouts
+     */
+    void updateTxEndpoint(struct socket_endpoint endpoint_tx);
 
     
 
