@@ -1,5 +1,5 @@
-#ifndef SocketEndpoint_h
-#define SocketEndpoint_h
+#ifndef SocketEndpoint_W2RP_H
+#define SocketEndpoint_W2RP_H
 
 #include <string>
 #include <chrono>
@@ -27,4 +27,4 @@ struct socket_endpoint
 
 }; // end namespace
 
-# endif
+#endif //SocketEndpoint_W2RP_H

@@ -1,5 +1,5 @@
-#ifndef Guid_h
-#define Guid_h
+#ifndef Guid_W2RP_h
+#define Guid_W2RP_h
 
 #include <w2rp/guid/guidPrefix.hpp>
 #include <w2rp/guid/entityID.hpp>
@@ -227,4 +227,4 @@ inline std::istream& operator >>(
 
 }; // end namespace w2rp
 
-#endif
+#endif //Guid_W2RP_h
