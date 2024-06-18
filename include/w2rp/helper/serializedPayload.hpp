@@ -115,7 +115,8 @@ inline std::ostream& operator << (
     for(uint32_t i=0; i < payload.length; i++)
     {
         output << payload.data[i];
-    }    
+    }
+    return output;
 }
 
 

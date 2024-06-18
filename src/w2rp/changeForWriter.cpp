@@ -55,7 +55,7 @@ bool ChangeForWriter::setFragmentData(uint32_t fragmentNumber, unsigned char *da
         // logDebug("[ChangeForWriter] update fragment " << fragmentNumber << ": " << frag->data)
     }
 
-    
+    return true;    
 }
 
 
