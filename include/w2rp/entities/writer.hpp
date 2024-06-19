@@ -303,9 +303,7 @@ protected:
     /**
      * @brief callback for handling of timeouts
      */
-    void updateTxEndpoint(struct socket_endpoint endpoint_tx);
-
-    
+    void updateTxEndpoint(std::string endpoint_tx, int port);
 
 
     /***************************/

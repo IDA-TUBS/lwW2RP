@@ -767,9 +767,10 @@ void Writer::handleTimeout()
 /* RM related functions */ 
 /************************/
 
-void Writer::updateTxEndpoint(struct socket_endpoint endpoint_tx)
+void Writer::updateTxEndpoint(std::string endpoint_tx, int port)
 {
-    CommInterface->setTxEndpoint(endpoint_tx);
+    logInfo("Updating Tx Endpoint: " << endpoint_tx << ":" << port)
+    CommInterface->setTxEndpoint(socket_endpoint(endpoint_tx, port));
 }
 
 
