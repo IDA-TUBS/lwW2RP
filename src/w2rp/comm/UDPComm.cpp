@@ -62,6 +62,12 @@ void UDPComm::setTxEndpoint(struct socket_endpoint endpoint_tx)
     tx_endpoint_ = generate_endpoint(endpoint_tx);
 }
 
+void UDPComm::setTxEndpoint(udp::endpoint endpoint_tx)
+{
+    tx_endpoint_ = endpoint_tx;
+}
+
+
 struct socket_endpoint UDPComm::getTxEndpoint()
 {
     return socket_endpoint(tx_endpoint_.address().to_string(), tx_endpoint_.port());
