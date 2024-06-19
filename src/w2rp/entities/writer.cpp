@@ -128,12 +128,13 @@ void Writer::receiveMsg()
 {
     // msg to store received data
     MessageNet_t msg;
+    udp::endpoint reader;
 
     while(true)
     {
-        CommInterface->receiveMsg(msg);
-
+        reader = CommInterface->receiveMsg(msg);
         receiveQueue.enqueue(msg);
+        logDebug("Reader: " << reader.address().to_string() << ":" << reader.port())
     }
 }
 
