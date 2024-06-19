@@ -201,63 +201,70 @@ bool Reader::handleHBFrag(HeartbeatFrag *msg)
     // logDebug("[Reader] handle HBFrag")
     auto change = writerProxy->getChange(msg->writerSN);
 
-    uint32_t lastFragmentNum = msg->lastFragmentNum;
-
-    std::vector<uint32_t> missingFragments;
-
-    uint32_t bitmapBase = 0;
-    if(msg->lastFragmentNum > 256)
+    if(change)
     {
-        bitmapBase = msg->lastFragmentNum - 256;
-    }
+        uint32_t lastFragmentNum = msg->lastFragmentNum;
 
-    change->getMissingFragments(lastFragmentNum, &missingFragments);
+        std::vector<uint32_t> missingFragments;
 
-    unsigned char bitmap[8] = {0};
-
-    if(missingFragments.size() > 0)
-    {
-        for(auto fn: missingFragments)
+        uint32_t bitmapBase = 0;
+        if(msg->lastFragmentNum > 256)
         {
-            // Calculate the index in the bitmap array
-            uint32_t index = (fn - bitmapBase) / 8;
-            // Calculate the bit position within the byte
-            uint32_t bitPosition = 7 - (fn - bitmapBase) % 8;
-            // Set the bit at the calculated index and position
-            bitmap[index] |= (1 << bitPosition);
+            bitmapBase = msg->lastFragmentNum - 256;
         }
+
+        change->getMissingFragments(lastFragmentNum, &missingFragments);
+
+        unsigned char bitmap[8] = {0};
+
+        if(missingFragments.size() > 0)
+        {
+            for(auto fn: missingFragments)
+            {
+                // Calculate the index in the bitmap array
+                uint32_t index = (fn - bitmapBase) / 8;
+                // Calculate the bit position within the byte
+                uint32_t bitPosition = 7 - (fn - bitmapBase) % 8;
+                // Set the bit at the calculated index and position
+                bitmap[index] |= (1 << bitPosition);
+            }
+        }
+        // else sent back an empty bitmap    
+
+        // create W2RP header
+        W2RPHeader *header = new W2RPHeader(guid.prefix);
+
+        // logDebug("[Reader] Created W2RP Header: " << header->guidPrefix)
+
+
+        // create NackFrag submessage
+        // TODO writerID?
+        uint32_t writerID = 0;
+        NackFrag *response = new NackFrag(c_entityID_reader.to_uint32(), c_entityID_writer.to_uint32(),
+                                            msg->writerSN, bitmapBase, bitmap, lastFragmentNum); // this->nackCount replaced with lastFragmentNum
+        this->nackCount++;
+
+        // serialization (toNet) and concatenation of submessages 
+        MessageNet_t *txMsg = new MessageNet_t;
+        header->headerToNet(txMsg);
+        response->nackToNet(txMsg);
+
+        // send message via UDP
+        // logDebug("[Reader] Sending NackFrag")
+        CommInterface->sendMsg(*txMsg);
+        
+
+        // delete objects
+        // delete header;
+        // delete response;
+        // delete txMsg;
+
+        return true;
     }
-    // else sent back an empty bitmap    
-
-    // create W2RP header
-    W2RPHeader *header = new W2RPHeader(guid.prefix);
-
-    // logDebug("[Reader] Created W2RP Header: " << header->guidPrefix)
-
-
-    // create NackFrag submessage
-    // TODO writerID?
-    uint32_t writerID = 0;
-    NackFrag *response = new NackFrag(c_entityID_reader.to_uint32(), c_entityID_writer.to_uint32(),
-                                        msg->writerSN, bitmapBase, bitmap, lastFragmentNum); // this->nackCount replaced with lastFragmentNum
-    this->nackCount++;
-
-    // serialization (toNet) and concatenation of submessages 
-    MessageNet_t *txMsg = new MessageNet_t;
-    header->headerToNet(txMsg);
-    response->nackToNet(txMsg);
-
-    // send message via UDP
-    // logDebug("[Reader] Sending NackFrag")
-    CommInterface->sendMsg(*txMsg);
-    
-
-    // delete objects
-    // delete header;
-    // delete response;
-    // delete txMsg;
-
-    return true;
+    else
+    {
+        return false;
+    }   
 }
 
 

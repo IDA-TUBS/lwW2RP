@@ -98,19 +98,19 @@ bool WriterProxy::checkSampleCompleteness(uint32_t sequenceNumber)
 
 
 ChangeForWriter* WriterProxy::getChange(uint32_t sequenceNumber)
+{
+    // first find change corresponding to the given sequence number
+    ChangeForWriter* tmp = nullptr;
+    for (auto cfw: history)
     {
-        // first find change corresponding to the given sequence number
-        ChangeForWriter* tmp = nullptr;
-        for (auto cfw: history)
+        if (cfw->sequenceNumber == sequenceNumber)
         {
-            if (cfw->sequenceNumber == sequenceNumber)
-            {
-                tmp = cfw;
-                break;
-            }
+            tmp = cfw;
+            break;
         }
+    }
 
-        return tmp;
-    };
+    return tmp;
+};
 
 }; // end namespace
