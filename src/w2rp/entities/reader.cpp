@@ -83,9 +83,11 @@ void Reader::receiveMsg()
     // msg to store received data
     MessageNet_t msg;
 
+    udp::endpoint writer;
     while(true)
     {      
-        CommInterface->receiveMsg(msg);
+        writer = CommInterface->receiveMsg(msg);
+        CommInterface->setTxEndpoint(writer);
         receiveQueue.enqueue(msg);
         // logDebug("[Reader] received and enqueued message")
     }
