@@ -147,6 +147,11 @@ public:
      */
     bool write(SerializedPayload* data);
 
+    std::function<void(std::string, int)> get_callback()
+    {
+        return std::bind(&Writer::updateTxEndpoint, this, std::placeholders::_1, std::placeholders::_2);
+    }
+
 protected:
 
     /********************************************/
