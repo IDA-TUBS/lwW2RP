@@ -70,6 +70,12 @@ class UDPComm
      */
     void setTxEndpoint(struct socket_endpoint endpoint_tx);
 
+    /**
+     * @brief set the Endpoint object
+     * 
+     * @param struct containing updated socket_endpoint 
+     */
+    void setTxEndpoint(udp::endpoint endpoint_tx);
 
     /**
      * @brief Get the Endpoint object
