@@ -146,7 +146,7 @@ void Writer::handleMsg()
     while(true)
     {
         msg = receiveQueue.dequeue();
-        logDebug("[Writer] received message")
+        // logDebug("[Writer] received message")
         handleMessages(&msg);
     }
 }
@@ -170,12 +170,12 @@ bool Writer::handleMessages(MessageNet_t *net)
         switch (subMsg->subMsgHeader->submessageId)
         {
             case NACK_FRAG:
-                logDebug("[Writer] received NackFrag")
+                // logDebug("[Writer] received NackFrag")
                 nackFrag = (NackFrag*)(subMsg);
                 handleNackFrag(&header, nackFrag);
                 break;
             default:
-                logDebug("[Writer] received unknown message")
+                // logDebug("[Writer] received unknown message")
                 break;
         }
     }
@@ -230,11 +230,11 @@ bool Writer::addSampleToCache(SerializedPayload *data, std::chrono::system_clock
     // add CacheChange to history
     if(historyCache.size() == this->config.sizeCache())
     {
-        logDebug("[Writer] history full")
+        // logDebug("[Writer] history full")
         return false;
     }
     historyCache.push_back(newChange);
-    logDebug("[Writer] added change to history")
+    // logDebug("[Writer] added change to history")
 
 
     // generate ChangeForReaders based on CacheChange and add to reader proxies (done by ReaderProxy itself)
@@ -243,13 +243,13 @@ bool Writer::addSampleToCache(SerializedPayload *data, std::chrono::system_clock
         // logDebug("[Writer] adding change to readerProxy: " << unsigned(rp->readerID))
         rp->addChange(*newChange);
     }
-    logDebug("[Writer] added change to readerProxies")
+    // logDebug("[Writer] added change to readerProxies")
 
     // start shaping timer for sample transmission to begin
     if(!shapingTimer->isActive())
     {
         shapingTimer->restart();
-        logDebug("[Writer] started shaping timer")
+        // logDebug("[Writer] started shaping timer")
     }
 
     return true;
@@ -591,11 +591,11 @@ void Writer::checkSampleLiveliness()
 
             if(!(rp->changeExists(sequenceNumber)))
             {
-                logDebug("[WRITER] (checkSampleliveness) - continue")
+                // logDebug("[WRITER] (checkSampleliveness) - continue")
                 continue;
             }
 
-            logDebug("[WRITER] (checkSampleliveness) - removing change")
+            // logDebug("[WRITER] (checkSampleliveness) - removing change")
             rp->removeChange(sequenceNumber);
         }
     }
@@ -675,7 +675,7 @@ void Writer::removeCompleteSamples()
                 }
 
             }
-            logDebug("[Writer] delete change " << change->sequenceNumber << " from history")
+            // logDebug("[Writer] delete change " << change->sequenceNumber << " from history")
             delete change;
         }
         else
@@ -700,7 +700,7 @@ void Writer::removeCompleteSamples()
 
 void Writer::handleTimeout()
 {
-    logDebug("[Writer] handleTimeout")
+    // logDebug("[Writer] handleTimeout")
 
     // current timestamp
     auto t_now = std::chrono::system_clock::now();

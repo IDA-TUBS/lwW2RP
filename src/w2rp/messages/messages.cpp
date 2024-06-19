@@ -259,7 +259,7 @@ void NetMessageParser::getSubmessages(MessageNet_t* msg, std::vector<SubmessageB
             }
             break;
         default:
-            logDebug("[NetMessageParser] Unknown sub-message")
+            // logDebug("[NetMessageParser] Unknown sub-message")
             break;
         }
     }

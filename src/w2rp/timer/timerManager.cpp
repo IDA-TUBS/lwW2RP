@@ -60,7 +60,7 @@ timerID TimerManager::registerTimer(const TimePoint& time_point, std::function<v
     auto timer = std::make_shared<boost::asio::system_timer>(timer_io);
     if(time_point > std::chrono::system_clock::time_point::min())
     {
-        logDebug("[TimerManager] (registerTime) configureTimer called")
+        // logDebug("[TimerManager] (registerTime) configureTimer called")
         configureTimer(timer, timer_id.second, time_point, function);
     }
 
