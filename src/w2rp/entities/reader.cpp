@@ -182,7 +182,7 @@ bool Reader::handleDataFrag(DataFrag *msg)
         // push to sampleQueue (application)
         sampleQueue.enqueue(sampleData);
         
-        // logDebug("[Reader] sample complete: " << sampleData.data << "\n----------------------------------------------------------------------------------------------")
+        logDebug("[Reader] sample complete: " << sampleData.data << "\n----------------------------------------------------------------------------------------------")
 
         // TODO remove sample from history?
     }    
