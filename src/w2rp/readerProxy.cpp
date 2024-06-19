@@ -11,17 +11,17 @@ namespace w2rp {
 
 bool ReaderProxy::addChange(CacheChange &change)
 {
-    logDebug("[ReaderProxy] adding change")
+    // logDebug("[ReaderProxy] adding change")
     if(history.size() == historySize)
     {
         // cannot add a new change the history
-        logDebug("[ReaderProxy] cannot add a new change the history")
+        // logDebug("[ReaderProxy] cannot add a new change the history")
         return false;
     }
     ChangeForReader* cfr = new ChangeForReader(this->readerID, change);
 
     history.push_back(cfr);
-    logDebug("[ReaderProxy] adding change complete: " << history.size())
+    // logDebug("[ReaderProxy] adding change complete: " << history.size())
     return true;
 }
 
@@ -88,7 +88,7 @@ bool ReaderProxy::processNack(NackFrag *msg)
 
     if(history.size() == 0)
     {
-        logDebug("[ReaderProxy] history empty")
+        // logDebug("[ReaderProxy] history empty")
         return false;
     }
 
@@ -104,7 +104,7 @@ bool ReaderProxy::processNack(NackFrag *msg)
     }
     if(!change)
     {
-        logDebug("[ReaderProxy] change empty")
+        // logDebug("[ReaderProxy] change empty")
         return false;
     }
 
@@ -114,8 +114,8 @@ bool ReaderProxy::processNack(NackFrag *msg)
     uint32_t smallestFN = bitmapStruct.bitmapBase;
     uint32_t highestFN = msg->count;
 
-    logDebug("[ReaderProxy] min FN: " << unsigned(smallestFN) << " max FN: " << unsigned(highestFN))
-    logDebug("[ReaderProxy] bitmap: " << std::bitset<8>(bitmap[0]))
+    // logDebug("[ReaderProxy] min FN: " << unsigned(smallestFN) << " max FN: " << unsigned(highestFN))
+    // logDebug("[ReaderProxy] bitmap: " << std::bitset<8>(bitmap[0]))
 
     // iterate over all relevant bits of the NackFrag bitmap
     for(uint32_t i = 0; i <= highestFN - smallestFN; i++)
@@ -208,7 +208,7 @@ bool ReaderProxy::checkSampleCompleteness(uint32_t sequenceNumber)
         // remove sample from history? maybe just remove if expired or all readers completed reception of a given sample
         // done elsewhere
         // TODO really??
-        logDebug("[ReaderProxy] sample acknowledged completely.\n----------------------------------------------------------------------------------------------")
+        // logDebug("[ReaderProxy] sample acknowledged completely.\n----------------------------------------------------------------------------------------------")
     }
     return complete;
 }

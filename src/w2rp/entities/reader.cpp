@@ -155,7 +155,7 @@ bool Reader::handleMessages(MessageNet_t *net)
 bool Reader::handleDataFrag(DataFrag *msg)
 {
     // DataFrag received, update cache
-    logDebug("[Reader] handle  DataFrag")
+    // logDebug("[Reader] handle  DataFrag")
 
     // TODO check for matching ReaderID??
 
@@ -195,7 +195,7 @@ bool Reader::handleDataFrag(DataFrag *msg)
 bool Reader::handleHBFrag(HeartbeatFrag *msg)
 {
     
-    logDebug("[Reader] handle HBFrag")
+    // logDebug("[Reader] handle HBFrag")
     auto change = writerProxy->getChange(msg->writerSN);
 
     uint32_t lastFragmentNum = msg->lastFragmentNum;
@@ -245,7 +245,7 @@ bool Reader::handleHBFrag(HeartbeatFrag *msg)
     response->nackToNet(txMsg);
 
     // send message via UDP
-    logDebug("[Reader] Sending NackFrag")
+    // logDebug("[Reader] Sending NackFrag")
     CommInterface->sendMsg(*txMsg);
     
 

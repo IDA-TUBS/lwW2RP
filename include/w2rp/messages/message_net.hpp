@@ -118,7 +118,7 @@ struct MessageNet_t
         }
         else
         {
-            logDebug("[MESSAGE_NET] add: max_size exceeded")
+            // logDebug("[MESSAGE_NET] add: max_size exceeded")
             return -1;
         }
     }

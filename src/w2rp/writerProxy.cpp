@@ -14,7 +14,7 @@ bool WriterProxy::addChange(CacheChange &change)
         // no new sample, no need to add to history
         return false;
     }
-    logDebug("[WriterProxy] added change " << change.sequenceNumber << " to history")
+    // logDebug("[WriterProxy] added change " << change.sequenceNumber << " to history")
     ChangeForWriter* cfr = new ChangeForWriter(change);
 
     history.push_back(cfr);
