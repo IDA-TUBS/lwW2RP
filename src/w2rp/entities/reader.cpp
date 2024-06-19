@@ -49,6 +49,7 @@ void Reader::init(uint16_t participant_id)
     socket_endpoint rx_socketEndpoint = config.endpoint();
     socket_endpoint tx_socketEndpoint  = config.writer();
 
+    rx_socketEndpoint.ip_addr = "0.0.0.0";
     logDebug("Reader: " << rx_socketEndpoint.ip_addr << ":" << rx_socketEndpoint.port)
     logDebug("Writer: " << tx_socketEndpoint.ip_addr << ":" << tx_socketEndpoint.port)
 
