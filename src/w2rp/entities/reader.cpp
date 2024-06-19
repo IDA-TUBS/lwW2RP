@@ -94,7 +94,6 @@ void Reader::receiveMsg()
     }
 }
 
-
 void Reader::handleMsg()
 {   
     // msg to store received data
@@ -167,10 +166,15 @@ bool Reader::handleDataFrag(DataFrag *msg)
 
     // create new change for temporary usage
     auto change = new CacheChange(msg->writerSN, msg->dataSize, msg->fragmentSize, msg->timestamp);
-    writerProxy->addChange(*change); // only adds change if new, else WriterProxy does nothing here
-
+    auto ret_val = writerProxy->addChange(*change); // only adds change if new, else WriterProxy does nothing here
+    
+    if(ret_val == true)
+    {
+        logDebug("Change added: " << unsigned(msg->writerSN))
+    }
     // mark fragment as received 
     writerProxy->updateFragmentStatus(RECEIVED, msg->writerSN, msg->fragmentStartingNum, msg->serializedPayload, msg->fragmentSize); // msg->TODO also set data
+    logDebug("Frag Update: " << unsigned(msg->fragmentStartingNum))
 
     bool complete = writerProxy->checkSampleCompleteness(change->sequenceNumber);
 
@@ -263,6 +267,7 @@ bool Reader::handleHBFrag(HeartbeatFrag *msg)
     }
     else
     {
+        logDebug("Change empty: " << msg->writerSN)
         return false;
     }   
 }
@@ -339,6 +344,7 @@ void Reader::checkSampleLiveliness()
         if(!change->isValid(this->config.deadline()))
         {
             deprecatedSNs.push_back(change->sequenceNumber);
+            logDebug("Removing change: " << change->sequenceNumber)
             writerProxy->removeChange(change->sequenceNumber);
             if(writerProxy->getSize() == 0)
             {
