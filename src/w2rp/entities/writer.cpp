@@ -134,7 +134,7 @@ void Writer::receiveMsg()
     {
         reader = CommInterface->receiveMsg(msg);
         receiveQueue.enqueue(msg);
-        logDebug("Reader: " << reader.address().to_string() << ":" << reader.port())
+        // logDebug("Reader: " << reader.address().to_string() << ":" << reader.port())
     }
 }
 
