@@ -32,7 +32,7 @@ void UDPComm::sendMsg(
 )
 {
     std::lock_guard<std::mutex> lock(send_lock);
-    logDebug("[sendMsg]: " << tx_endpoint_.address().to_string() << ":" << tx_endpoint_.port())
+    // logDebug("[sendMsg]: " << tx_endpoint_.address().to_string() << ":" << tx_endpoint_.port())
     socket_.send_to(boost::asio::buffer(msg.buffer, msg.length), tx_endpoint_);
 }
 
