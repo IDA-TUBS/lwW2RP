@@ -155,38 +155,46 @@ bool Reader::handleMessages(MessageNet_t *net)
 bool Reader::handleDataFrag(DataFrag *msg)
 {
     // DataFrag received, update cache
-    logDebug("[Reader] handle  DataFrag")
+    // logDebug("[Reader] handle  DataFrag")
 
     // TODO check for matching ReaderID??
 
+    /********************** WIP ************************/
     // first check liveliness of previous samples
-    checkSampleLiveliness();
+    // checkSampleLiveliness();
+    /***************************************************/
 
     // create new change for temporary usage
     auto change = new CacheChange(msg->writerSN, msg->dataSize, msg->fragmentSize, msg->timestamp);
-    writerProxy->addChange(*change); // only adds change if new, else WriterProxy does nothing here
-
-    // mark fragment as received 
-    writerProxy->updateFragmentStatus(RECEIVED, msg->writerSN, msg->fragmentStartingNum, msg->serializedPayload, msg->fragmentSize); // msg->TODO also set data
-
-    bool complete = writerProxy->checkSampleCompleteness(change->sequenceNumber);
-
-    // if sample complete, send data up to application
-    if(complete)
+    if(writerProxy->checkChange(*change) == false)
     {
-        // create serializedPayload some sf data
-        auto cfw  = writerProxy->getChange(change->sequenceNumber);
-        SerializedPayload sampleData;
-        buildSerializedSample(cfw, sampleData);
+        bool add_flag = writerProxy->addChange(*change); // only adds change if new, else WriterProxy does nothing here
 
-        // push to sampleQueue (application)
-        sampleQueue.enqueue(sampleData);
-        
-        // logDebug("[Reader] sample complete: " << sampleData.data << "\n----------------------------------------------------------------------------------------------")
+        // mark fragment as received 
+        writerProxy->updateFragmentStatus(RECEIVED, msg->writerSN, msg->fragmentStartingNum, msg->serializedPayload, msg->fragmentSize); // msg->TODO also set data
 
-        // TODO remove sample from history?
-    }    
+        if(!add_flag)
+        {
+            bool complete = writerProxy->checkSampleCompleteness(change->sequenceNumber);
 
+            // if sample complete, send data up to application
+            if(complete)
+            {
+                // create serializedPayload some sf data
+                auto cfw  = writerProxy->getChange(change->sequenceNumber);
+                SerializedPayload sampleData;
+                buildSerializedSample(cfw, sampleData);
+
+                // push to sampleQueue (application)
+                sampleQueue.enqueue(sampleData);
+                
+                // logDebug("[Reader] sample complete: " << sampleData.data << "\n----------------------------------------------------------------------------------------------")
+                logDebug("[Reader] sample complete: " << cfw->sequenceNumber << "\n----------------------------------------------------------------------------------------------")
+
+                // TODO remove sample from history?
+            }
+        }
+    }
     delete change;
 
     return true;
@@ -194,8 +202,6 @@ bool Reader::handleDataFrag(DataFrag *msg)
 
 bool Reader::handleHBFrag(HeartbeatFrag *msg)
 {
-    
-    logDebug("[Reader] handle HBFrag")
     auto change = writerProxy->getChange(msg->writerSN);
 
     uint32_t lastFragmentNum = msg->lastFragmentNum;
@@ -208,6 +214,7 @@ bool Reader::handleHBFrag(HeartbeatFrag *msg)
         bitmapBase = msg->lastFragmentNum - 256;
     }
 
+    // logDebug("[Reader] handle HBFrag: " << unsigned(change->sequenceNumber) << " " << unsigned(lastFragmentNum)) 
     change->getMissingFragments(lastFragmentNum, &missingFragments);
 
     unsigned char bitmap[8] = {0};
@@ -245,7 +252,7 @@ bool Reader::handleHBFrag(HeartbeatFrag *msg)
     response->nackToNet(txMsg);
 
     // send message via UDP
-    logDebug("[Reader] Sending NackFrag")
+    // logDebug("[Reader] Sending NackFrag")
     CommInterface->sendMsg(*txMsg);
     
 
@@ -309,7 +316,6 @@ void Reader::buildSerializedSample(ChangeForWriter *cfw, SerializedPayload &samp
 /* methods for checking validity of cacheChanges */ 
 /*************************************************/
 
-
 void Reader::checkSampleLiveliness()
 {
     // TODO maybe, rather only remove samples once cache is full?
@@ -341,6 +347,8 @@ void Reader::checkSampleLiveliness()
         }
     }
 }
+
+
 
 /***************************/
 /* miscellaneous functions */ 

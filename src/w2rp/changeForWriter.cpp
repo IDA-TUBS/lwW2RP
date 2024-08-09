@@ -62,8 +62,8 @@ bool ChangeForWriter::setFragmentData(uint32_t fragmentNumber, unsigned char *da
 void ChangeForWriter::getMissingFragments(uint32_t lastfragmentNum, std::vector<uint32_t> *res)
 {
     // logDebug("[ChangeForWriter] getMissingFragments")
-    
     for(uint32_t i = 0; i <= lastfragmentNum; i++){ //lastfragmentNum
+        // logDebug("[ChangeForWriter] checking: " << unsigned(sequenceNumber) << " " << unsigned(i))
         auto frag = sampleFragmentArray[i];
         if(!(frag->received)) {
             logDebug("[ChangeForWriter] missing " << i)
@@ -71,6 +71,5 @@ void ChangeForWriter::getMissingFragments(uint32_t lastfragmentNum, std::vector<
         }
     }
 }
-
 
 }; // end namespace

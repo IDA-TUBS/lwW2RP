@@ -17,8 +17,8 @@ class SampleFragment;
 class ChangeForWriter: public CacheChange
 {
   private:
-    /// flag for signaling that all fragments have been acknowledged
-    bool complete;
+    // /// flag for signaling that all fragments have been acknowledged
+    // bool complete;
 
     /// storing fragment number that has been sent last
     int lastReceivedFN;
@@ -31,7 +31,7 @@ class ChangeForWriter: public CacheChange
      */
     ChangeForWriter()
     {
-        complete = false;
+        // complete = false;
         lastReceivedFN = -1;
         highestFNreceived = 0;
     }
@@ -47,7 +47,7 @@ class ChangeForWriter: public CacheChange
      */
     ChangeForWriter(uint32_t seqNum, uint32_t sampleSize, uint32_t fragmentSize, std::chrono::system_clock::time_point timestamp):
         CacheChange(seqNum, sampleSize, fragmentSize, timestamp),
-        complete(false),
+        // complete(false),
         lastReceivedFN(-1),
         highestFNreceived(0)
     {
@@ -69,10 +69,12 @@ class ChangeForWriter: public CacheChange
      */
     ChangeForWriter(CacheChange &change):
         CacheChange(change.sequenceNumber, change.sampleSize, change.fragmentSize, change.arrivalTime),
-        complete(false),
+        // complete(false),
         lastReceivedFN(-1),
         highestFNreceived(0)
     {
+        // logDebug("[ChangeForWriter] constructor: " << this->sequenceNumber << " " << this->numberFragments)
+
         sampleFragmentArray = new SampleFragment*[this->numberFragments];
 
         // instantiate all fragments comprising the sample
@@ -91,7 +93,7 @@ class ChangeForWriter: public CacheChange
      */
     ChangeForWriter(ChangeForWriter &change):
         CacheChange(change.sequenceNumber, change.sampleSize, change.fragmentSize, change.arrivalTime),
-        complete(change.complete),
+        // complete(change.complete),
         lastReceivedFN(change.lastReceivedFN),
         highestFNreceived(change.highestFNreceived)
     {
@@ -109,7 +111,8 @@ class ChangeForWriter: public CacheChange
      */
     ~ChangeForWriter()
     {
-//        delete[] sampleFragmentArray; // Leads to conflicts at object destruction
+        // delete[] sampleFragmentArray; // Leads to conflicts at object destruction
+        // logDebug("[ChangeForWriter] destructor: " << unsigned(sequenceNumber))
     };
 
     /**
@@ -145,6 +148,13 @@ class ChangeForWriter: public CacheChange
      * @param res vector for storing the missing fragment numbers
      */
     void getMissingFragments(uint32_t lastfragmentNum, std::vector<uint32_t> *res);
+
+    // /**
+    //  * @brief read complete flag
+    //  * 
+    //  */
+    // bool getCompleteFlag();
+
 };
 
 }; // end namespace
