@@ -66,6 +66,21 @@ class WriterProxy
     void removeChange(uint32_t sequenceNumber);
 
     /**
+     * @brief method for removing deprecated samples from the history. Sample removal is handled such that the number of elements in the history is kept at historySize.
+     * 
+     */
+    void checkHistory();
+
+    /**
+     * @brief Check change complete flag
+     * 
+     * @param change Cache change to be checked
+     * @return true change complete
+     * @return false change incomplete
+     */
+    bool checkChange(CacheChange &change);
+
+    /**
      * @brief method for altering a fragment's status (unsent, sent, acked, ...)
      *
      * @param status fragment status

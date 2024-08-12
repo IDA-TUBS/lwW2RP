@@ -67,7 +67,8 @@ class CacheChange
         fragmentSize(fragmentSize),
         numberFragments(int(ceil((float)sampleSize / (float)fragmentSize))),
         arrivalTime(timestamp),
-        sampleFragmentArray(nullptr)
+        sampleFragmentArray(nullptr),
+        complete(false)
     {
         // sampleFragmentArray = new SampleFragment*[this->numberFragments];
 
@@ -88,7 +89,8 @@ class CacheChange
         sampleSize(change.sampleSize),
         fragmentSize(change.fragmentSize),
         numberFragments(change.numberFragments),
-        arrivalTime(change.arrivalTime)
+        arrivalTime(change.arrivalTime),
+        complete(change.complete)
     {
         sampleFragmentArray = new SampleFragment*[this->numberFragments];
 
@@ -181,18 +183,27 @@ class CacheChange
      */
     bool checkForCompleteness()
     {
-       bool tmp = true;
-       for(int i = 0; i < this->numberFragments; i++){
-        //    logDebug("[checkForCompleteness]: " << i)
-           SampleFragment* fragment = this->sampleFragmentArray[i];
-           if(!fragment->acked && !fragment->received){
-                // logDebug("[checkForCompleteness] - missing: " << i)
-                return false;
-           }
-       }
-       this->complete = tmp;
+        if(!complete)
+        {
+            bool tmp = true;
+            for(int i = 0; i < this->numberFragments; i++){
+                // logDebug("[checkForCompleteness]: " << i)
+                SampleFragment* fragment = this->sampleFragmentArray[i];
+                if(!fragment->acked && !fragment->received){
+                    // logDebug("[checkForCompleteness] - missing: " << i)
+                    return false;
+                }
+            }
+            this->complete = tmp;
+        }
        return this->complete;
     };
+
+    bool getCompleteFlag()
+    {
+        return complete;
+    }
+
 
 };
 
