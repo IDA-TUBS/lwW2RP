@@ -180,7 +180,11 @@ std::vector<SampleFragment*> ReaderProxy::getUnsentFragments(uint32_t sequenceNu
         }
     }
 
-    std::vector<SampleFragment*> unsentFragments = change->getUnsentFragments();
+    std::vector<SampleFragment*> unsentFragments;
+    if(change)
+    {
+        unsentFragments = change->getUnsentFragments();
+    }
 
     return unsentFragments;
 }

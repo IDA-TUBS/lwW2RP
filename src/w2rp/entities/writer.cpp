@@ -299,6 +299,10 @@ bool Writer::sendMessage(){
     // check whether a sample has been successfully transmitted to all readers
     removeCompleteSamples();
 
+
+    /***********************************************************************************************************************************************/
+    /*************************************************** BEGIN CRITICAL SECTION *******************************************************************/
+    std::unique_lock<std::mutex> lock(history_mutex); // lock history access for the duration of the modification
     // if no sample left to transmit: no need to transmit anything or schedule a new transmission
     if(historyCache.size() == 0)
     {
@@ -314,6 +318,9 @@ bool Writer::sendMessage(){
         // priming send queue with all fragments of the new sample
         fillSendQueueWithSample(this->currentSampleNumber);
     }
+    lock.unlock(); // modification complete, unlock history
+    /*************************************************** END CRITICAL SECTION ********************************************************************/
+    /***********************************************************************************************************************************************/
 
     // differentiate two scenarios:
     // 1. scenario: send queue is empty, select a new fragment for tx or retx
@@ -480,17 +487,21 @@ SampleFragment* Writer::selectNextFragment(ReaderProxy *rp)
     // find the unacknowledged fragment and return that fragment for transmission
     SampleFragment *tmp = nullptr;
     SampleFragment **fragments = rp->getCurrentChange()->getFragmentArray();
-    for (int i = 0; i < rp->getCurrentChange()->numberFragments; i++)
+    if(rp->getCurrentChange())
     {
-        SampleFragment* sf = fragments[i];
-        if (sf->sent || sf->acked) {
-            continue;
-        }
+        SampleFragment **fragments = rp->getCurrentChange()->getFragmentArray();
+        for (int i = 0; i < rp->getCurrentChange()->numberFragments; i++)
+        {
+            SampleFragment* sf = fragments[i];
+            if (sf->sent || sf->acked) {
+                continue;
+            }
 
-        // take the first unsent and unacknowledged fragment
-        tmp = sf;
-        break;
-    }
+            // take the first unsent and unacknowledged fragment
+            tmp = sf;
+            break;
+        }
+    {}
     return tmp;
 }
 
