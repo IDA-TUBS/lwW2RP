@@ -32,6 +32,7 @@ void ReaderProxy::removeChange(uint32_t sequenceNumber)
     {
         if ((*it)->sequenceNumber <= sequenceNumber)
         {
+            logDebug("[ReaderProxy] removing change: " << (*it)->sequenceNumber)
             ChangeForReader* change = (*it);
             history.erase(it);
             delete change;

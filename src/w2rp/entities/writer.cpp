@@ -204,6 +204,7 @@ bool Writer::write(SerializedPayload *data)
 bool Writer::handleNewSample(SerializedPayload *data)
 {
     auto timestamp_now = std::chrono::system_clock::now();
+    logInfo("[Writer] handleNewSample")
 
     // first check existing samples for deadline expiry
     checkSampleLiveliness();
@@ -291,7 +292,7 @@ void Writer::handleNackFrag(W2RPHeader *header, NackFrag *msg)
 
 
 bool Writer::sendMessage(){
-    // logDebug("[Writer] sendMessage()")
+    logDebug("[Writer] sendMessage()")
     // check liveliness of sample in history cache, removes outdated samples
     checkSampleLiveliness();
 
@@ -549,7 +550,7 @@ void Writer::createHBFrag(SampleFragment* sf, HeartbeatFrag*& ret)
 
 void Writer::checkSampleLiveliness()
 {
-    // logDebug("[Writer] checkSampleLiveliness")
+    logDebug("[Writer] checkSampleLiveliness")
     if(historyCache.size() == 0)
     {
         while(sendQueue.size() > 0){
@@ -563,13 +564,19 @@ void Writer::checkSampleLiveliness()
 
     std::vector<uint32_t> deprecatedSNs;
     std::vector<CacheChange*> toDelete;
+
+    /***********************************************************************************************************************************************/
+    /*************************************************** BEGIN CRITICAL SECTION *******************************************************************/
     // check liveliness of samples in history cache, if deadline expired remove sample from cache and ReaderProxies
-    auto* change = historyCache.front();
+    // auto* change = historyCache.front();
+    std::unique_lock<std::mutex> lock(history_mutex); // lock history access for the duration of the modification
     while(1)
     {
+        auto* change = historyCache.front();
         if(!change->isValid(this->config.deadline()))
         {
             deprecatedSNs.push_back(change->sequenceNumber);
+            logDebug("[Writer][checkSampleLiveliness] delete change " << change->sequenceNumber << " from history")
             historyCache.pop_front();
             toDelete.push_back(change); // delete all expired changes in the end
             if(historyCache.size() == 0)
@@ -583,6 +590,10 @@ void Writer::checkSampleLiveliness()
         // following the first] valid sample is also still valid!
         break;
     }
+    lock.unlock(); // modification complete, unlock history
+    /*************************************************** END CRITICAL SECTION ********************************************************************/
+    /***********************************************************************************************************************************************/
+
 
     for (uint32_t sequenceNumber: deprecatedSNs)
     {
@@ -596,7 +607,7 @@ void Writer::checkSampleLiveliness()
                 continue;
             }
 
-            // logDebug("[WRITER] (checkSampleliveness) - removing change")
+            logDebug("[WRITER] (checkSampleliveness) - removing change: " << sequenceNumber)
             rp->removeChange(sequenceNumber);
         }
     }
@@ -635,7 +646,10 @@ void Writer::removeCompleteSamples()
         return;
     }
 
+    /***********************************************************************************************************************************************/
+    /*************************************************** BEGIN CRITICAL SECTION *******************************************************************/
     // iterate over all changes, remove those that are complete at ALL (!!) readers
+    std::unique_lock<std::mutex> lock(history_mutex); // lock history access for the duration of the modification
     while(1)
     {
         auto* change = historyCache.front();
@@ -658,11 +672,14 @@ void Writer::removeCompleteSamples()
         if(completed)
         {
             // remove if change successfully acknowledged by all readers
+            logDebug("[Writer][removeCompleteSample] delete change " << change->sequenceNumber << " from history")
             for(auto rp: matchedReaders)
             {
                 rp->removeChange(change->sequenceNumber);
             }
             historyCache.pop_front();
+
+
             // remove all queued fragments of that sample from the send queue
             for(auto it = sendQueue.cbegin(); it != sendQueue.end(); it++)
             {
@@ -676,7 +693,6 @@ void Writer::removeCompleteSamples()
                 }
 
             }
-            // logDebug("[Writer] delete change " << change->sequenceNumber << " from history")
             delete change;
         }
         else
@@ -692,6 +708,10 @@ void Writer::removeCompleteSamples()
 //            break;
 //        }
     }
+    lock.unlock(); // modification complete, unlock history
+    /*************************************************** END CRITICAL SECTION ********************************************************************/
+    /***********************************************************************************************************************************************/
+
 }
 
 

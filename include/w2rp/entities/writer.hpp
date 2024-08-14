@@ -70,6 +70,9 @@ private:
     /// list of fragments to send next
     std::list<SampleFragment*> sendQueue;
 
+    // mutex for thread synchronization 
+    std::mutex history_mutex; 
+
     /****************/
     /* Timer events */
     /****************/
