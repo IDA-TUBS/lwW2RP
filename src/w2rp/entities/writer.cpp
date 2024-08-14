@@ -550,6 +550,10 @@ void Writer::createHBFrag(SampleFragment* sf, HeartbeatFrag*& ret)
 
 void Writer::checkSampleLiveliness()
 {
+    /***********************************************************************************************************************************************/
+    /*************************************************** BEGIN CRITICAL SECTION *******************************************************************/
+    std::unique_lock<std::mutex> lock(history_mutex); // lock history access for the duration of the modification
+
     logDebug("[Writer] checkSampleLiveliness")
     if(historyCache.size() == 0)
     {
@@ -559,17 +563,15 @@ void Writer::checkSampleLiveliness()
             delete to_delete_element;
         }
 //        sendQueue.clear();
+        lock.unlock();
         return;
     }
 
     std::vector<uint32_t> deprecatedSNs;
     std::vector<CacheChange*> toDelete;
 
-    /***********************************************************************************************************************************************/
-    /*************************************************** BEGIN CRITICAL SECTION *******************************************************************/
     // check liveliness of samples in history cache, if deadline expired remove sample from cache and ReaderProxies
     // auto* change = historyCache.front();
-    std::unique_lock<std::mutex> lock(history_mutex); // lock history access for the duration of the modification
     while(1)
     {
         auto* change = historyCache.front();
@@ -641,15 +643,16 @@ void Writer::checkSampleLiveliness()
 
 void Writer::removeCompleteSamples()
 {
-    if(historyCache.size() == 0)
-    {
-        return;
-    }
-
     /***********************************************************************************************************************************************/
     /*************************************************** BEGIN CRITICAL SECTION *******************************************************************/
     // iterate over all changes, remove those that are complete at ALL (!!) readers
     std::unique_lock<std::mutex> lock(history_mutex); // lock history access for the duration of the modification
+    if(historyCache.size() == 0)
+    {
+        lock.unlock();
+        return;
+    }
+
     while(1)
     {
         auto* change = historyCache.front();
