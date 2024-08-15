@@ -48,6 +48,8 @@ class CacheChange
     /// array storing the fragments
     SampleFragment** sampleFragmentArray;
 
+    std::mutex cache_mutex; 
+
     /*
      * empty default constructor
      */
@@ -92,6 +94,7 @@ class CacheChange
         arrivalTime(change.arrivalTime),
         complete(change.complete)
     {
+        std::unique_lock<std::mutex> lock(cache_mutex);
         sampleFragmentArray = new SampleFragment*[this->numberFragments];
 
         auto sampleArrayRef = change.getFragmentArray();
@@ -100,6 +103,7 @@ class CacheChange
         for(uint32_t i = 0; i < this->numberFragments; i++){
             sampleFragmentArray[i] = new SampleFragment(*sampleArrayRef[i]);
         }
+        lock.unlock();
     }
 
     /**
@@ -107,6 +111,7 @@ class CacheChange
      */
     ~CacheChange()
     {
+        std::unique_lock<std::mutex> lock(cache_mutex);
         if(this->sampleFragmentArray)
         {
             for (uint32_t i = 0; i < this->numberFragments; i++) {
@@ -118,6 +123,7 @@ class CacheChange
         {
             // Nothing
         }
+        lock.unlock();
     };
 
     /**
@@ -141,6 +147,7 @@ class CacheChange
      */
     void setFragmentArray(std::vector<SampleFragment*> *fragments)
     {
+        std::unique_lock<std::mutex> lock(cache_mutex);
         sampleFragmentArray = new SampleFragment*[this->numberFragments];
         // logDebug("[CacheChange] setFragmentArray")
 
@@ -150,7 +157,8 @@ class CacheChange
             // logDebug("[CacheChange] copy: fragment " << sf->fragmentStartingNum  << " size: " << sf->dataSize << " data: " << sf->data)
             sampleFragmentArray[i] = new SampleFragment(*sf);
             i++;
-        }        
+        }    
+        lock.unlock();    
     }
 
     /**
@@ -161,6 +169,19 @@ class CacheChange
     SampleFragment **getFragmentArray()
     {
         return this->sampleFragmentArray;
+        
+
+        if(this->sampleFragmentArray)
+        {
+            return this->sampleFragmentArray;
+        }
+        else
+        {
+            logDebug("CC: sampleFragArray does not seem to exist")
+            return nullptr;
+        }
+        
+
     }
 
 

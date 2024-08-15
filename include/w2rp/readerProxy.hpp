@@ -40,6 +40,8 @@ class ReaderProxy
     /// timestamp of next TO if active
     std::chrono::system_clock::time_point timeoutTS;
 
+    std::mutex rp_mutex;
+
     /**
      * @brief default constructor
      */
@@ -74,7 +76,9 @@ class ReaderProxy
         nackSuppressionEnabled(false),
         timeoutActive(false)
     {
+        std::unique_lock<std::mutex> lock(rp_mutex);
         this->addChange(change);
+        lock.unlock();
     };
 
     /**
@@ -87,7 +91,9 @@ class ReaderProxy
         nackSuppressionDuration(nackSuppressionDuration),
         timeoutActive(false)
     {
+        std::unique_lock<std::mutex> lock(rp_mutex);
         this->addChange(change);
+        lock.unlock();
     };
 
     /**
@@ -95,7 +101,9 @@ class ReaderProxy
      */
     ~ReaderProxy()
     {
+        std::unique_lock<std::mutex> lock(rp_mutex);
         history.clear();
+        lock.unlock();
     };
 
     /**
@@ -172,7 +180,9 @@ class ReaderProxy
      */
     ChangeForReader* getCurrentChange()
     {
+        std::unique_lock<std::mutex> lock(rp_mutex);
         return history.front();
+        lock.unlock();
     }
 
     /**

@@ -11,6 +11,7 @@ namespace w2rp {
 
 bool ReaderProxy::addChange(CacheChange &change)
 {
+    std::unique_lock<std::mutex> lock(rp_mutex);
     // logDebug("[ReaderProxy] adding change")
     if(history.size() == historySize)
     {
@@ -23,11 +24,12 @@ bool ReaderProxy::addChange(CacheChange &change)
     history.push_back(cfr);
     // logDebug("[ReaderProxy] adding change complete: " << history.size())
     return true;
+    lock.unlock();
 }
 
 void ReaderProxy::removeChange(uint32_t sequenceNumber)
 {
-
+    std::unique_lock<std::mutex> lock(rp_mutex);
     for (auto it = history.begin(); it != history.end();)
     {
         if ((*it)->sequenceNumber <= sequenceNumber)
@@ -43,6 +45,7 @@ void ReaderProxy::removeChange(uint32_t sequenceNumber)
             ++it;
         }
     }
+    lock.unlock();
 }
 
 bool ReaderProxy::changeExists(uint32_t sequenceNumber)
@@ -65,6 +68,7 @@ bool ReaderProxy::changeExists(uint32_t sequenceNumber)
 
 bool ReaderProxy::updateFragmentStatus (fragmentStates status, uint32_t sequenceNumber, uint32_t fragmentNumber, std::chrono::system_clock::time_point sentTimestamp)
 {
+    std::unique_lock<std::mutex> lock(rp_mutex);
     // first find change corresponding to the given sequence number
     ChangeForReader* tmp = nullptr;
     for (auto cfr: history)
@@ -75,6 +79,7 @@ bool ReaderProxy::updateFragmentStatus (fragmentStates status, uint32_t sequence
             break;
         }
     }
+    lock.unlock();
 
     return tmp->setFragmentStatus(status, fragmentNumber, sentTimestamp);
 }
@@ -180,11 +185,13 @@ std::vector<SampleFragment*> ReaderProxy::getUnsentFragments(uint32_t sequenceNu
         }
     }
 
+    std::unique_lock<std::mutex> lock(rp_mutex);
     std::vector<SampleFragment*> unsentFragments;
     if(change)
     {
         unsentFragments = change->getUnsentFragments();
     }
+    lock.unlock();
 
     return unsentFragments;
 }
@@ -206,7 +213,9 @@ bool ReaderProxy::checkSampleCompleteness(uint32_t sequenceNumber)
     bool complete = false;
     if(change)
     {
+        std::unique_lock<std::mutex> lock(rp_mutex);
         complete = change->checkForCompleteness();
+        lock.unlock();
     }
     if(complete)
     {
@@ -258,7 +267,9 @@ void ReaderProxy::resetTimeoutedFragments(uint32_t sequenceNumber)
 
     if(change && !(change->complete))
     {
+        std::unique_lock<std::mutex> lock(rp_mutex);
         change->resetSentFragments();
+        lock.unlock();
     }
 }
 

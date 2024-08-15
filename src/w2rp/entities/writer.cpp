@@ -291,7 +291,8 @@ void Writer::handleNackFrag(W2RPHeader *header, NackFrag *msg)
 /*********************************************/
 
 
-bool Writer::sendMessage(){
+bool Writer::sendMessage()
+{
     logDebug("[Writer] sendMessage()")
     // check liveliness of sample in history cache, removes outdated samples
     checkSampleLiveliness();
@@ -503,6 +504,7 @@ SampleFragment* Writer::selectNextFragment(ReaderProxy *rp)
         }
     {}
     return tmp;
+    }
 }
 
 
@@ -603,10 +605,7 @@ void Writer::checkSampleLiveliness()
         // following the first] valid sample is also still valid!
         break;
     }
-    lock.unlock(); // modification complete, unlock history
-    /*************************************************** END CRITICAL SECTION ********************************************************************/
-    /***********************************************************************************************************************************************/
-
+    
 
     for (uint32_t sequenceNumber: deprecatedSNs)
     {
@@ -650,6 +649,11 @@ void Writer::checkSampleLiveliness()
         toDelete.erase(toDelete.begin());
         delete to_delete_element;
     }
+
+    lock.unlock(); // modification complete, unlock history
+    /*************************************************** END CRITICAL SECTION ********************************************************************/
+    /***********************************************************************************************************************************************/
+
 }
 
 void Writer::removeCompleteSamples()
