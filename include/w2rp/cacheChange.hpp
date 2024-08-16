@@ -177,7 +177,7 @@ class CacheChange
         }
         else
         {
-            logDebug("CC: sampleFragArray does not seem to exist")
+            // logDebug("CC: sampleFragArray does not seem to exist")
             return nullptr;
         }
         
