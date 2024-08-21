@@ -40,9 +40,9 @@
 
 namespace w2rp {
 
-void init_console_log(std::string log_prefix, std::string log_suffix);
+void init_console_log();
 
-void init_app_log(std::string log_prefix, std::string log_suffix);
+void init_file_log(std::string log_prefix, std::string log_suffix);
 
 };
 
