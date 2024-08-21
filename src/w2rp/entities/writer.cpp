@@ -21,7 +21,7 @@ Writer::Writer(uint16_t participant_id, config::writerCfg cfg)
 
 Writer::~Writer()
 {
-    logInfo("[Writer] delete")
+    // logInfo("[Writer] delete")
     matchedReaders.clear();
     historyCache.clear();
     sendQueue.clear();
@@ -42,7 +42,7 @@ void Writer::init(uint16_t participant_id)
     // set guid
     guid = GUID_t(guidPrefix, c_entityID_writer);
 
-    logInfo("[WRITER] GUID: " << guid);
+    // logInfo("[WRITER] GUID: " << guid);
 
 
     sequenceNumberCnt = 0;
@@ -187,7 +187,7 @@ bool Writer::handleMessages(MessageNet_t *net)
 
 bool Writer::write(SerializedPayload *data)
 {
-    logInfo("[Writer] new sample received")
+    // logInfo("[Writer] new sample received")
     if(initialized)
     {
         return handleNewSample(data);
@@ -204,7 +204,8 @@ bool Writer::write(SerializedPayload *data)
 bool Writer::handleNewSample(SerializedPayload *data)
 {
     auto timestamp_now = std::chrono::system_clock::now();
-    logInfo("[Writer] handleNewSample")
+    logTrace("SN Arrival," << sequenceNumberCnt)
+    // logInfo("[Writer] handleNewSample")
 
     // first check existing samples for deadline expiry
     checkSampleLiveliness();
@@ -215,7 +216,7 @@ bool Writer::handleNewSample(SerializedPayload *data)
 
 bool Writer::addSampleToCache(SerializedPayload *data, std::chrono::system_clock::time_point timestamp)
 {
-    logInfo("[Writer] addSampleToCache")
+    // logInfo("[Writer] addSampleToCache")
     // create CacheChange object
     CacheChange *newChange = new CacheChange(sequenceNumberCnt++, data->length, config.fragmentSize(), timestamp);
     // logDebug("[Writer] created CacheChange comprising " << newChange->numberFragments << " fragments; data length: " << data->length)
@@ -273,6 +274,7 @@ void Writer::handleNackFrag(W2RPHeader *header, NackFrag *msg)
             {
                 unsigned int sequenceNumber = msg->writerSN;
                 bool complete = rp->checkSampleCompleteness(sequenceNumber);
+                logTrace("SN Complete," << sequenceNumber)
 
                 // restart shapingTimer if not active any more and sample not yet complete
                 if(!shapingTimer->isActive())
@@ -293,7 +295,7 @@ void Writer::handleNackFrag(W2RPHeader *header, NackFrag *msg)
 
 bool Writer::sendMessage()
 {
-    logDebug("[Writer] sendMessage()")
+    // logDebug("[Writer] sendMessage()")
     // check liveliness of sample in history cache, removes outdated samples
     checkSampleLiveliness();
 
@@ -403,6 +405,8 @@ bool Writer::sendMessage()
         // logDebug("[Writer] TX: sending fragment " << sf->fragmentStartingNum)
 
         // send message via UDP
+        logTrace("Frag," << sf->fragmentStartingNum << ",SN," << sf->baseChange->sequenceNumber)
+
         CommInterface->sendMsg(*txMsg);
 
         delete header;
@@ -416,7 +420,7 @@ bool Writer::sendMessage()
     // wait for next sample top arrive
     else
     {
-        logInfo("[Writer] sendMessage: no fragments available, halt shaping")
+        // logInfo("[Writer] sendMessage: no fragments available, halt shaping")
         // ...
         return false;
     }
@@ -567,7 +571,7 @@ void Writer::checkSampleLiveliness()
     /*************************************************** BEGIN CRITICAL SECTION *******************************************************************/
     std::unique_lock<std::mutex> lock(history_mutex); // lock history access for the duration of the modification
 
-    logDebug("[Writer] checkSampleLiveliness")
+    // logDebug("[Writer] checkSampleLiveliness")
     if(historyCache.size() == 0)
     {
         while(sendQueue.size() > 0){
@@ -591,7 +595,7 @@ void Writer::checkSampleLiveliness()
         if(!change->isValid(this->config.deadline()))
         {
             deprecatedSNs.push_back(change->sequenceNumber);
-            logDebug("[Writer][checkSampleLiveliness] delete change " << change->sequenceNumber << " from history")
+            // logDebug("[Writer][checkSampleLiveliness] delete change " << change->sequenceNumber << " from history")
             historyCache.pop_front();
             toDelete.push_back(change); // delete all expired changes in the end
             if(historyCache.size() == 0)
@@ -619,7 +623,7 @@ void Writer::checkSampleLiveliness()
                 continue;
             }
 
-            logDebug("[WRITER] (checkSampleliveness) - removing change: " << sequenceNumber)
+            // logDebug("[WRITER] (checkSampleliveness) - removing change: " << sequenceNumber)
             rp->removeChange(sequenceNumber);
         }
     }
@@ -690,7 +694,7 @@ void Writer::removeCompleteSamples()
         if(completed)
         {
             // remove if change successfully acknowledged by all readers
-            logDebug("[Writer][removeCompleteSample] delete change " << change->sequenceNumber << " from history")
+            // logDebug("[Writer][removeCompleteSample] delete change " << change->sequenceNumber << " from history")
             for(auto rp: matchedReaders)
             {
                 rp->removeChange(change->sequenceNumber);
