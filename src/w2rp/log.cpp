@@ -31,7 +31,7 @@ void w2rp::init_file_log(std::string log_prefix, std::string log_suffix)
         boost::log::keywords::auto_flush = true,
         boost::log::keywords::format = (
             boost::log::expressions::stream
-                << boost::log::expressions::format_date_time< boost::posix_time::ptime >("TimeStamp", "%Y-%m-%d, %H:%M:%S.%f")
+                << boost::log::expressions::format_date_time< boost::posix_time::ptime >("TimeStamp", "%Y-%m-%d %H:%M:%S.%f")
                 << ", "
                 << boost::log::expressions::smessage
         ),

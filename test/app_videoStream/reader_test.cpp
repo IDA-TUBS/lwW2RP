@@ -48,15 +48,15 @@ void Subscriber::rxThread()
 {    
     logInfo("[APP] Subscriber running.")
 
-    SerializedPayload payload;
+    w2rp::Reader::sample payload;
     while (true)
     {
         reader->retrieveSample(payload);
         logInfo("\n----------------------------------------------------------------------------------------\n[APP] Received sample\n---------------------------------------------------------\n");
     
         
-        unsigned char* imgData = new unsigned char[payload.length];
-        memcpy(imgData, payload.data, payload.length);
+        unsigned char* imgData = new unsigned char[payload.second.length];
+        memcpy(imgData, payload.second.data, payload.second.length);
 
         // Create a cv::Mat from the unsigned char array
         cv::Mat img(IMG_ROWS, IMG_COLS, CV_8UC1, imgData);
