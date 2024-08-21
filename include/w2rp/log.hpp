@@ -10,6 +10,12 @@
 #include <boost/log/utility/setup/common_attributes.hpp>
 #include <boost/log/sources/severity_logger.hpp>
 #include <boost/log/sources/record_ostream.hpp>
+#include <boost/log/utility/setup/settings.hpp>
+#include <boost/log/attributes/timer.hpp>
+#include <boost/log/attributes/named_scope.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/log/attributes/clock.hpp>
+#include <boost/log/support/date_time.hpp>
 
 #include <cstdlib>
 #include <iostream>
