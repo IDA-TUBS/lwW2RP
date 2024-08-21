@@ -274,7 +274,10 @@ void Writer::handleNackFrag(W2RPHeader *header, NackFrag *msg)
             {
                 unsigned int sequenceNumber = msg->writerSN;
                 bool complete = rp->checkSampleCompleteness(sequenceNumber);
-                logTrace("SN Complete," << sequenceNumber)
+                if(complete)
+                {
+                    logTrace("SN Complete," << sequenceNumber)
+                }
 
                 // restart shapingTimer if not active any more and sample not yet complete
                 if(!shapingTimer->isActive())
