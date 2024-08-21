@@ -189,7 +189,7 @@ bool Reader::handleDataFrag(DataFrag *msg)
                 buildSerializedSample(cfw, sampleData);
 
                 // push to sampleQueue (application)
-                sampleQueue.enqueue(sampleData);
+                sampleQueue.enqueue(std::make_pair(cfw->sequenceNumber, sampleData));
                 
                 // logDebug("[Reader] sample complete: " << sampleData.data << "\n----------------------------------------------------------------------------------------------")
                 logDebug("[Reader] sample complete: " << cfw->sequenceNumber << "\n----------------------------------------------------------------------------------------------")
@@ -279,11 +279,11 @@ bool Reader::handleHBFrag(HeartbeatFrag *msg)
 /* public API */
 /**************/
 
- void Reader::retrieveSample(SerializedPayload &sample)
+ void Reader::retrieveSample(sample &data)
  {    
     if(initialized)
     {
-        sample = sampleQueue.dequeue();        
+        data = sampleQueue.dequeue();
     }
     else
     {

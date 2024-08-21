@@ -25,6 +25,8 @@ namespace w2rp {
 class Reader
 {
   public:
+    typedef std::pair<uint64_t, SerializedPayload> sample;
+    
     /**
      * @brief empty default constructor
      */ 
@@ -52,7 +54,7 @@ class Reader
      * 
      * @param data reference to object where sample data shall be written to
      */ 
-    void retrieveSample(SerializedPayload &data);
+    void retrieveSample(sample &data );
 
   private:
 
@@ -91,7 +93,7 @@ class Reader
     SafeQueue<MessageNet_t> receiveQueue;
 
     /// sample queue for application interface
-    SafeQueue<SerializedPayload> sampleQueue;
+    SafeQueue<std::pair<uint64_t ,SerializedPayload>> sampleQueue;
 
     /********/
     /* misc */
