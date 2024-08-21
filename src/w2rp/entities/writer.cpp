@@ -204,6 +204,7 @@ bool Writer::write(SerializedPayload *data)
 bool Writer::handleNewSample(SerializedPayload *data)
 {
     auto timestamp_now = std::chrono::system_clock::now();
+    logTrace("SN Arrival," << sequenceNumberCnt)
     // logInfo("[Writer] handleNewSample")
 
     // first check existing samples for deadline expiry
@@ -273,6 +274,7 @@ void Writer::handleNackFrag(W2RPHeader *header, NackFrag *msg)
             {
                 unsigned int sequenceNumber = msg->writerSN;
                 bool complete = rp->checkSampleCompleteness(sequenceNumber);
+                logTrace("SN Complete," << sequenceNumber)
 
                 // restart shapingTimer if not active any more and sample not yet complete
                 if(!shapingTimer->isActive())
@@ -403,6 +405,8 @@ bool Writer::sendMessage()
         // logDebug("[Writer] TX: sending fragment " << sf->fragmentStartingNum)
 
         // send message via UDP
+        logTrace("Frag," << sf->fragmentStartingNum << ",SN," << sf->baseChange->sequenceNumber)
+
         CommInterface->sendMsg(*txMsg);
 
         delete header;

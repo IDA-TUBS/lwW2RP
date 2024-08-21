@@ -168,6 +168,7 @@ bool Reader::handleDataFrag(DataFrag *msg)
 
     // create new change for temporary usage
     auto change = new CacheChange(msg->writerSN, msg->dataSize, msg->fragmentSize, msg->timestamp);
+    logTrace("SN," << msg->writerSN << ",FN," << msg->fragmentStartingNum)
     if(writerProxy->checkChange(*change) == false)
     {
         bool add_flag = writerProxy->addChange(*change); // only adds change if new, else WriterProxy does nothing here
