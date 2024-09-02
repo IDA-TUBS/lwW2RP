@@ -17,7 +17,7 @@ class SampleFragment;
 class ChangeForWriter: public CacheChange
 {
   private:
-    // /// flag for signaling that all fragments have been acknowledged
+    // // flag for signaling that all fragments have been acknowledged
     // bool complete;
 
     /// storing fragment number that has been sent last
