@@ -52,7 +52,7 @@ void WriterProxy::checkHistory()
     {
         if(history.front()->getCompleteFlag() == false)
         {
-            logDebug("[WriterProxy] removing INCOMPLETE change " << history.front()->sequenceNumber)
+            logInfo("[WriterProxy] removing INCOMPLETE change " << history.front()->sequenceNumber)
         }
         delete history.front();
         history.pop_front();
