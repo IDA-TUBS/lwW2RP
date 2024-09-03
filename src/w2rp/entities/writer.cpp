@@ -408,9 +408,9 @@ bool Writer::sendMessage()
         // logDebug("[Writer] TX: sending fragment " << sf->fragmentStartingNum)
 
         // send message via UDP
-        logTrace("Frag," << sf->fragmentStartingNum << ",SN," << sf->baseChange->sequenceNumber)
-
         CommInterface->sendMsg(*txMsg);
+
+        logTrace("SN," << sf->baseChange->sequenceNumber << ",FN," << sf->fragmentStartingNum << ",DST," << CommInterface->getTxEndpoint().ip_addr)
 
         delete header;
         delete data;

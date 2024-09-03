@@ -20,12 +20,15 @@
 #include <w2rp/guid/guidPrefixManager.hpp>
 #include <w2rp/guid/guid.hpp>
 
+#include <boost/asio.hpp>
+
 namespace w2rp {
 
 class Reader
 {
   public:
     typedef std::pair<uint64_t, SerializedPayload> sample;
+    typedef std::pair<MessageNet_t, boost::asio::ip::udp::endpoint> message_pair;
     
     /**
      * @brief empty default constructor
@@ -90,7 +93,7 @@ class Reader
     std::thread handlerThread;
 
     /// receive queue
-    SafeQueue<MessageNet_t> receiveQueue;
+    SafeQueue<message_pair> receiveQueue;
 
     /// sample queue for application interface
     SafeQueue<std::pair<uint64_t ,SerializedPayload>> sampleQueue;
@@ -123,7 +126,7 @@ class Reader
      * @param net MessageNet_t object containing W2RP submessages
      * @return true: success, false: failure
      */
-    bool handleMessages(MessageNet_t *net);
+    bool handleMessages(MessageNet_t *net, boost::asio::ip::udp::endpoint writer);
 
     /**
      * @brief Callback for processing Data Frag
@@ -131,7 +134,7 @@ class Reader
      * @param msg data frag submessage
      * @return true: success, false: failure
      */
-    bool handleDataFrag(DataFrag *msg);
+    bool handleDataFrag(DataFrag *msg, boost::asio::ip::udp::endpoint writer);
 
     /**
      * @brief Method for reacting to Heartbeatfrags, send Nackfrag in return
@@ -139,7 +142,7 @@ class Reader
      * @param msg heartbeat submessage
      * @return true: success, false: failure
      */
-    bool handleHBFrag(HeartbeatFrag *msg);
+    bool handleHBFrag(HeartbeatFrag *msg, boost::asio::ip::udp::endpoint writer);
 
 
     /****************************************************/

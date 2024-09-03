@@ -89,7 +89,7 @@ void Reader::receiveMsg()
     {      
         writer = CommInterface->receiveMsg(msg);
         CommInterface->setTxEndpoint(writer);
-        receiveQueue.enqueue(msg);
+        receiveQueue.enqueue(std::make_pair(msg, writer));
         // logDebug("[Reader] received and enqueued message")
     }
 }
@@ -97,18 +97,18 @@ void Reader::receiveMsg()
 void Reader::handleMsg()
 {   
     // msg to store received data
-    MessageNet_t msg;
+    message_pair pair;
 
     while(true)
     {              
-        msg = receiveQueue.dequeue();
+        pair = receiveQueue.dequeue();
         // logDebug("[Reader] read msg from queue")
         
-        handleMessages(&msg);
+        handleMessages(&(pair.first), pair.second);
     }
 }
 
-bool Reader::handleMessages(MessageNet_t *net)
+bool Reader::handleMessages(MessageNet_t *net, boost::asio::ip::udp::endpoint writer)
 {
     // // debug only: test nackfrag, retx and timeout
     // if((debugCnt == 3))//|| (debugCnt == 2))
@@ -137,11 +137,11 @@ bool Reader::handleMessages(MessageNet_t *net)
         {
         case DATA_FRAG:
             dataFrag = (DataFrag*)(subMsg);
-            handleDataFrag(dataFrag);
+            handleDataFrag(dataFrag, writer);
             break;
         case HEARTBEAT_FRAG:
             hbFrag = (HeartbeatFrag*)(subMsg);
-            handleHBFrag(hbFrag);
+            handleHBFrag(hbFrag, writer);
             break;
         default:
             break;
@@ -154,7 +154,7 @@ bool Reader::handleMessages(MessageNet_t *net)
     return true;
 }
 
-bool Reader::handleDataFrag(DataFrag *msg)
+bool Reader::handleDataFrag(DataFrag *msg, boost::asio::ip::udp::endpoint writer)
 {
     // DataFrag received, update cache
     // logDebug("[Reader] handle  DataFrag")
@@ -168,7 +168,7 @@ bool Reader::handleDataFrag(DataFrag *msg)
 
     // create new change for temporary usage
     auto change = new CacheChange(msg->writerSN, msg->dataSize, msg->fragmentSize, msg->timestamp);
-    logTrace("SN," << msg->writerSN << ",FN," << msg->fragmentStartingNum)
+    logTrace("SN," << msg->writerSN << ",FN," << msg->fragmentStartingNum << ",SRC," << writer.address().to_string())
     if(writerProxy->checkChange(*change) == false)
     {
         bool add_flag = writerProxy->addChange(*change); // only adds change if new, else WriterProxy does nothing here
@@ -203,7 +203,7 @@ bool Reader::handleDataFrag(DataFrag *msg)
     return true;
 }
 
-bool Reader::handleHBFrag(HeartbeatFrag *msg)
+bool Reader::handleHBFrag(HeartbeatFrag *msg, boost::asio::ip::udp::endpoint writer)
 {
     auto change = writerProxy->getChange(msg->writerSN);
 
