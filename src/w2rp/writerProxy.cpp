@@ -27,12 +27,12 @@ bool WriterProxy::addChange(CacheChange &change)
 
 void WriterProxy::removeChange(uint32_t sequenceNumber)
 {
-    logDebug("[WriterProxy] remove change " << sequenceNumber)
+    // logDebug("[WriterProxy] remove change " << sequenceNumber)
     for (auto it = history.begin(); it != history.end();)
     {
         if ((*it)->sequenceNumber <= sequenceNumber)
         {
-            logDebug("[WriterProxy] removing change " << (*it)->sequenceNumber)
+            // logDebug("[WriterProxy] removing change " << (*it)->sequenceNumber)
             auto change = (*it);
             history.erase(it);
             delete change;
@@ -50,7 +50,11 @@ void WriterProxy::checkHistory()
 {
     if(history.size() > historySize)
     {
-        logDebug("[WriterProxy] removing change " << history.front()->sequenceNumber << " " << std::boolalpha << history.front()->getCompleteFlag() << std::dec)
+        if(!history.front()->getCompleteFlag())
+        {
+            logDebug("[WriterProxy] removing INCOMPLETE change " << history.front()->sequenceNumber << " " << std::boolalpha << history.front()->getCompleteFlag() << std::dec)
+        }
+        // logDebug("[WriterProxy] removing change " << history.front()->sequenceNumber << " " << std::boolalpha << history.front()->getCompleteFlag() << std::dec)
         delete history.front();
         history.pop_front();
     }

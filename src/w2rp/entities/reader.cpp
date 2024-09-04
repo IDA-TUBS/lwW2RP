@@ -191,8 +191,7 @@ bool Reader::handleDataFrag(DataFrag *msg)
                 // push to sampleQueue (application)
                 sampleQueue.enqueue(std::make_pair(cfw->sequenceNumber, sampleData));
                 
-                // logDebug("[Reader] sample complete: " << sampleData.data << "\n----------------------------------------------------------------------------------------------")
-                logDebug("[Reader] sample complete: " << cfw->sequenceNumber << "\n----------------------------------------------------------------------------------------------")
+                // logDebug("[Reader] sample complete: " << cfw->sequenceNumber << "\n----------------------------------------------------------------------------------------------")
 
                 // TODO remove sample from history?
             }
