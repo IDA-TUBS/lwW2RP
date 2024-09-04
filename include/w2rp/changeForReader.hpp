@@ -23,8 +23,8 @@ class ChangeForReader: public CacheChange
     uint32_t readerID;
 
   public:
-    /// flag for signaling that all fragments have been acknowledged
-    bool complete;
+    // /// flag for signaling that all fragments have been acknowledged
+    // bool complete;
 
     /// storing fragment number that has been sent last
     int lastSentFN;
@@ -56,7 +56,7 @@ class ChangeForReader: public CacheChange
     ChangeForReader(CacheChange* change, uint32_t id, uint32_t seqNum, uint32_t sampleSize, uint32_t fragmentSize, std::chrono::system_clock::time_point timestamp):
         CacheChange(seqNum, sampleSize, fragmentSize, timestamp),
         readerID(id),
-        complete(false),
+        // complete(false),
         lastSentFN(-1),
         highestFNSend(0),
         baseChange(change)
@@ -81,7 +81,7 @@ class ChangeForReader: public CacheChange
     ChangeForReader(uint32_t id, CacheChange &change):
         CacheChange(change.sequenceNumber, change.sampleSize, change.fragmentSize, change.arrivalTime),
         readerID(id),
-        complete(false),
+        // complete(false),
         lastSentFN(-1),
         highestFNSend(0),
         baseChange(&change)
@@ -102,7 +102,7 @@ class ChangeForReader: public CacheChange
     ChangeForReader(ChangeForReader &change):
         CacheChange(change.sequenceNumber, change.sampleSize, change.fragmentSize, change.arrivalTime),
         readerID(change.readerID),
-        complete(change.complete),
+        // complete(change.complete),
         lastSentFN(change.lastSentFN),
         highestFNSend(change.highestFNSend),
         baseChange(change.baseChange)

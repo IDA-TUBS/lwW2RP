@@ -50,11 +50,10 @@ void WriterProxy::checkHistory()
 {
     if(history.size() > historySize)
     {
-        if(!history.front()->getCompleteFlag())
+        if(history.front()->getCompleteFlag() == false)
         {
-            logDebug("[WriterProxy] removing INCOMPLETE change " << history.front()->sequenceNumber << " " << std::boolalpha << history.front()->getCompleteFlag() << std::dec)
+            logInfo("[WriterProxy] removing INCOMPLETE change " << history.front()->sequenceNumber)
         }
-        // logDebug("[WriterProxy] removing change " << history.front()->sequenceNumber << " " << std::boolalpha << history.front()->getCompleteFlag() << std::dec)
         delete history.front();
         history.pop_front();
     }

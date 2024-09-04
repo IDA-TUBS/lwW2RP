@@ -175,7 +175,7 @@ void TimerManager::configureTimer(std::shared_ptr<boost::asio::steady_timer> tim
             }
             else
             {
-                logInfo("Cancel called: " << timer_id)
+                // logInfo("Cancel called: " << timer_id)
             }
     });
 }
@@ -191,7 +191,7 @@ void TimerManager::configureTimer(std::shared_ptr<boost::asio::system_timer> tim
         }
         else
         {
-            logInfo("Cancel called: " << timer_id)
+            // logInfo("Cancel called: " << timer_id)
         }
     });
 }

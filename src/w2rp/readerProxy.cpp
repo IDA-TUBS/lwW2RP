@@ -35,6 +35,11 @@ void ReaderProxy::removeChange(uint32_t sequenceNumber)
         if ((*it)->sequenceNumber <= sequenceNumber)
         {
             // logDebug("[ReaderProxy] removing change: " << (*it)->sequenceNumber)
+            if((*it)->getCompleteFlag() == false)
+            {
+                logInfo("[ReaderProxy] removing INCOMPLETE change " << (*it)->sequenceNumber)
+
+            }
             ChangeForReader* change = (*it);
             history.erase(it);
             delete change;
