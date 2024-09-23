@@ -27,12 +27,12 @@ bool WriterProxy::addChange(CacheChange &change)
 
 void WriterProxy::removeChange(uint32_t sequenceNumber)
 {
-    logDebug("[WriterProxy] remove change " << sequenceNumber)
+    // logDebug("[WriterProxy] remove change " << sequenceNumber)
     for (auto it = history.begin(); it != history.end();)
     {
         if ((*it)->sequenceNumber <= sequenceNumber)
         {
-            logDebug("[WriterProxy] removing change " << (*it)->sequenceNumber)
+            // logDebug("[WriterProxy] removing change " << (*it)->sequenceNumber)
             auto change = (*it);
             history.erase(it);
             delete change;
