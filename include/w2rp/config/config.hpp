@@ -28,7 +28,7 @@ namespace config{
 #define PRIO_MODE "PRIO_MODE"
 
 /************** Misc. parameters **************************/
-#define NACK_BITMAP_SIZE 64
+#define NACK_BITMAP_SIZE 64 // in Bytes. Allows handling of NACK_BITMAP_SIZE*8 fragments
 
 }; // end namespace conifg
 }; // end namespace w2rp
