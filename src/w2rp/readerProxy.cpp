@@ -127,7 +127,9 @@ bool ReaderProxy::processNack(NackFrag *msg)
     uint32_t highestFN = msg->count;
 
     // logDebug("[ReaderProxy] min FN: " << unsigned(smallestFN) << " max FN: " << unsigned(highestFN))
-    // logDebug("[ReaderProxy] bitmap: " << std::bitset<8>(bitmap[0]))
+
+    // Debug: create string to hold bit stream
+    std::string bitstream;
 
     // iterate over all relevant bits of the NackFrag bitmap
     for(uint32_t i = 0; i <= highestFN - smallestFN; i++)
@@ -172,7 +174,14 @@ bool ReaderProxy::processNack(NackFrag *msg)
                 this->updateFragmentStatus(NACKED, sequenceNumber, fragmentNum, t_now);
             }
         }
+
+        uint8_t val = bitmap[byte_index] & (1 << bit_position);
+        bitstream += std::to_string(val); 
+
     }
+
+    logTrace("NACKFRAG,SN," << sequenceNumber << ",smallestFN," << smallestFN << ",highestFN," << highestFN << ",bitmap," << bitstream)
+
 
     return true;
 }

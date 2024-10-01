@@ -410,7 +410,7 @@ bool Writer::sendMessage()
         // send message via UDP
         CommInterface->sendMsg(*txMsg);
 
-        logTrace("SN," << sf->baseChange->sequenceNumber << ",FN," << sf->fragmentStartingNum << ",DST," << CommInterface->getTxEndpoint().ip_addr)
+        // logTrace("SN," << sf->baseChange->sequenceNumber << ",FN," << sf->fragmentStartingNum << ",DST," << CommInterface->getTxEndpoint().ip_addr)
 
         delete header;
         delete data;
