@@ -27,6 +27,9 @@ namespace config{
 #define NUMBER_READERS "NUMBER_READERS"
 #define PRIO_MODE "PRIO_MODE"
 
+/************** Misc. parameters **************************/
+#define NACK_BITMAP_SIZE 64
+
 }; // end namespace conifg
 }; // end namespace w2rp
 

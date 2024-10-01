@@ -3,6 +3,7 @@
  */
 
 #include <w2rp/entities/reader.hpp>
+#include <w2rp/config/config.hpp>
 #include <stdexcept>
 
 namespace w2rp {
@@ -213,14 +214,15 @@ bool Reader::handleHBFrag(HeartbeatFrag *msg, boost::asio::ip::udp::endpoint wri
         std::vector<uint32_t> missingFragments;
 
         uint32_t bitmapBase = 0;
-        if(msg->lastFragmentNum > 256)
+        uint32_t bitmapFrags = NACK_BITMAP_SIZE * 8;
+        if(msg->lastFragmentNum > bitmapFrags)
         {
-            bitmapBase = msg->lastFragmentNum - 256;
+            bitmapBase = msg->lastFragmentNum - bitmapFrags;
         }
 
         change->getMissingFragments(lastFragmentNum, &missingFragments);
 
-        unsigned char bitmap[8] = {0};
+        unsigned char bitmap[NACK_BITMAP_SIZE] = {0};
 
         if(missingFragments.size() > 0)
         {

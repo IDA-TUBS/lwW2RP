@@ -3,6 +3,7 @@
  */
 
 #include <w2rp/readerProxy.hpp>
+#include <w2rp/config/config.hpp>
 #include <w2rp/log.hpp>
 
 #include <bitset>
@@ -120,8 +121,8 @@ bool ReaderProxy::processNack(NackFrag *msg)
     }
 
     FragmentNumberSet bitmapStruct = msg->fragmentNumberState;
-    unsigned char bitmap[8];
-    memcpy(bitmap, bitmapStruct.bitmap, 8);
+    unsigned char bitmap[NACK_BITMAP_SIZE];
+    memcpy(bitmap, bitmapStruct.bitmap, NACK_BITMAP_SIZE);
     uint32_t smallestFN = bitmapStruct.bitmapBase;
     uint32_t highestFN = msg->count;
 
