@@ -236,6 +236,12 @@ bool Reader::handleHBFrag(HeartbeatFrag *msg, boost::asio::ip::udp::endpoint wri
                 bitmap[index] |= (1 << bitPosition);
             }
         }
+
+        // debugging only
+        std::string bitstring(bitmap, bitmap + sizeof(bitmap) / sizeof(bitmap[0]));
+        logTrace("NACKFRAG,SN," << msg->writerSN << ",smallestFN," << bitmapBase << ",highestFN," << msg->lastFragmentNum << ",bitmap," << bitstring)
+
+
         // else sent back an empty bitmap    
 
         // create W2RP header
