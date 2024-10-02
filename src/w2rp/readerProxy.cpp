@@ -176,16 +176,7 @@ bool ReaderProxy::processNack(NackFrag *msg)
     }
     lock.unlock();
 
-    // Create a string to hold the bitstream
-    std::string bitstream;
-
-    // Convert each byte to a bit representation and append it to the string
-    int iterations = (highestFN - smallestFN)/8 + 1;
-    for (std::size_t i = 0; i < iterations; ++i) {
-        bitstream += std::bitset<8>(bitmap[i]).to_string();  // Convert byte to bitstring
-    }
-    logTrace("NACKFRAG,SN," << sequenceNumber << ",smallestFN," << smallestFN << ",highestFN," << highestFN << ",bitmap," << bitstream)
-
+    logTrace("NACKFRAG,SN," << sequenceNumber << ",smallestFN," << smallestFN << ",highestFN," << highestFN)
 
     return true;
 }
