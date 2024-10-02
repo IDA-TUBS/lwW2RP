@@ -87,6 +87,11 @@ bool ReaderProxy::updateFragmentStatus (fragmentStates status, uint32_t sequence
     }
     lock.unlock();
 
+    if(!tmp)
+    {
+        return false;
+    }
+
     return tmp->setFragmentStatus(status, fragmentNumber, sentTimestamp);
 }
 
