@@ -5,6 +5,7 @@
 #include <chrono>
 #include <vector>
 #include <w2rp/messages/message_net.hpp>
+#include <w2rp/config/config.hpp>
 #include <w2rp/log.hpp>
 #include <w2rp/guid/guid.hpp>
 #include <w2rp/guid/guidPrefix.hpp>
@@ -25,8 +26,8 @@ enum SUBMESSAGES
 
 struct FragmentNumberSet {
     uint32_t bitmapBase;
-    unsigned char bitmap[8];
-    uint32_t size = 4 + 8;
+    unsigned char bitmap[NACK_BITMAP_SIZE];
+    uint32_t size = 4 + NACK_BITMAP_SIZE;
 };
 
 
@@ -365,7 +366,7 @@ class NackFrag: public SubmessageBase
              writerSN(writerSN),
              count(NackFragCount)
     {
-        memcpy(this->fragmentNumberState.bitmap, fragmentStates, 8);
+        memcpy(this->fragmentNumberState.bitmap, fragmentStates, NACK_BITMAP_SIZE);
         this->fragmentNumberState.bitmapBase = bitmapBase;
 
         // subMsgHeader = new SubmessageHeader(NACK_FRAG, this->length, false);
