@@ -104,7 +104,7 @@ bool ReaderProxy::processNack(NackFrag *msg)
         return false;
     }
 
-    std::unique_lock<std::mutex> lock(rp_mutex);
+
     // access change with the given sequence number
     ChangeForReader* change = nullptr;
     for(auto cfr: history)
@@ -118,7 +118,6 @@ bool ReaderProxy::processNack(NackFrag *msg)
     if(!change)
     {
         // logDebug("[ReaderProxy] change empty")
-        lock.unlock();
         return false;
     }
 
@@ -174,7 +173,6 @@ bool ReaderProxy::processNack(NackFrag *msg)
             }
         }
     }
-    lock.unlock();
 
     logTrace("NACKFRAG,SN," << sequenceNumber << ",smallestFN," << smallestFN << ",highestFN," << highestFN)
 
