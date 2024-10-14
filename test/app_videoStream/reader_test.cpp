@@ -89,8 +89,8 @@ int main()
     // std::string setup_path = std::string(getenv("HOME")) + "/Documents/Code/lightweightW2RP/test/app_videoStream/setup_defines.json";
 
     // Daniel Setup
-    std::string cfg_path = std::string(getenv("HOME")) + "/lightweightW2RP/test/app_videoStream/w2rp_config.json";
-    std::string setup_path = std::string(getenv("HOME")) + "/lightweightW2RP/test/app_videoStream/setup_defines.json";
+    std::string cfg_path = std::string(getenv("HOME")) + "/Documents/Code/lightweightW2RP/test/app_videoStream/w2rp_config.json";
+    std::string setup_path = std::string(getenv("HOME")) + "/Documents/Code/lightweightW2RP/test/app_videoStream/setup_defines.json";
 
 
     Subscriber mySub;
