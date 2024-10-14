@@ -124,6 +124,9 @@ private:
     /// HB counter
     uint32_t hbCounter; 
 
+    // send counter for debugging
+    int send_counter = 0;
+
 public:
     /**
      * @brief empty default constructor
