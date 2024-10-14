@@ -95,6 +95,7 @@ void Writer::init(uint16_t participant_id)
         cycle,
         std::bind(&Writer::sendMessage, this)
     );
+    
     // only start timer once data available, hence stop immediately
     shapingTimer->cancel();
 
@@ -298,6 +299,9 @@ void Writer::handleNackFrag(W2RPHeader *header, NackFrag *msg)
 
 bool Writer::sendMessage()
 {
+    logTrace("SAMPLE_START," << ++send_counter)
+
+    
     // logDebug("[Writer] sendMessage()")
     // check liveliness of sample in history cache, removes outdated samples
     checkSampleLiveliness();
@@ -410,7 +414,7 @@ bool Writer::sendMessage()
         // send message via UDP
         CommInterface->sendMsg(*txMsg);
 
-        // logTrace("SN," << sf->baseChange->sequenceNumber << ",FN," << sf->fragmentStartingNum << ",DST," << CommInterface->getTxEndpoint().ip_addr)
+        logTrace("SAMPLE_END," << send_counter << ",SN," << sf->baseChange->sequenceNumber << ",FN," << sf->fragmentStartingNum << ",DST," << CommInterface->getTxEndpoint().ip_addr)
 
         delete header;
         delete data;
