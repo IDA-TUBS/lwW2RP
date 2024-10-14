@@ -302,6 +302,9 @@ bool Writer::sendMessage()
     logTrace("SAMPLE_START," << ++send_counter)
 
     
+    // take timestamp for adjusting shaping cycle to properly match configured shaping time
+    auto ts_start = std::chrono::steady_clock::now();
+
     // logDebug("[Writer] sendMessage()")
     // check liveliness of sample in history cache, removes outdated samples
     checkSampleLiveliness();
@@ -429,9 +432,29 @@ bool Writer::sendMessage()
     {
         // logInfo("[Writer] sendMessage: no fragments available, halt shaping")
         // ...
+
+        std::chrono::microseconds cycle = config.shapingTime();
+        shapingTimer->setInterval(cycle);
         return false;
     }
 
+    auto ts_end = std::chrono::steady_clock::now();
+    std::chrono::microseconds ts_diff = std::chrono::duration_cast<std::chrono::microseconds>(ts_end - ts_start);
+
+    std::chrono::microseconds cycle = config.shapingTime(); 
+
+    std::chrono::microseconds new_cycle;
+
+    if(ts_diff < cycle)
+    {
+        new_cycle = (cycle - ts_diff);
+    }
+    else
+    {
+        new_cycle = cycle;
+    }
+
+    shapingTimer->setInterval(new_cycle);
 
     return true;
 }
