@@ -4,6 +4,7 @@
 
 #include <w2rp/entities/writer.hpp>
 #include <stdexcept>
+#include <w2rp/w2rp-tp.h>
 
 
 namespace w2rp {
@@ -299,11 +300,14 @@ void Writer::handleNackFrag(W2RPHeader *header, NackFrag *msg)
 
 bool Writer::sendMessage()
 {
-    logTrace("SAMPLE_START," << ++send_counter)
+    // logTrace("SAMPLE_START," << ++send_counter)
+    // // take timestamp for adjusting shaping cycle to properly match configured shaping time
+    auto ts_start = std::chrono::steady_clock::now();
+    
+    tracepoint(w2rp_trace, tracepoint_writer_int, "SAMPLE_START, : ", ++send_counter);
 
     
-    // take timestamp for adjusting shaping cycle to properly match configured shaping time
-    auto ts_start = std::chrono::steady_clock::now();
+    
 
     // logDebug("[Writer] sendMessage()")
     // check liveliness of sample in history cache, removes outdated samples
@@ -417,7 +421,8 @@ bool Writer::sendMessage()
         // send message via UDP
         CommInterface->sendMsg(*txMsg);
 
-        logTrace("SAMPLE_END," << send_counter << ",SN," << sf->baseChange->sequenceNumber << ",FN," << sf->fragmentStartingNum << ",DST," << CommInterface->getTxEndpoint().ip_addr)
+        // logTrace("SAMPLE_END," << send_counter << ",SN," << sf->baseChange->sequenceNumber << ",FN," << sf->fragmentStartingNum << ",DST," << CommInterface->getTxEndpoint().ip_addr)
+        tracepoint(w2rp_trace, tracepoint_writer_int, "SAMPLE_END, : ", send_counter);
 
         delete header;
         delete data;

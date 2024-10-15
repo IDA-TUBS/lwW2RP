@@ -45,6 +45,8 @@ set(
     ${PROJECT_SOURCE_DIR}/src/w2rp/readerProxy.cpp
     ${PROJECT_SOURCE_DIR}/src/w2rp/writerProxy.cpp
     ${PROJECT_SOURCE_DIR}/src/w2rp/log.cpp
+
+    ${PROJECT_SOURCE_DIR}/src/w2rp/w2rp-tp.cpp
     
 )
 
@@ -57,7 +59,7 @@ target_include_directories(w2rp
   $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(w2rp PUBLIC boost_system boost_log boost_log_setup boost_thread pthread)
+target_link_libraries(w2rp PUBLIC boost_system boost_log boost_log_setup boost_thread pthread lttng-ust)
 
 target_compile_definitions(w2rp PUBLIC BOOST_LOG_DYN_LINK)
 
