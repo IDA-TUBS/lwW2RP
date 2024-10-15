@@ -151,34 +151,38 @@ set(SRC_FILES
 )
 
 # ## TimedEvent testing
-# add_executable(timer_test_function test/timer/timer_test_function.cpp ${SRC_FILES})
-# target_link_libraries(timer_test_function w2rp)
+add_executable(timer_test_function test/unit_test/timer/timer_test_function.cpp ${SRC_FILES})
+target_link_libraries(timer_test_function w2rp)
 
 # ## TimedEvent testing
-# add_executable(timer_test_object test/timer/timer_test_object.cpp ${SRC_FILES})
-# target_link_libraries(timer_test_object w2rp)
+add_executable(timer_test_object test/unit_test/timer/timer_test_object.cpp ${SRC_FILES})
+target_link_libraries(timer_test_object w2rp)
+
+# ## Active Wait testing
+add_executable(timer_test_active test/unit_test/timer/timer_test_active_wait.cpp ${SRC_FILES})
+target_link_libraries(timer_test_active w2rp)
 
 # ## Writer testing
-# add_executable(writer_test test/entities/writer_test.cpp ${SRC_FILES})
+# add_executable(writer_test test/unit_test/entities/writer_test.cpp ${SRC_FILES})
 # target_link_libraries(writer_test w2rp)
 
 # ## Reader testing
-# add_executable(reader_test test/entities/reader_test.cpp ${SRC_FILES})
+# add_executable(reader_test test/unit_test/entities/reader_test.cpp ${SRC_FILES})
 # target_link_libraries(reader_test w2rp)
 
 # ## Config testing
-# add_executable(readConfig_test test/config/readConfig_test.cpp ${SRC_FILES})
+# add_executable(readConfig_test test/unit_test/config/readConfig_test.cpp ${SRC_FILES})
 # target_link_libraries(readConfig_test w2rp)
 
 ## Writer testing (video stream)
-add_executable(writer_test_video test/app_videoStream/writer_test.cpp ${SRC_FILES})
+add_executable(writer_test_video test/unit_test/app_videoStream/writer_test.cpp ${SRC_FILES})
 target_link_libraries(writer_test_video w2rp ${OpenCV_LIBS})
 
 ## Reader testing (video stream)
-add_executable(reader_test_video test/app_videoStream/reader_test.cpp ${SRC_FILES})
+add_executable(reader_test_video test/unit_test/app_videoStream/reader_test.cpp ${SRC_FILES})
 target_link_libraries(reader_test_video w2rp ${OpenCV_LIBS})
 
 # ## GUID testing
-# add_executable(guid_test test/guid/guid_test.cpp ${SRC_FILES})
+# add_executable(guid_test test/unit_test/guid/guid_test.cpp ${SRC_FILES})
 # target_link_libraries(guid_test w2rp)
 

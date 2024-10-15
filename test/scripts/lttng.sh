@@ -3,11 +3,11 @@
 # First destroy all active lttng sessions
 lttng destroy
 
-rm -r ~/Documents/Code/lightweightW2RP/ZZ_logs/lttng_tracing/ust
+rm -r ~/lightweightW2RP/test/logslttng_tracing/ust
 
 lttng-sessiond --daemonize
 #lttng list --userspace
-lttng create fastrtps_tracing_session --output ~/Documents/Code/lightweightW2RP/ZZ_logs/lttng_tracing
+lttng create fastrtps_tracing_session --output ~/lightweightW2RP/test/logs/lttng_tracing
 lttng enable-event --userspace w2rp_trace:tracepoint_pub_int
 lttng enable-event --userspace w2rp_trace:tracepoint_writer_int
 lttng enable-event --userspace w2rp_trace:tracepoint_writer
@@ -22,4 +22,4 @@ lttng destroy
 
 TIMESTAMP=$(date +%s)
 
-babeltrace2 ~/Documents/Code/lightweightW2RP/ZZ_logs/lttng_tracing/ >~/Documents/Code/lightweightW2RP/ZZ_logs/lttng_tracing/trace_$1_$2.log
+babeltrace2 ~/lightweightW2RP/test/logs/lttng_tracing/ >~/lightweightW2RP/test/logs/lttng_tracing/trace_$1_$2.log

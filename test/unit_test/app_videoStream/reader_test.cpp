@@ -84,13 +84,13 @@ int main()
 {
     uint16_t p_id = 0x5340;
     
-    // // Alex Setup
-    std::string cfg_path = std::string(getenv("HOME")) + "/Documents/Code/lightweightW2RP/test/app_videoStream/w2rp_config.json";
-    std::string setup_path = std::string(getenv("HOME")) + "/Documents/Code/lightweightW2RP/test/app_videoStream/setup_defines.json";
+    // // // Alex Setup
+    // std::string cfg_path = std::string(getenv("HOME")) + "/Documents/Code/lightweightW2RP/test/app_videoStream/w2rp_config.json";
+    // std::string setup_path = std::string(getenv("HOME")) + "/Documents/Code/lightweightW2RP/test/app_videoStream/setup_defines.json";
 
     // Daniel Setup
-    // std::string cfg_path = std::string(getenv("HOME")) + "/lightweightW2RP/test/app_videoStream/w2rp_config.json";
-    // std::string setup_path = std::string(getenv("HOME")) + "/lightweightW2RP/test/app_videoStream/setup_defines.json";
+    std::string cfg_path = std::string(getenv("HOME")) + "/lightweightW2RP/test/unit_test/app_videoStream/w2rp_config.json";
+    std::string setup_path = std::string(getenv("HOME")) + "/lightweightW2RP/test/unit_test/app_videoStream/setup_defines.json";
 
 
     Subscriber mySub;

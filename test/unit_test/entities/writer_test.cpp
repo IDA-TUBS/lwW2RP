@@ -44,7 +44,6 @@ void Publisher::runThread(uint32_t number_samples)
             // sending worked?!
         }
         std::this_thread::sleep_for(std::chrono::seconds(20));
-        std::cout << std::endl << std::endl;
     }
     
 }

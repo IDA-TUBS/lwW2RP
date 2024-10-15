@@ -38,8 +38,9 @@ class PeriodicEvent
         TimerManager& service,
         std::chrono::microseconds interval,
         std::function<bool()> callback,
-        Args... args,
-        bool autoStart = true
+        TimerType timer,
+        bool autoStart,
+        Args... args
     ):
         service_(service),
         interval_(interval),
@@ -47,7 +48,7 @@ class PeriodicEvent
         args_(std::make_tuple(args...))
     {
         auto timerCallback = [&]() { return eventCallback(); }; 
-        id = service_.registerTimer(interval, timerCallback, autoStart);
+        id = service_.registerTimer(interval, timerCallback, timer, autoStart);
         if(autoStart)
         {
             isActive_ = true;  
@@ -57,6 +58,15 @@ class PeriodicEvent
             isActive_ = false;
         }
     };
+
+    PeriodicEvent(
+        TimerManager& service,
+        std::chrono::microseconds interval,
+        std::function<bool()> callback,
+        Args... args
+    ):
+        PeriodicEvent(service, interval, callback, STEADY_TIMER, true, args...)
+    {};
     
     /**
      * @brief Destroy the Timed Event object

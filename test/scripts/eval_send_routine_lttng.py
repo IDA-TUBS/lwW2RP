@@ -1,27 +1,31 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import re
 import datetime
+import sys
 
-# Function to parse log lines and extract relevant information
-def parse_log_line(line):
-    parts = line.split(',')
-    timestamp = datetime.datetime.strptime(parts[0], '%Y-%m-%d %H:%M:%S.%f')
-    event_type = parts[1].strip()
-    events = ["SAMPLE_START", "SAMPLE_END"]
-    sequence_number = int(parts[2]) if event_type in events else None
-    # print(sequence_number)
-    return timestamp, event_type, sequence_number
 
-# Read log data into a Pandas DataFrame
-log_data = []
-with open('writer_test_video_20241014_134040.log', 'r') as f:
-    for line in f:
-        log_data.append(parse_log_line(line))
-df = pd.DataFrame(log_data, columns=['Timestamp', 'Event Type', 'Sequence Number'])
+# Specify the log file path
+log_file_path = sys.argv[1]
 
-df = df[(df['Event Type'] != 'NACKFRAG')]
-df = df[(df['Event Type'] != 'SN Arrival')]
+# Open and read the file
+with open(log_file_path, 'r') as file:
+    log_data = file.read()
+
+# Regular expression pattern to extract timestamp, event type, and sequence number
+pattern = r'\[(.*?)\] .+{ string_field = "(.*?)", integer_field = (\d+) }'
+
+# Parse the log file
+matches = re.findall(pattern, log_data)
+
+# Create DataFrame
+df = pd.DataFrame(matches, columns=['Timestamp', 'Event Type', 'Sequence Number'])
+
+df['Event Type'] = df['Event Type'].apply(lambda x: re.sub(r'[^a-zA-Z_]', '', x))
+
+# Convert Sequence Number to integer type
+df['Sequence Number'] = df['Sequence Number'].astype(int)
 
 df['Timestamp'] = pd.to_datetime(df['Timestamp'])
 
@@ -39,8 +43,6 @@ merged_df['time_diff_us'] = (merged_df['Timestamp_end'] - merged_df['Timestamp_s
 result = merged_df[['Sequence Number', 'Timestamp_start', 'Timestamp_end', 'time_diff_us']]
 # Display the result
 print(result)
-
-
 
 
 # Calculate the difference between subsequent SAMPLE_START entries

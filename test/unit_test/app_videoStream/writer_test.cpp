@@ -53,7 +53,6 @@ void Publisher::runThread(uint32_t number_samples)
             // sending worked?!
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        std::cout << std::endl << std::endl;
     }
     
 }
@@ -126,19 +125,19 @@ int main()
 {
 
     w2rp::init_console_log();
-    std::string log_path = "/Documents/Code/lightweightW2RP/ZZ_logs/writer_test_video_";
+    std::string log_path = "/lightweightW2RP/test/logs/writer_test_video_";
     w2rp::init_file_log(log_path, generateTimestamp());
 
 
     uint16_t p_id = 0x8517;
 
     // // Alex Setup
-    std::string cfg_path = std::string(getenv("HOME")) + "/Documents/Code/lightweightW2RP/test/app_videoStream/w2rp_config.json";
-    std::string setup_path = std::string(getenv("HOME")) + "/Documents/Code/lightweightW2RP/test/app_videoStream/setup_defines.json";
+    // std::string cfg_path = std::string(getenv("HOME")) + "/Documents/Code/lightweightW2RP/test/app_videoStream/w2rp_config.json";
+    // std::string setup_path = std::string(getenv("HOME")) + "/Documents/Code/lightweightW2RP/test/app_videoStream/setup_defines.json";
 
     // Daniel Setup
-    // std::string cfg_path = std::string(getenv("HOME")) + "/lightweightW2RP/test/app_videoStream/w2rp_config.json";
-    // std::string setup_path = std::string(getenv("HOME")) + "/lightweightW2RP/test/app_videoStream/setup_defines.json";
+    std::string cfg_path = std::string(getenv("HOME")) + "/lightweightW2RP/test/unit_test/app_videoStream/w2rp_config.json";
+    std::string setup_path = std::string(getenv("HOME")) + "/lightweightW2RP/test/unit_test/app_videoStream/setup_defines.json";
     
     Publisher myPub;
     if (myPub.init(p_id, cfg_path, setup_path))
