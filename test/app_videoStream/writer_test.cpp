@@ -107,18 +107,38 @@ bool Publisher::publish()
     
 }
 
+std::string generateTimestamp() {
+    // Get the current time
+    std::time_t now = std::time(nullptr);
+    
+    // Convert to a tm structure
+    std::tm* localTime = std::localtime(&now);
+    
+    // Create a string stream to format the date and time
+    std::stringstream ss;
+    ss << std::put_time(localTime, "%Y%m%d_%H%M%S");
+
+    // Return the formatted string
+    return ss.str();
+}
 
 int main()
 {
+
+    w2rp::init_console_log();
+    std::string log_path = "/Documents/Code/lightweightW2RP/ZZ_logs/writer_test_video_";
+    w2rp::init_file_log(log_path, generateTimestamp());
+
+
     uint16_t p_id = 0x8517;
 
     // // Alex Setup
-    // std::string cfg_path = std::string(getenv("HOME")) + "/Documents/Code/lightweightW2RP/test/app_videoStream/w2rp_config.json";
-    // std::string setup_path = std::string(getenv("HOME")) + "/Documents/Code/lightweightW2RP/test/app_videoStream/setup_defines.json";
-
-    // Daniel Setup
     std::string cfg_path = std::string(getenv("HOME")) + "/Documents/Code/lightweightW2RP/test/app_videoStream/w2rp_config.json";
     std::string setup_path = std::string(getenv("HOME")) + "/Documents/Code/lightweightW2RP/test/app_videoStream/setup_defines.json";
+
+    // Daniel Setup
+    // std::string cfg_path = std::string(getenv("HOME")) + "/lightweightW2RP/test/app_videoStream/w2rp_config.json";
+    // std::string setup_path = std::string(getenv("HOME")) + "/lightweightW2RP/test/app_videoStream/setup_defines.json";
     
     Publisher myPub;
     if (myPub.init(p_id, cfg_path, setup_path))
