@@ -5,6 +5,9 @@
 #include <thread>
 #include <chrono>
 #include <functional>
+#include <iostream>
+#include <mutex>
+
 
 class ActiveWaitTimer
 {
@@ -12,31 +15,42 @@ class ActiveWaitTimer
 
         typedef std::chrono::steady_clock::duration Duration;
 
-        ActiveWaitTimer() : active(false) {}
+        ActiveWaitTimer()
+        :
+            active(false),
+            t_mutex(),
+            worker{}
+        {}
 
         // Start the timer with a specific duration and function to call
         void start(Duration duration, std::function<bool()> function)
         {
-            stop();  // Ensure any previous timer is stopped
+            std::unique_lock<std::mutex> lock(t_mutex);
+            if(!active)
+            {
+                stop();  // Ensure any previous timer is stopped
 
-            active = true;
-            worker = std::thread([this, duration, function]() {
-                auto start_time = std::chrono::steady_clock::now();
-                while (active)
-                {
-                    auto current_time = std::chrono::steady_clock::now();
-                    if (current_time - start_time >= duration)
+                active = true;
+                worker = std::thread([this, duration, function]() {
+                    auto start_time = std::chrono::steady_clock::now();
+                    while (active)
                     {
-                        start_time = std::chrono::steady_clock::now();
-                        bool restart_ = function();
-                        if(!restart_)
+                        auto current_time = std::chrono::steady_clock::now();
+                        if (current_time - start_time >= duration)
                         {
-                            active = false;
+                            start_time = std::chrono::steady_clock::now();
+                            bool restart_ = function();
+                            if(!restart_)
+                            {
+                                // active = false;
+                                break;
+                            }
                         }
                     }
-                }
-            });
-
+                    active = false;
+                });
+            }
+            lock.unlock();
         }
 
         // Stop the timer
@@ -57,6 +71,7 @@ class ActiveWaitTimer
     private:
         std::atomic<bool> active;
         std::thread worker;
+        std::mutex t_mutex;
 };
 
 #endif

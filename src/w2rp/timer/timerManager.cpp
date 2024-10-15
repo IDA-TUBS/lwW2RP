@@ -74,8 +74,6 @@ void TimerManager::unregisterTimer(timerID timer_id)
 {
     logInfo("Removing timer: " << timer_id.second << ": " << timer_id.first)
 
-    std::unique_lock<std::mutex> lock(m_mutex);
-
     cancelTimer(timer_id);
     removeTimer(timer_id);
 
@@ -105,9 +103,14 @@ void TimerManager::cancelTimer(timerID timer_id)
         case ACTIVEWAIT_TIMER:
             {
                 auto timer_entry = getActiveWaitTimer(timer_id.second);
-                if (timer_entry) {
+                if (timer_entry) 
+                {
                     timer_entry->stop();  // Stop the active wait timer
-            }
+                }
+                else
+                {
+                    logError("No ActiveWaitTimer available with ID: " <<  timer_id.second)
+                }
             }
             break;
 
@@ -295,7 +298,7 @@ void TimerManager::restartSteadyTimer(timerID timer_id, const Duration& duration
     }
     else
     {
-        logInfo("restartSteadyTimer: Timer object not available")
+        logError("restartSteadyTimer: Timer object not available")
     }
 
 }
@@ -312,12 +315,13 @@ void TimerManager::restartActiveWaitTimer(timerID timer_id, const Duration& dura
     }
     else
     {
-        logInfo("restartActiveWaitTimer: Timer object not available")
+        logError("restartActiveWaitTimer: Timer object not available")
     }
 }
 
 void TimerManager::removeTimer(timerID timer_id)
 {
+    std::unique_lock<std::mutex> lock(m_mutex);
     switch(timer_id.first)
     {
         case STEADY_TIMER:
@@ -336,4 +340,5 @@ void TimerManager::removeTimer(timerID timer_id)
             // nothing to do
             break;
     }
+    lock.unlock();
 }

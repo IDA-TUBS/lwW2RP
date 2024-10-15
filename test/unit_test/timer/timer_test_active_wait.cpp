@@ -12,8 +12,8 @@ int send_counter;
 
 bool handler()
 {
-    tracepoint(w2rp_trace, tracepoint_writer_int, "SAMPLE_START, : ", ++send_counter);
-    // logInfo("Hello from handler!")
+    // tracepoint(w2rp_trace, tracepoint_writer_int, "SAMPLE_START, : ", ++send_counter);
+    logInfo("Hello from handler!")
     return true;
 }
 
@@ -26,8 +26,7 @@ int main()
 
     logInfo("Hello from main")
 
-    // std::chrono::microseconds cycle(500000);
-    std::chrono::microseconds cycle(1000);
+    std::chrono::microseconds cycle(100000);
 
     PeriodicEvent timer(
         timer_manager, 
@@ -39,10 +38,22 @@ int main()
     
     timer_manager.start();
 
-    while(true)
-    {
+    sleep(1);
 
-    }
+    timer.cancel();
+
+    sleep(1);
+
+    timer.restart();
+
+    sleep(1);
+
+    // while(true)
+    // {
+
+    // }
+
+    logInfo("Exiting")
 
     return 0;
 }
