@@ -389,7 +389,7 @@ bool Writer::sendMessage()
                     timeoutTimer->restart(toTS);
                 }
             }
-
+        }
 
 
         // create W2RP header
@@ -424,7 +424,7 @@ bool Writer::sendMessage()
         delete hb;
         delete txMsg;
         // logDebug("[Writer] sendMessage: delete message")
-        }
+        
     }
     // if send queue still empty, no need to schedule new fragment transmission,
     // wait for next sample top arrive
