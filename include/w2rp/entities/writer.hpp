@@ -98,7 +98,7 @@ private:
     /// socket receive thread
     std::thread recvThread;
     /// receive handler thread
-    std::thread handlerThread;
+    std::thread handlerThread; 
 
     /// receive queue
     SafeQueue<MessageNet_t> receiveQueue;

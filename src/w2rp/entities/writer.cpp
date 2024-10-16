@@ -4,6 +4,7 @@
 
 #include <w2rp/entities/writer.hpp>
 #include <stdexcept>
+#include <w2rp/w2rp-tp.h>
 
 
 namespace w2rp {
@@ -71,7 +72,6 @@ void Writer::init(uint16_t participant_id)
     /*****************************************************************************************************************/
 
 
-
     // init net message parser
     netParser = new NetMessageParser();
 
@@ -93,7 +93,9 @@ void Writer::init(uint16_t participant_id)
     shapingTimer = new PeriodicEvent(
         this->timer_manager,
         cycle,
-        std::bind(&Writer::sendMessage, this)
+        std::bind(&Writer::sendMessage, this),
+        ACTIVEWAIT_TIMER,
+        true
     );
     
     // only start timer once data available, hence stop immediately
@@ -300,10 +302,10 @@ void Writer::handleNackFrag(W2RPHeader *header, NackFrag *msg)
 bool Writer::sendMessage()
 {
     logTrace("SAMPLE_START," << ++send_counter)
-
-    
     // take timestamp for adjusting shaping cycle to properly match configured shaping time
     auto ts_start = std::chrono::steady_clock::now();
+    
+    // tracepoint(w2rp_trace, tracepoint_writer_int, "SAMPLE_START, : ", ++send_counter);
 
     // logDebug("[Writer] sendMessage()")
     // check liveliness of sample in history cache, removes outdated samples
@@ -311,7 +313,6 @@ bool Writer::sendMessage()
 
     // check whether a sample has been successfully transmitted to all readers
     removeCompleteSamples();
-
 
     /***********************************************************************************************************************************************/
     /*************************************************** BEGIN CRITICAL SECTION *******************************************************************/
@@ -391,7 +392,6 @@ bool Writer::sendMessage()
             }
         }
 
-
         // create W2RP header
         W2RPHeader *header = new W2RPHeader(guid.prefix);
         // logDebug("[Writer] sendMessage: created W2RP header")
@@ -418,6 +418,7 @@ bool Writer::sendMessage()
         CommInterface->sendMsg(*txMsg);
 
         logTrace("SAMPLE_END," << send_counter << ",SN," << sf->baseChange->sequenceNumber << ",FN," << sf->fragmentStartingNum << ",DST," << CommInterface->getTxEndpoint().ip_addr)
+        // tracepoint(w2rp_trace, tracepoint_writer_int, "SAMPLE_END, : ", send_counter);
 
         delete header;
         delete data;
@@ -432,29 +433,8 @@ bool Writer::sendMessage()
     {
         // logInfo("[Writer] sendMessage: no fragments available, halt shaping")
         // ...
-
-        std::chrono::microseconds cycle = config.shapingTime();
-        shapingTimer->setInterval(cycle);
         return false;
     }
-
-    auto ts_end = std::chrono::steady_clock::now();
-    std::chrono::microseconds ts_diff = std::chrono::duration_cast<std::chrono::microseconds>(ts_end - ts_start);
-
-    std::chrono::microseconds cycle = config.shapingTime(); 
-
-    std::chrono::microseconds new_cycle;
-
-    if(ts_diff < cycle)
-    {
-        new_cycle = (cycle - ts_diff);
-    }
-    else
-    {
-        new_cycle = cycle;
-    }
-
-    shapingTimer->setInterval(new_cycle);
 
     return true;
 }

@@ -31,5 +31,5 @@ fi
 cd build
 
 # Execute the cmake with the stored parameters
-cmake .. -DLOG=$dlog -DCONSOLE=$dconsole -DFILE=$dfile
+cmake .. #-DLOG=$dlog -DCONSOLE=$dconsole -DFILE=$dfile
 sudo cmake --build . --target install -j$threads

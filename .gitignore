@@ -291,3 +291,5 @@ thirdparty/boost_1_73_0/stage
 thirdparty/boost_1_73_0/bin.v2
 thirdparty/boost_1_73_0/project-config.jam*
 thirdparty/boost_1_73_0/b2
+
+test/logs

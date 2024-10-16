@@ -2,6 +2,7 @@
 #define TimerManager_h
 
 #include <w2rp/log.hpp>
+#include <w2rp/timer/activeWaitTimer.hpp>
 
 #define BOOST_BIND_GLOBAL_PLACEHOLDERS
 #include <boost/asio.hpp>
@@ -17,7 +18,8 @@ namespace w2rp{
 enum TimerType
 {
     STEADY_TIMER = 0,
-    SYSTEM_TIMER
+    SYSTEM_TIMER,
+    ACTIVEWAIT_TIMER
 };
 
 typedef std::pair<TimerType,size_t> timerID;
@@ -59,12 +61,14 @@ class TimerManager
      * 
      * @param duration timer interval
      * @param function event handler
+     * @param timer TimerType {STEADY, ACTIVEWAIT}
      * @param autoStart [bool] (true): timer allocation + start (false) timer allocation only
      * @return timerID timer id object
      */
     timerID registerTimer(
         const Duration& duration, 
         std::function<bool()> function,
+        TimerType timer,
         bool autoStart = true
     );
 
@@ -95,7 +99,7 @@ class TimerManager
     void cancelTimer(timerID timer_id);
 
     /**
-     * @brief restart a registered steady timer 
+     * @brief restart a registered interval timer 
      *      
      * @param timerID timer id object
      * @param duration timer interval
@@ -187,6 +191,70 @@ class TimerManager
     std::shared_ptr<boost::asio::system_timer> getSystemTimer(size_t id);
 
     /**
+     * @brief Get the ActiveWaitTimer object 
+     * 
+     * @param id 
+     * @return std::shared_ptr<ActiveWaitTimer> 
+     */
+    std::shared_ptr<ActiveWaitTimer> getActiveWaitTimer(size_t id);
+
+    /**
+     * @brief register a timed event based on a steady timer
+     * 
+     * @param duration timer interval
+     * @param function event handler
+     * @param timer TimerType {STEADY, ACTIVEWAIT}
+     * @param autoStart [bool] (true): timer allocation + start (false) timer allocation only
+     * @return timerID timer id object
+     */
+    timerID registerSteadyTimer(
+        const Duration& duration, 
+        std::function<bool()> function,
+        bool autoStart = true
+    );
+
+    /**
+     * @brief register a timed event based on an active wait timer
+     * 
+     * @param duration timer interval
+     * @param function event handler
+     * @param timer TimerType {STEADY, ACTIVEWAIT}
+     * @param autoStart [bool] (true): timer allocation + start (false) timer allocation only
+     * @return timerID timer id object
+     */
+    timerID registerActiveWaitTimer(
+        const Duration& duration, 
+        std::function<bool()> function,
+        bool autoStart = true
+    );
+
+    /**
+     * @brief restart a registered steady timer 
+     *      
+     * @param timerID timer id object
+     * @param duration timer interval
+     * @param function event handler
+     */
+    void restartSteadyTimer(
+        timerID timer_id, 
+        const Duration& duration, 
+        std::function<bool()> function
+    );
+
+    /**
+     * @brief restart a registered active wait timer 
+     *      
+     * @param timerID timer id object
+     * @param duration timer interval
+     * @param function event handler
+     */
+    void restartActiveWaitTimer(
+        timerID timer_id, 
+        const Duration& duration, 
+        std::function<bool()> function
+    );
+
+    /**
      * @brief remove a timer from
      * 
      * @param timer_id 
@@ -202,6 +270,7 @@ class TimerManager
     
     std::map<size_t, std::shared_ptr<boost::asio::steady_timer>> m_steady_timers;
     std::map<size_t, std::shared_ptr<boost::asio::system_timer>> m_system_timers;
+    std::map<size_t,  std::shared_ptr<ActiveWaitTimer>> m_activewait_timers;
 
     std::mutex m_mutex;
     

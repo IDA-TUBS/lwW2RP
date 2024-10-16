@@ -33,22 +33,21 @@ void TimerManager::stop()
     executor.join();
 }
 
-timerID TimerManager::registerTimer(const Duration& duration, std::function<bool()> function, bool autoStart)
+timerID TimerManager::registerTimer(const Duration& duration, std::function<bool()> function, TimerType timer, bool autoStart)
 {
-    timerID timer_id = assignID(STEADY_TIMER);
-    
-    // Create a timer and bind it to the function
-    auto timer = std::make_shared<boost::asio::steady_timer>(timer_io);
-    
-    if(autoStart)
+    timerID timer_id;
+    switch (timer)
     {
-        configureTimer(timer, timer_id.second, duration, function);      
+        case STEADY_TIMER:
+            timer_id = registerSteadyTimer(duration, function, autoStart);
+            break;
+        case ACTIVEWAIT_TIMER:
+            timer_id = registerActiveWaitTimer(duration, function, autoStart);
+            break;
+        default:
+            logError("Timer registration failed, unrecognized TimerType")
+            break;
     }
-
-    // Add the timer to the list of timers
-    std::unique_lock<std::mutex> lock(m_mutex);
-    m_steady_timers.emplace(timer_id.second, std::move(timer));
-    
     return timer_id;
 }
 
@@ -74,8 +73,6 @@ timerID TimerManager::registerTimer(const TimePoint& time_point, std::function<v
 void TimerManager::unregisterTimer(timerID timer_id)
 {
     logInfo("Removing timer: " << timer_id.second << ": " << timer_id.first)
-
-    std::unique_lock<std::mutex> lock(m_mutex);
 
     cancelTimer(timer_id);
     removeTimer(timer_id);
@@ -103,6 +100,19 @@ void TimerManager::cancelTimer(timerID timer_id)
                 timer_entry->expires_at(std::chrono::system_clock::now());
             }
             break;
+        case ACTIVEWAIT_TIMER:
+            {
+                auto timer_entry = getActiveWaitTimer(timer_id.second);
+                if (timer_entry) 
+                {
+                    timer_entry->stop();  // Stop the active wait timer
+                }
+                else
+                {
+                    logError("No ActiveWaitTimer available with ID: " <<  timer_id.second)
+                }
+            }
+            break;
 
         default:
             // nothing to do
@@ -114,19 +124,18 @@ void TimerManager::cancelTimer(timerID timer_id)
 
 void TimerManager::restartTimer(timerID timer_id, const Duration& duration, std::function<bool()> function)
 {
-    std::unique_lock<std::mutex> lock(m_mutex);
-    auto timer = getSteadyTimer(timer_id.second);
-    lock.unlock();
-
-    if(timer)
+    switch (timer_id.first)
     {
-        configureTimer(timer, timer_id.second, duration, function);
+        case STEADY_TIMER:
+            restartSteadyTimer(timer_id, duration, function);
+            break;
+        case ACTIVEWAIT_TIMER:
+            restartActiveWaitTimer(timer_id, duration, function);
+            break;
+        default:
+            logError("Timer registration failed, unrecognized TimerType")
+            break;
     }
-    else
-    {
-        logInfo("restartTimer: Timer object not available")
-    }
-
 }
 
 void TimerManager::restartTimer(timerID timer_id, const TimePoint& time_point, std::function<void()> function)
@@ -145,7 +154,12 @@ void TimerManager::restartTimer(timerID timer_id, const TimePoint& time_point, s
     }
 }
 
-/* ----------------- PrivateMethods ------------------------- */
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+/* ---------------------------- PrivateMethods -------------------------------*/
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+
 timerID TimerManager::assignID(TimerType t_type)
 {
     std::unique_lock<std::mutex> lock(m_mutex);
@@ -222,8 +236,92 @@ std::shared_ptr<boost::asio::system_timer> TimerManager::getSystemTimer(size_t i
     }
 }
 
+std::shared_ptr<ActiveWaitTimer> TimerManager::getActiveWaitTimer(size_t id)
+{
+    auto timer_entry = m_activewait_timers.find(id);
+    if (timer_entry != m_activewait_timers.end()) 
+    {
+        return timer_entry->second;
+    } 
+    else 
+    {
+        return nullptr;
+    }
+}
+
+timerID TimerManager::registerSteadyTimer(const Duration& duration, std::function<bool()> function, bool autoStart)
+{
+    timerID timer_id = assignID(STEADY_TIMER);
+    
+    // Create a timer and bind it to the function
+    auto timer = std::make_shared<boost::asio::steady_timer>(timer_io);
+    
+    if(autoStart)
+    {
+        configureTimer(timer, timer_id.second, duration, function);      
+    }
+
+    // Add the timer to the list of timers
+    std::unique_lock<std::mutex> lock(m_mutex);
+    m_steady_timers.emplace(timer_id.second, std::move(timer));
+    
+    return timer_id;
+}
+
+timerID TimerManager::registerActiveWaitTimer(const Duration& duration, std::function<bool()> function, bool autoStart)
+{
+    timerID timer_id = assignID(ACTIVEWAIT_TIMER);
+    
+    auto timer = std::make_shared<ActiveWaitTimer>();
+
+    if (autoStart)
+    {
+        timer->start(duration, function);
+    }
+
+    // Add the timer to the list of custom timers
+    std::unique_lock<std::mutex> lock(m_mutex);
+    m_activewait_timers.emplace(timer_id.second, std::move(timer));
+    
+    return timer_id;
+}
+
+void TimerManager::restartSteadyTimer(timerID timer_id, const Duration& duration, std::function<bool()> function)
+{
+    std::unique_lock<std::mutex> lock(m_mutex);
+    auto timer = getSteadyTimer(timer_id.second);
+    lock.unlock();
+
+    if(timer)
+    {
+        configureTimer(timer, timer_id.second, duration, function);
+    }
+    else
+    {
+        logError("restartSteadyTimer: Timer object not available")
+    }
+
+}
+
+void TimerManager::restartActiveWaitTimer(timerID timer_id, const Duration& duration, std::function<bool()> function)
+{
+    std::unique_lock<std::mutex> lock(m_mutex);
+    auto timer = getActiveWaitTimer(timer_id.second);
+    lock.unlock();
+    if (timer) 
+    {
+        timer->stop();  // Stop the current timer
+        timer->start(duration, function);  // Restart the timer
+    }
+    else
+    {
+        logError("restartActiveWaitTimer: Timer object not available")
+    }
+}
+
 void TimerManager::removeTimer(timerID timer_id)
 {
+    std::unique_lock<std::mutex> lock(m_mutex);
     switch(timer_id.first)
     {
         case STEADY_TIMER:
@@ -233,9 +331,14 @@ void TimerManager::removeTimer(timerID timer_id)
         case SYSTEM_TIMER:
             m_system_timers.erase(timer_id.second);
             break;
+
+        case ACTIVEWAIT_TIMER:
+            m_activewait_timers.erase(timer_id.second);
+            break;
     
         default:
             // nothing to do
             break;
     }
+    lock.unlock();
 }

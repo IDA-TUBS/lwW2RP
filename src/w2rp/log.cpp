@@ -24,6 +24,7 @@ void w2rp::init_file_log(std::string log_prefix, std::string log_suffix)
     boost::log::add_common_attributes();    
 
     #ifdef FILE_ON
+    logInfo("File logging enabled")
     boost::log::add_file_log
     (
         boost::log::keywords::file_name = log_file,
