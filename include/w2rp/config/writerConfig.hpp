@@ -138,6 +138,13 @@ class writerCfg
      */
     PrioritizationMode prioMode();
 
+    /**
+     * @brief get number of fragments to transmit in a timely aggregated manner
+     * 
+     * @return uint32_t 
+     */
+    uint32_t aggregation_size();
+
     private:
 
     bool check();

@@ -136,6 +136,12 @@ uint32_t writerCfg::host_id()
     return setup.get_hostID(host);
 }
 
+unsigned int writerCfg::aggregation_size()
+{
+    return getAttribute<unsigned int>(AGGREGATION_SIZE);
+}
+
+
 std::vector<uint32_t> writerCfg::reader_id()
 {
     std::vector<uint32_t> readerList;

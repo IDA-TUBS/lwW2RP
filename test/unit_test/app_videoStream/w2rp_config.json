@@ -5,6 +5,7 @@
     "FRAGMENT_SIZE [Byte]": 1200,
     "DEADLINE [us]": 100000,
     "SHAPING_TIME [us]": 1500,
+    "AGGREGATION_SIZE": 5,
     "NACK_SUPPRESSION_DURATION [us]": 3500,
     "TIMEOUT [us]": 3500,
     "SIZE_CACHE": 2,

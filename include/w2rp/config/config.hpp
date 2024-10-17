@@ -26,6 +26,7 @@ namespace config{
 #define TIMEOUT "TIMEOUT [us]"
 #define NUMBER_READERS "NUMBER_READERS"
 #define PRIO_MODE "PRIO_MODE"
+#define AGGREGATION_SIZE "AGGREGATION_SIZE"
 
 /************** Misc. parameters **************************/
 #define NACK_BITMAP_SIZE 64 // in Bytes. Allows handling of NACK_BITMAP_SIZE*8 fragments

@@ -344,6 +344,7 @@ bool Writer::sendMessage()
         // add new fragment to queue
         SampleFragment* sf = nullptr;
         ReaderProxy *rp = nullptr;
+
         // then select a reader
         if(rp = selectReader())
         {
@@ -364,68 +365,80 @@ bool Writer::sendMessage()
         // logDebug("[Writer] sendMessage: select fragment for (re)tx")
         auto t_now = std::chrono::system_clock::now();
 
-        SampleFragment* sf = sendQueue.front();
-        // update currentSN
-        currentChange = sf->baseChange;
-        
-        sendQueue.pop_front();
-        // update fragment status (at all reader proxies if multicast is used)
-        for(auto rp: matchedReaders)
+        // list for storing all packets that shall be transmitted in a burst
+        std::vector<MessageNet_t*> messages;
+        SampleFragment *latestSF;
+
+        for(uint32_t i = 0; i < config.aggregation_size(); i++)
         {
-            rp->updateFragmentStatus(SENT, sf->baseChange->sequenceNumber, sf->fragmentStartingNum, t_now);
-
-            // check for timeout situation: reader has no fragments in state 'UNSENT' left
-            if(rp->checkForTimeout(sf->baseChange->sequenceNumber))
+            SampleFragment* sf = sendQueue.front();
+            latestSF = sf;
+            // update currentSN
+            currentChange = sf->baseChange;
+            
+            sendQueue.pop_front();
+            // update fragment status (at all reader proxies if multicast is used)
+            for(auto rp: matchedReaders)
             {
-                // timeout needed
+                rp->updateFragmentStatus(SENT, sf->baseChange->sequenceNumber, sf->fragmentStartingNum, t_now);
 
-                // determine TO time of fragment
-                auto toTS = t_now + config.timeout();
-                rp->setTimeoutTimestamp(toTS);
-
-                timeoutQueue.push(rp);
-
-                if(!timeoutTimer->isActive())
+                // check for timeout situation: reader has no fragments in state 'UNSENT' left
+                if(rp->checkForTimeout(sf->baseChange->sequenceNumber))
                 {
-                    timeoutTimer->restart(toTS);
+                    // timeout needed
+
+                    // determine TO time of fragment
+                    auto toTS = t_now + config.timeout();
+                    rp->setTimeoutTimestamp(toTS);
+
+                    timeoutQueue.push(rp);
+
+                    if(!timeoutTimer->isActive())
+                    {
+                        timeoutTimer->restart(toTS);
+                    }
                 }
+            
+            // serialization (toNet) and concatenation of submessages
+            
+            // create W2RP header
+            W2RPHeader *header = new W2RPHeader(guid.prefix);
+
+            // create submessages: DataFrag and HBFrag
+            DataFrag* data;
+            createDataFrag(sf, data);
+
+            
+            MessageNet_t *txMsg = new MessageNet_t;
+            header->headerToNet(txMsg);
+            data->dataToNet(txMsg);            
+
+            messages.push_back(txMsg);
             }
         }
 
-        // create W2RP header
-        W2RPHeader *header = new W2RPHeader(guid.prefix);
-        // logDebug("[Writer] sendMessage: created W2RP header")
+        uint32_t num_messages = messages.size();
+        uint32_t i = 1;
 
-        // create submessages: DataFrag and HBFrag
-        DataFrag* data;
-        HeartbeatFrag* hb;
+        for (auto txMsg: messages)
+        {
+            if (i == num_messages)
+            {
+                HeartbeatFrag* hb;
+                this->createHBFrag(latestSF, hb);
+                hb->hbToNet(txMsg);
+            }
 
-        createDataFrag(sf, data);
-        // logDebug("[Writer] sendMessage: created dataFrag: " << unsigned(data->fragmentSize))
-        // data->print();
+            // send message via UDP
+            CommInterface->sendMsg(*txMsg);
+            logTrace("Transmitted Fragment ...")
 
-        this->createHBFrag(sf, hb);
-
-        // serialization (toNet) and concatenation of submessages
-        MessageNet_t *txMsg = new MessageNet_t;
-        header->headerToNet(txMsg);
-        data->dataToNet(txMsg);
-        hb->hbToNet(txMsg);
-
-        // logDebug("[Writer] TX: sending fragment " << sf->fragmentStartingNum)
-
-        // send message via UDP
-        CommInterface->sendMsg(*txMsg);
-
-        logTrace("SAMPLE_END," << send_counter << ",SN," << sf->baseChange->sequenceNumber << ",FN," << sf->fragmentStartingNum << ",DST," << CommInterface->getTxEndpoint().ip_addr)
-        // tracepoint(w2rp_trace, tracepoint_writer_int, "SAMPLE_END, : ", send_counter);
-
-        delete header;
-        delete data;
-        delete hb;
-        delete txMsg;
-        // logDebug("[Writer] sendMessage: delete message")
-        
+            // delete header;
+            // delete data;
+            // delete hb;
+            delete txMsg;
+            i++;
+        }        
     }
     // if send queue still empty, no need to schedule new fragment transmission,
     // wait for next sample top arrive
