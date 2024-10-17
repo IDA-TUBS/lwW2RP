@@ -369,6 +369,7 @@ bool Writer::sendMessage()
         std::vector<MessageNet_t*> messages;
         SampleFragment *latestSF;
 
+
         for(uint32_t i = 0; i < config.aggregation_size(); i++)
         {
             if(sendQueue.empty())
@@ -424,6 +425,7 @@ bool Writer::sendMessage()
         uint32_t num_messages = messages.size();
         uint32_t i = 1;
 
+        logDebug("Fragment Burst")
         for (auto txMsg: messages)
         {
             if (i == num_messages)
@@ -435,7 +437,7 @@ bool Writer::sendMessage()
 
             // send message via UDP
             CommInterface->sendMsg(*txMsg);
-            logTrace("Transmitted Fragment ...")
+            logDebug("Transmitted Fragment ...")
 
             // delete header;
             // delete data;
