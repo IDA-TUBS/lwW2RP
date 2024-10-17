@@ -345,17 +345,21 @@ bool Writer::sendMessage()
         SampleFragment* sf = nullptr;
         ReaderProxy *rp = nullptr;
 
-        // then select a reader
-        if(rp = selectReader())
+        for(uint32_t i = 0; i < config.aggregation_size(); i++)
         {
-            // finally select a fragment from the previously chosen reader for transmission
 
-            if(sf = selectNextFragment(rp))
+            // then select a reader
+            if(rp = selectReader())
             {
-                // add sample fragment to send queue
-                // use actual 'data' sample fragment from history cache instead of sf from reader proxy
-                auto sfToSend = (sf->baseChange->getFragmentArray())[sf->fragmentStartingNum];
-                sendQueue.push_back(sfToSend);
+                // finally select a fragment from the previously chosen reader for transmission
+
+                if(sf = selectNextFragment(rp))
+                {
+                    // add sample fragment to send queue
+                    // use actual 'data' sample fragment from history cache instead of sf from reader proxy
+                    auto sfToSend = (sf->baseChange->getFragmentArray())[sf->fragmentStartingNum];
+                    sendQueue.push_back(sfToSend);
+                }
             }
         }
     }
@@ -530,6 +534,12 @@ SampleFragment* Writer::selectNextFragment(ReaderProxy *rp)
             if (sf->sent || sf->acked) {
                 continue;
             }
+
+            // NOTE: already set fragment as sent so that aggregation aware burst creation is possible
+            if(config.aggregation_size() > 1)
+            {
+                rp->updateFragmentStatus(SENT, sf->baseChange->sequenceNumber, sf->fragmentStartingNum, std::chrono::system_clock::now());
+            } 
 
             // take the first unsent and unacknowledged fragment
             tmp = sf;
