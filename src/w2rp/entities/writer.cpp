@@ -371,6 +371,10 @@ bool Writer::sendMessage()
 
         for(uint32_t i = 0; i < config.aggregation_size(); i++)
         {
+            if(sendQueue.empty())
+            {
+                break;
+            }
             SampleFragment* sf = sendQueue.front();
             latestSF = sf;
             // update currentSN
