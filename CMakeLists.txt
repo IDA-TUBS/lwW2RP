@@ -175,11 +175,11 @@ target_link_libraries(timer_test_active w2rp)
 # target_link_libraries(readConfig_test w2rp)
 
 ## Writer testing (video stream)
-add_executable(writer_test_video test/unit_test/app_videoStream/writer_test.cpp ${SRC_FILES})
+add_executable(writer_test_video examples/app_videoStream/writer_test.cpp ${SRC_FILES})
 target_link_libraries(writer_test_video w2rp ${OpenCV_LIBS})
 
 ## Reader testing (video stream)
-add_executable(reader_test_video test/unit_test/app_videoStream/reader_test.cpp ${SRC_FILES})
+add_executable(reader_test_video examples/app_videoStream/reader_test.cpp ${SRC_FILES})
 target_link_libraries(reader_test_video w2rp ${OpenCV_LIBS})
 
 # ## GUID testing

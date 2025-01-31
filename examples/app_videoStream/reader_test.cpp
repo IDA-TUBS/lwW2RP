@@ -84,11 +84,19 @@ int main()
 {
     uint16_t p_id = 0x5340;
     
+<<<<<<< HEAD
     // // // Alex Setup
     std::string cfg_path = std::string(getenv("HOME")) + "/Documents/Code/lightweightW2RP/test/unit_test/app_videoStream/w2rp_config.json";
     std::string setup_path = std::string(getenv("HOME")) + "/Documents/Code/lightweightW2RP/test/unit_test/app_videoStream/setup_defines.json";
 
     // Daniel Setup
+=======
+    // Alex' Setup
+        std::string cfg_path = std::string(getenv("HOME")) + "/Documents/Code/lightweightW2RP/test/unit_test/app_videoStream/w2rp_config.json";
+    std::string setup_path = std::string(getenv("HOME")) + "/Documents/Code/lightweightW2RP/test/unit_test/app_videoStream/setup_defines.json";
+
+    // Daniel's Setup
+>>>>>>> feature/fragmentArregation
     // std::string cfg_path = std::string(getenv("HOME")) + "/lightweightW2RP/test/unit_test/app_videoStream/w2rp_config.json";
     // std::string setup_path = std::string(getenv("HOME")) + "/lightweightW2RP/test/unit_test/app_videoStream/setup_defines.json";
 
