@@ -31,8 +31,6 @@ bool Publisher::init(uint16_t participant_id ,std::string cfg, std::string setup
     config::writerCfg w_config("WRITER_01", cfg, setup);
     
     writer = new Writer(participant_id, w_config);
-    // writer = new Writer(participant_id);
-    // writer = Writer(participant_id);
     return true;
 }
 
@@ -69,29 +67,6 @@ void Publisher::run()
 
 bool Publisher::publish()
 {
-    // cv::Mat img(IMG_ROWS, IMG_COLS, CV_8UC1 , cv::Scalar(0));       
-    // cv::Scalar line_Color(255);//Color of the line
-    // cv::Point starting(0, counterRow);//Starting Point of the line
-    // cv::Point ending(IMG_COLS, counterRow);//Ending Point of the line
-    // line(img, starting, ending, line_Color, 3);//using line() function to draw the line
-
-    // size_t imgSize = img.total() * img.elemSize();
-    // logDebug("[APP] sending image of size " << imgSize)
-
-    // // Allocate memory for the unsigned char array
-    // unsigned char* imgData = new unsigned char[imgSize];
-    // memcpy(imgData, img.data, imgSize);
-
-
-    // counterRow++;
-    // if(counterRow == (IMG_ROWS - 3))
-    // {
-    //     counterRow = 0;
-    // }
-
-    // // Shift the image downward by one row (wrap around)
-    // cv::Mat shifted_img = idaLogo.clone(); // Create a copy to modify
-
     // // Move the bottom row to the top
     // shifted_img.rowRange(1, shifted_img.rows).copyTo(shifted_img.rowRange(0, shifted_img.rows - 1));
     // shifted_img.row(shifted_img.rows - 1).setTo(cv::Scalar(0)); // Set the last row to black
@@ -139,10 +114,7 @@ std::string generateTimestamp() {
 }
 
 int main()
-{
-
-    
-
+{  
     idaLogo = cv::imread(std::string(getenv("HOME")) + "/Documents/Code/lightweightW2RP/examples/app_videoStream/IDA_Logo_Icon_Only.png");
     if (idaLogo.empty()) {
         std::cout << "Error loading image!" << std::endl;
