@@ -46,7 +46,7 @@ set(
     ${PROJECT_SOURCE_DIR}/src/w2rp/writerProxy.cpp
     ${PROJECT_SOURCE_DIR}/src/w2rp/log.cpp
 
-    ${PROJECT_SOURCE_DIR}/src/w2rp/w2rp-tp.cpp
+    # ${PROJECT_SOURCE_DIR}/src/w2rp/w2rp-tp.cpp
     
 )
 
@@ -59,7 +59,7 @@ target_include_directories(w2rp
   $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(w2rp PUBLIC boost_system boost_log boost_log_setup boost_thread pthread lttng-ust)
+target_link_libraries(w2rp PUBLIC boost_system boost_log boost_log_setup boost_thread pthread) #lttng-ust
 
 target_compile_definitions(w2rp PUBLIC BOOST_LOG_DYN_LINK)
 
@@ -175,11 +175,11 @@ target_link_libraries(timer_test_active w2rp)
 # target_link_libraries(readConfig_test w2rp)
 
 ## Writer testing (video stream)
-add_executable(writer_test_video test/unit_test/app_videoStream/writer_test.cpp ${SRC_FILES})
+add_executable(writer_test_video examples/app_videoStream/writer_test.cpp ${SRC_FILES})
 target_link_libraries(writer_test_video w2rp ${OpenCV_LIBS})
 
 ## Reader testing (video stream)
-add_executable(reader_test_video test/unit_test/app_videoStream/reader_test.cpp ${SRC_FILES})
+add_executable(reader_test_video examples/app_videoStream/reader_test.cpp ${SRC_FILES})
 target_link_libraries(reader_test_video w2rp ${OpenCV_LIBS})
 
 # ## GUID testing
