@@ -35,7 +35,7 @@ sudo ./install_boost.sh
 Then build and install lwW2RP library:
 
 ```bash
-sudo ./build.sh -j <n_threads>
+sudo ./build.sh -j<n_threads>
 ```
 
 **Important:** lwW2RP will be installed as a system-wide library. This allows use of lwW2RP in any arbitrary C++ program. Standard practices need to be followed when including lwW2RP (linking in makefile, includes in source code).
