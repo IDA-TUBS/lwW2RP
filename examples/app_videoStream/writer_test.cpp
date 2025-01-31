@@ -143,7 +143,7 @@ int main()
 
     
 
-    idaLogo = cv::imread(std::string(getenv("HOME")) + "/Documents/Code/lightweightW2RP/test/unit_test/app_videoStream/IDA_Logo_Icon_Only.png");
+    idaLogo = cv::imread(std::string(getenv("HOME")) + "/Documents/Code/lightweightW2RP/examples/app_videoStream/IDA_Logo_Icon_Only.png");
     if (idaLogo.empty()) {
         std::cout << "Error loading image!" << std::endl;
         return -1;
@@ -158,22 +158,10 @@ int main()
 
     uint16_t p_id = 0x8517;
 
-<<<<<<< HEAD
-    // // Alex Setup
-=======
-    // Alex Setup
+    // NOTE: change these path variables to your unique paths!
     std::string log_path = "/Documents/Code/lightweightW2RP/test/logs/writer_test_video_";
->>>>>>> feature/fragmentArregation
-    std::string cfg_path = std::string(getenv("HOME")) + "/Documents/Code/lightweightW2RP/test/unit_test/app_videoStream/w2rp_config.json";
-    std::string setup_path = std::string(getenv("HOME")) + "/Documents/Code/lightweightW2RP/test/unit_test/app_videoStream/setup_defines.json";
-
-    // Daniel Setup
-<<<<<<< HEAD
-=======
-    // std::string log_path = "/lightweightW2RP/test/logs/writer_test_video_";
->>>>>>> feature/fragmentArregation
-    // std::string cfg_path = std::string(getenv("HOME")) + "/lightweightW2RP/test/unit_test/app_videoStream/w2rp_config.json";
-    // std::string setup_path = std::string(getenv("HOME")) + "/lightweightW2RP/test/unit_test/app_videoStream/setup_defines.json";
+    std::string cfg_path = std::string(getenv("HOME")) + "/Documents/Code/lightweightW2RP/examples/app_videoStream/w2rp_config.json";
+    std::string setup_path = std::string(getenv("HOME")) + "/Documents/Code/lightweightW2RP/examples/app_videoStream/setup_defines.json";
     
     w2rp::init_console_log();
     w2rp::init_file_log(log_path, generateTimestamp());

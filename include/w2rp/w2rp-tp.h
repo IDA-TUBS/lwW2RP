@@ -8,6 +8,8 @@
 
 #include <lttng/tracepoint.h>
 
+// add lttng-ust to w2rp's target_link_libraries + add # ${PROJECT_SOURCE_DIR}/src/w2rp/w2rp-tp.cpp to lib set
+
 TRACEPOINT_EVENT(
 	w2rp_trace, 
 	tracepoint_pub_int,

@@ -4,7 +4,7 @@
 
 #include <w2rp/log.hpp>
 
-#include <w2rp/w2rp-tp.h>
+// #include <w2rp/w2rp-tp.h>
 
 using namespace w2rp;
 
@@ -12,7 +12,7 @@ int send_counter;
 
 bool handler()
 {
-    tracepoint(w2rp_trace, tracepoint_writer_int, "SAMPLE_START, : ", ++send_counter);
+    // tracepoint(w2rp_trace, tracepoint_writer_int, "SAMPLE_START, : ", ++send_counter);
     // logInfo("Hello from handler!")
     return true;
 }

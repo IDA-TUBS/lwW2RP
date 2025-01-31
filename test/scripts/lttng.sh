@@ -1,5 +1,8 @@
 #!/bin/bash
 
+
+# only works when properly enabling all lttng related stuff! 
+
 # First destroy all active lttng sessions
 lttng destroy
 
