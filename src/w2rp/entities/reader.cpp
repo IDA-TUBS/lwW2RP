@@ -164,7 +164,7 @@ bool Reader::handleDataFrag(DataFrag *msg, boost::asio::ip::udp::endpoint writer
 
     /********************** WIP ************************/
     // first check liveliness of previous samples
-    // checkSampleLiveliness();
+    checkSampleLiveliness();
     /***************************************************/
 
     // create new change for temporary usage
