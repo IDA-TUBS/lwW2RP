@@ -1,5 +1,5 @@
-#ifndef SafeQueue_h
-#define SafeQueue_h
+#ifndef W2RP_SafeQueue_h
+#define W2RP_SafeQueue_h
 
 
 #include <queue>

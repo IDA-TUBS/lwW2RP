@@ -1,5 +1,5 @@
-#ifndef SocketEndpoint_W2RP_H
-#define SocketEndpoint_W2RP_H
+#ifndef W2RP_SocketEndpoint_H
+#define W2RP_SocketEndpoint_H
 
 #include <string>
 #include <chrono>

@@ -1,5 +1,5 @@
-#ifndef TimerManager_h
-#define TimerManager_h
+#ifndef W2RP_TimerManager_h
+#define W2RP_TimerManager_h
 
 #include <w2rp/log.hpp>
 #include <w2rp/timer/activeWaitTimer.hpp>

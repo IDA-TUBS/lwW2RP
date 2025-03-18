@@ -1,10 +1,10 @@
-#ifndef MessageNet_h
-#define MessageNet_h
+#ifndef W2RP_MessageNet_h
+#define W2RP_MessageNet_h
 
 #include <w2rp/log.hpp>
 
-#ifndef MAX_MSG_LENGTH
-#define MAX_MSG_LENGTH 1472
+#ifndef W2RP_MAX_MSG_LENGTH
+#define W2RP_MAX_MSG_LENGTH 1472
 #endif
 
 namespace w2rp {
@@ -20,7 +20,7 @@ struct MessageNet_t
 	 * 
 	 */
 	MessageNet_t()
-		: MessageNet_t(MAX_MSG_LENGTH)
+		: MessageNet_t(W2RP_MAX_MSG_LENGTH)
   	{
   	}
 

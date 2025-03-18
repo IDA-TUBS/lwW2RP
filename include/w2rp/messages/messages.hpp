@@ -1,5 +1,5 @@
-#ifndef MESSAGES_H
-#define MESSAGES_H
+#ifndef W2RP_MESSAGES_H
+#define W2RP_MESSAGES_H
 
 #include <cstring>
 #include <chrono>

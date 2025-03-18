@@ -1,5 +1,5 @@
-#ifndef UDPComm_h
-#define UDPComm_h
+#ifndef W2RP_UDPComm_h
+#define W2RP_UDPComm_h
 
 #include <w2rp/messages/messages.hpp>
 #include <w2rp/messages/message_net.hpp>

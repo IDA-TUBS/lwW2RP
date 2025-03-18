@@ -1,5 +1,5 @@
-#ifndef TimedEvent_h
-#define TimedEvent_h
+#ifndef W2RP_TimedEvent_h
+#define W2RP_TimedEvent_h
 
 #include <w2rp/timer/timerManager.hpp>
 

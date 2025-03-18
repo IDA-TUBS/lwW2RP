@@ -1,6 +1,6 @@
 // serializedPayload.h
-#ifndef SERIALIZED_PAYLOAD_H
-#define SERIALIZED_PAYLOAD_H
+#ifndef W2RP_SERIALIZED_PAYLOAD_H
+#define W2RP_SERIALIZED_PAYLOAD_H
 
 #include <iostream>
 #include <cstring>

@@ -1,5 +1,5 @@
-#ifndef GuidPrefix_h
-#define GuidPrefix_h
+#ifndef W2RP_GuidPrefix_h
+#define W2RP_GuidPrefix_h
 
 #include <string>
 #include <cstdint>

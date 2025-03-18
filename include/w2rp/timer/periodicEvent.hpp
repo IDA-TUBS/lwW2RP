@@ -1,5 +1,5 @@
-#ifndef PeriodicEvent_h
-#define PeriodicEvent_h
+#ifndef W2RP_PeriodicEvent_h
+#define W2RP_PeriodicEvent_h
 
 #include <w2rp/timer/timerManager.hpp>
 

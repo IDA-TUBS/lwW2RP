@@ -1,5 +1,5 @@
-#ifndef ActiveWaitTimer_h
-#define ActiveWaitTimer_h
+#ifndef W2RP_ActiveWaitTimer_h
+#define W2RP_ActiveWaitTimer_h
 
 #include <atomic>
 #include <thread>

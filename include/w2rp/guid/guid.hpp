@@ -1,5 +1,5 @@
-#ifndef Guid_W2RP_h
-#define Guid_W2RP_h
+#ifndef W2RP_Guid_h
+#define W2RP_Guid_h
 
 #include <w2rp/guid/guidPrefix.hpp>
 #include <w2rp/guid/entityID.hpp>

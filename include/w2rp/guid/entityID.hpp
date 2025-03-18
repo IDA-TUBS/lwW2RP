@@ -1,5 +1,5 @@
-#ifndef EntityID_h
-#define EntityID_h
+#ifndef W2RP_EntityID_h
+#define W2RP_EntityID_h
 
 #include<boost/endian/conversion.hpp>
 

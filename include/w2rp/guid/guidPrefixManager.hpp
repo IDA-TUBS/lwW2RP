@@ -1,5 +1,5 @@
-#ifndef guidPrefixManager_h
-#define guidPrefixManager_h
+#ifndef W2RP_guidPrefixManager_h
+#define W2RP_guidPrefixManager_h
 
 #include <w2rp/guid/guidPrefix.hpp>
 #include <w2rp/log.hpp>
