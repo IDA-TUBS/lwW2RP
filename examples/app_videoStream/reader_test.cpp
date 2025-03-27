@@ -85,8 +85,8 @@ int main()
     uint16_t p_id = 0x5340;
     
     // NOTE: change these path variables to your unique path!
-    std::string cfg_path = std::string(getenv("HOME")) + "/Documents/Code/lightweightW2RP/examples/app_videoStream/w2rp_config.json";
-    std::string setup_path = std::string(getenv("HOME")) + "/Documents/Code/lightweightW2RP/examples/app_videoStream/setup_defines.json";
+    std::string cfg_path = std::string(getenv("HOME")) + "/ResearchPrototypes/lightweightW2RP/examples/app_videoStream/w2rp_config.json";
+    std::string setup_path = std::string(getenv("HOME")) + "/ResearchPrototypes/lightweightW2RP/examples/app_videoStream/setup_defines.json";
 
 
     Subscriber mySub;

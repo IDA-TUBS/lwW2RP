@@ -429,7 +429,7 @@ bool Writer::sendMessage()
         uint32_t num_messages = messages.size();
         uint32_t i = 1;
 
-        logDebug("Fragment Burst")
+        // logDebug("Fragment Burst")
         for (auto txMsg: messages)
         {
             if (i == num_messages)
@@ -441,7 +441,7 @@ bool Writer::sendMessage()
 
             // send message via UDP
             CommInterface->sendMsg(*txMsg);
-            logDebug("Transmitted Fragment ...")
+            // logDebug("Transmitted Fragment ...")
 
             // delete header;
             // delete data;
