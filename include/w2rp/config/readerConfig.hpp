@@ -119,6 +119,13 @@ class readerCfg
      */
     uint32_t priority();
 
+    /**
+     * @brief get liveliness check config
+     * 
+     * @return bool 
+     */
+    bool check_liveliness();
+
     private:
 
     bool check();
