@@ -64,19 +64,19 @@ target_link_libraries(w2rp PUBLIC boost_system boost_log boost_log_setup boost_t
 target_compile_definitions(w2rp PUBLIC BOOST_LOG_DYN_LINK)
 
 # Enable logging via -DLOG during build process
-if(DEFINED LOG)
+if(LOG)
     message("Logging activated")
     target_compile_definitions(w2rp PUBLIC LOG_ON)
 endif()
 
 # Enable file log via -DFILE during build process
-if(DEFINED FILE)
+if(FILE)
     message("File logging activated")
     target_compile_definitions(w2rp PUBLIC FILE_ON)
 endif()
 
 # Enable console log via -DCONSOLE during build process
-if(DEFINED CONSOLE)
+if(CONSOLE)
     message("Console logging activated")
     target_compile_definitions(w2rp PUBLIC CONSOLE_ON)
 endif()
