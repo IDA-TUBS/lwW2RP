@@ -21,6 +21,7 @@
     "SIZE_CACHE": 2,
     "PRIORITY": 0,
     "WRITER": "WRITER_01",
-    "HOST": "CLIENT2"
+    "HOST": "CLIENT2",
+    "CHECK_LIVELINESS": false
   }
 }

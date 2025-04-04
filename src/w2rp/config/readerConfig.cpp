@@ -36,6 +36,7 @@ void readerCfg::print()
     logInfo("# cache size: " << unsigned(sizeCache()))
     logInfo("# host ID: " << unsigned(host_id()))
     logInfo("# priority: " << unsigned(priority()))
+    logInfo("# check liveliness: " << unsigned(check_liveliness()))
     logInfo("#---------------------------------------------#")
 }
 
@@ -85,6 +86,12 @@ uint32_t readerCfg::host_id()
 uint32_t readerCfg::priority()
 {
     return getAttribute<uint32_t>(PRIORITY);
+}
+
+
+bool readerCfg::check_liveliness()
+{
+    return getAttribute<bool>(CHECK_LIVELINESS);
 }
 
 /*------------------------------------- Private -----------------------------------------*/

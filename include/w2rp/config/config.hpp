@@ -18,6 +18,7 @@ namespace config{
 /*********************** Reader ***************************/
 #define RESPONSE_DELAY "RESPONSE_DELAY [us]"
 #define PRIORITY "PRIORITY"
+#define CHECK_LIVELINESS "CHECK_LIVELINESS"
 
 /*********************** Writer ***************************/
 #define FRAGMENT_SIZE "FRAGMENT_SIZE [Byte]"
