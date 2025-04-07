@@ -59,7 +59,6 @@ void DataFrag::dataToNet(MessageNet_t* msg)
     msg->add(&readerID, sizeof(readerID));
     msg->add(&writerID, sizeof(writerID));
     msg->add(&writerSN, sizeof(writerSN));
-    msg->add(&writerSN, sizeof(writerSN));
     msg->add(&fragmentStartingNum, sizeof(fragmentStartingNum));
     msg->add(&fragmentsInSubmessage, sizeof(fragmentsInSubmessage));
     msg->add(&dataSize, sizeof(dataSize));
@@ -76,7 +75,6 @@ void DataFrag::netToData(MessageNet_t* msg)
     // read contents
     msg->read(&readerID, sizeof(readerID));
     msg->read(&writerID, sizeof(writerID));
-    msg->read(&writerSN, sizeof(writerSN));
     msg->read(&writerSN, sizeof(writerSN));
     msg->read(&fragmentStartingNum, sizeof(fragmentStartingNum));
     msg->read(&fragmentsInSubmessage, sizeof(fragmentsInSubmessage));
