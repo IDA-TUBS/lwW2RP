@@ -351,7 +351,7 @@ void Reader::checkSampleLiveliness()
         if(!change->isValid(this->config.deadline()))
         {
             deprecatedSNs.push_back(change->sequenceNumber);
-            logDebug("Removing change: " << change->sequenceNumber)
+            // logDebug("Removing change: " << change->sequenceNumber)
             writerProxy->removeChange(change->sequenceNumber);
             if(writerProxy->getSize() == 0)
             {
