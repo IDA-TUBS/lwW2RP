@@ -19,8 +19,6 @@ namespace w2rp
 
 /**
  * @brief Structure EntityID_t, entity id part of GUID_t.
- * 
- * 
  */
 struct EntityID_t
 {

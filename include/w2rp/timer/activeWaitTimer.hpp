@@ -23,16 +23,23 @@ class ActiveWaitTimer
         {}
 
         // Start the timer with a specific duration and function to call
-        void start(Duration duration, std::function<bool()> function)
+        void start(Duration duration, std::function<bool()> function, bool immediateExecution = true)
         {
             std::unique_lock<std::mutex> lock(t_mutex);
             if(!active)
             {
-                stop();  // Ensure any previous timer is stopped
+                stop_impl();
 
                 active = true;
-                worker = std::thread([this, duration, function]() {
+
+                worker = std::thread([this, duration, function, immediateExecution]() {
+                    
                     auto start_time = std::chrono::steady_clock::now();
+                    if(immediateExecution)
+                    {
+                        start_time = start_time - duration; // execute as soon as possible
+                    }
+              
                     while (active)
                     {
                         auto current_time = std::chrono::steady_clock::now();
@@ -42,7 +49,6 @@ class ActiveWaitTimer
                             bool restart_ = function();
                             if(!restart_)
                             {
-                                // active = false;
                                 break;
                             }
                         }
@@ -56,11 +62,8 @@ class ActiveWaitTimer
         // Stop the timer
         void stop()
         {
-            active = false;
-            if (worker.joinable())
-            {
-                worker.join();
-            }
+            std::lock_guard<std::mutex> lock(t_mutex);
+            stop_impl();
         }
 
         ~ActiveWaitTimer()
@@ -72,6 +75,15 @@ class ActiveWaitTimer
         std::atomic<bool> active;
         std::thread worker;
         std::mutex t_mutex;
+
+        void stop_impl()
+        {
+            active = false;
+            if (worker.joinable())
+            {
+                worker.join();
+            }
+        }
 };
 
 #endif

@@ -50,9 +50,9 @@ class setupConfig
      * @brief Get the hostID object
      * 
      * @param name name of the host
-     * @return uint32_t ID of the host
+     * @return std::uint32_t ID of the host
      */
-    uint32_t get_hostID(std::string name);
+    std::uint32_t get_hostID(std::string name);
 
     /**
      * @brief Check if host with specified name exists

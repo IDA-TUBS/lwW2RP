@@ -7,48 +7,45 @@
 
 #include <math.h>
 #include <list>
-#include <w2rp/changeForWriter.hpp>
+#include <w2rp/changeFromWriter.hpp>
 
 namespace w2rp {
 
-class SampleFragment;
-
 class WriterProxy
 {
-  private:
-    /// history story all samples
-    std::list<ChangeForWriter*> history;
-    /// latest sample number;
-    int highestSequenceNumber;
+private:
 
-    /// max size of history
-    uint32_t historySize;
+    // history storing all changes for this writer proxy
+    std::unordered_map<std::uint32_t, ChangeFromWriter> history;
 
-  public:
-    /**
-     * @brief default constructor
-     */
-    WriterProxy(uint32_t historySize):
-        historySize(historySize),
-        highestSequenceNumber(-1)
-    {};
+    std::uint32_t latestSequenceNumber;
 
-    /**
-     * @brief overloaded constructor, add first change to history
-     */
-    WriterProxy(uint32_t historySize, CacheChange &change):
-        historySize(historySize)
-    {
-        this->addChange(change);
+public:
+
+    std::uint32_t writerID;
+
+    std::uint32_t historySize;
+
+    enum ChangeStatus{
+        COMPLETE,
+        INCOMPLETE,
+        NOT_FOUND
     };
 
-    /**
-     * @brief default destructor
-     */
-    ~WriterProxy()
-    {
-        history.clear();
-    };
+
+public:
+    
+    /** 
+     * @brief Construct a new Writer Proxy object
+     * 
+     * @param id ID of the writer entity
+     * @param historySize max size of history
+    */
+    WriterProxy(
+        std::uint32_t id,
+        std::uint32_t historySize
+    );
+
 
     /**
      * @brief method for adding a new Cache Change to the proxy's history cache
@@ -59,74 +56,20 @@ class WriterProxy
     bool addChange(CacheChange &change);
 
     /**
+     * @brief method for updating the fragment status of a given change
+     *
+     * @param sequenceNumber sequence number of the change that shall be updated
+     * @param fragmentNumber fragment number whose status shall be updated
+     * @return ChangeStatus indicating whether the change is COMPLETE, INCOMPLETE or NOT_FOUND
+     */
+    ChangeStatus updateFragmentStatus(std::uint32_t sequenceNumber, std::uint32_t fragmentNumber);
+
+    /**
      * @brief method for removing a Cache Change from the proxie's history cache
      *
      * @param sequenceNumber sequence number of the change that has be be removed
      */
-    void removeChange(uint32_t sequenceNumber);
-
-    /**
-     * @brief method for removing deprecated samples from the history. Sample removal is handled such that the number of elements in the history is kept at historySize.
-     * 
-     */
-    void checkHistory();
-
-    /**
-     * @brief Check change complete flag
-     * 
-     * @param change Cache change to be checked
-     * @return true change complete
-     * @return false change incomplete
-     */
-    bool checkChange(CacheChange &change);
-
-    /**
-     * @brief method for altering a fragment's status (unsent, sent, acked, ...)
-     *
-     * @param status fragment status
-     * @param sequenceNumber seq number of the sample which fragment status shall be altered
-     * @param fragmentNumber fn of fragment to be updated
-     * @param data actual fragment data
-     * @param dataLength size of fragment
-     * @return true if successful, else false
-     */
-    bool updateFragmentStatus (fragmentStates status, uint32_t sequenceNumber, uint32_t fragmentNumber, unsigned char *data, uint32_t dataLength);
-
-    /**
-     * @brief method for evaluating completeness of samples
-     *
-     * @param sequenceNumber seq number of sample that shall be checked
-     * @return true if complete, else returns false
-     */
-    bool checkSampleCompleteness(uint32_t sequenceNumber);
-
-    /**
-     * @brief method returning the current (oldest) cache change
-     *
-     * @return ChangeForWriter object
-     */
-    ChangeForWriter* getCurrentChange()
-    {
-        return history.front();
-    };
-
-    /**
-     * @brief method returning the latest cache change
-     *
-     * @return ChangeForWriter object
-     */
-    ChangeForWriter* getLatestChange()
-    {
-        return history.back();
-    };
-
-    /**
-     * @brief Method for returning history size
-     */
-    uint32_t getSize()
-    {
-        return history.size();
-    };
+    void removeChange(std::uint32_t sequenceNumber);
 
     /**
      * @brief method cache change with corresponding sequence number
@@ -134,7 +77,32 @@ class WriterProxy
      * @param sequenceNumber seq number of sample that shall be retrieved
      * @return ChangeForWriter object
      */
-    ChangeForWriter* getChange(uint32_t sequenceNumber);
+    ChangeFromWriter& getChange(std::uint32_t sequenceNumber);
+
+    /**
+     * @brief check if the change corresponding to the specified sequence number has beend "published", i.e. passed to the reader for further processing
+     * 
+     * @param sequenceNumber 
+     * @return true 
+     * @return false 
+     */
+    bool checkPublished(std::uint32_t sequenceNumber);
+
+    /**
+     * @brief Set the published attribute for the change with the corresponding sequence number
+     * 
+     * @param sequenceNumber 
+     */
+    void setPublished(std::uint32_t sequenceNumber);
+
+    /**
+     * @brief Check if the change corresponding to the specified sequence number is complete
+     * 
+     * @param sequenceNumber 
+     * @return true 
+     * @return false 
+     */
+    bool isComplete(std::uint32_t sequenceNumber);
 
 };
 

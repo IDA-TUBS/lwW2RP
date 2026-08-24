@@ -115,7 +115,13 @@ class TimedEvent
     
     /************************************************************************/
     private:
-    
+
+    // Non-copyable, non-movable: timers manage resources in the TimerManager
+    TimedEvent(const TimedEvent&) = delete;
+    TimedEvent& operator=(const TimedEvent&) = delete;
+    TimedEvent(TimedEvent&&) = delete;
+    TimedEvent& operator=(TimedEvent&&) = delete;
+
     timerID id;
     TimerManager& service_;
     std::chrono::system_clock::time_point time_point_;

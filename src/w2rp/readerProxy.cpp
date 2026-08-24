@@ -1,316 +1,249 @@
-/*
- *
- */
-
 #include <w2rp/readerProxy.hpp>
-#include <w2rp/config/config.hpp>
-#include <w2rp/log.hpp>
-
-#include <bitset>
+#include <tuple>
 
 namespace w2rp {
+
+ReaderProxy::ReaderProxy():
+    readerID(0),
+    historySize(0),
+    timeout(),
+    fragmentBudget(0),
+    history()
+{}
+
+ReaderProxy::ReaderProxy(
+    std::uint32_t id, 
+    std::uint32_t historySize, 
+    std::chrono::system_clock::duration nackSuppressionDuration,
+    std::chrono::microseconds deadline,
+    std::chrono::microseconds shapingTime,
+    std::uint32_t agg_size
+):
+    readerID(id),
+    historySize(historySize),
+    nackSuppressionDuration(nackSuppressionDuration),
+    timeout(),
+    history()
+{
+    history.reserve(historySize);
+
+    fragmentBudget = (deadline.count() / shapingTime.count()) * agg_size;
+    logInfo("[ReaderProxy] initialized with fragment budget: " << fragmentBudget);
+}
 
 bool ReaderProxy::addChange(CacheChange &change)
 {
     std::unique_lock<std::mutex> lock(rp_mutex);
-    // logDebug("[ReaderProxy] adding change")
     if(history.size() == historySize)
     {
         // cannot add a new change the history
-        // logDebug("[ReaderProxy] cannot add a new change the history")
+        logError("[ReaderProxy] cannot add a new change the history")
         return false;
     }
-    ChangeForReader* cfr = new ChangeForReader(this->readerID, change);
-
-    history.push_back(cfr);
-    // logDebug("[ReaderProxy] adding change complete: " << history.size())
-    return true;
-    lock.unlock();
-}
-
-void ReaderProxy::removeChange(uint32_t sequenceNumber)
-{
-    std::unique_lock<std::mutex> lock(rp_mutex);
-    for (auto it = history.begin(); it != history.end();)
-    {
-        if ((*it)->sequenceNumber <= sequenceNumber)
-        {
-            // logDebug("[ReaderProxy] removing change: " << (*it)->sequenceNumber)
-            if((*it)->getCompleteFlag() == false)
-            {
-                logInfo("[ReaderProxy] removing INCOMPLETE change " << (*it)->sequenceNumber)
-
-            }
-            ChangeForReader* change = (*it);
-            history.erase(it);
-            delete change;
-            return;
-        }
-        else
-        {
-            ++it;
-        }
-    }
-    lock.unlock();
-}
-
-bool ReaderProxy::changeExists(uint32_t sequenceNumber)
-{
-    for (auto it = history.begin(); it != history.end();)
-    {
-        if ((*it)->sequenceNumber <= sequenceNumber)
-        {
-            return true;
-        }
-        else
-        {
-            ++it;
-        }
-    }
-
-    return false;
-}
-
-
-bool ReaderProxy::updateFragmentStatus (fragmentStates status, uint32_t sequenceNumber, uint32_t fragmentNumber, std::chrono::system_clock::time_point sentTimestamp)
-{
-    std::unique_lock<std::mutex> lock(rp_mutex);
-    // first find change corresponding to the given sequence number
-    ChangeForReader* tmp = nullptr;
-    for (auto cfr: history)
-    {
-        if (cfr->sequenceNumber == sequenceNumber)
-        {
-            tmp = cfr;
-            break;
-        }
-    }
-    lock.unlock();
-
-    if(!tmp)
-    {
-        return false;
-    }
-
-    return tmp->setFragmentStatus(status, fragmentNumber, sentTimestamp);
-}
-
-bool ReaderProxy::processNack(NackFrag *msg) 
-{
-    auto t_now = std::chrono::system_clock::now();
-    // to be called by writer NackFrag reception callback
+    // Construct ChangeForReader in-place to avoid copying/moving the object
+    // (it contains a mutex and is not move/copy constructible).
+    history.emplace(
+        std::piecewise_construct,
+        std::forward_as_tuple(change.sequenceNumber),
+        std::forward_as_tuple(std::ref(change), readerID, fragmentBudget)
+    );
     
-    // first get relevant sequence number
-    uint32_t sequenceNumber = msg->writerSN;
-
-    if(history.size() == 0)
-    {
-        // logDebug("[ReaderProxy] history empty")
-        return false;
-    }
-
-
-    // access change with the given sequence number
-    ChangeForReader* change = nullptr;
-    for(auto cfr: history)
-    {
-        if (cfr->sequenceNumber == sequenceNumber)
-        {
-            change = cfr;
-            break;
-        }
-    }
-    if(!change)
-    {
-        // logDebug("[ReaderProxy] change empty")
-        return false;
-    }
-
-    FragmentNumberSet bitmapStruct = msg->fragmentNumberState;
-    unsigned char bitmap[NACK_BITMAP_SIZE];
-    memcpy(bitmap, bitmapStruct.bitmap, NACK_BITMAP_SIZE);
-    uint32_t smallestFN = bitmapStruct.bitmapBase;
-    uint32_t highestFN = msg->count;
-
-    // logDebug("[ReaderProxy] min FN: " << unsigned(smallestFN) << " max FN: " << unsigned(highestFN))
-
-    // iterate over all relevant bits of the NackFrag bitmap
-    for(uint32_t i = 0; i <= highestFN - smallestFN; i++)
-    {
-        // first retrieve corresponding fragment from readerproxy's history
-        uint32_t fragmentNum = smallestFN + i;
-        SampleFragment* currentFragment = change->getFragmentArray()[fragmentNum];
-
-        if(currentFragment->acked){
-            // skip processing of already acknowledged fragments
-            // logDebug("[ReaderProxy] Fragment " << currentFragment->fragmentStartingNum << " acked")
-            continue;
-        }
-        
-        // logDebug("[ReaderProxy] Fragment " << currentFragment->fragmentStartingNum << " not acked")
-
-        // Calculate the index of the byte containing the current bit
-        int byte_index = i / 8;
-        // Calculate the position of the bit within the byte
-        int bit_position = 7 - (i % 8);
-
-        // int bit_position = i % 8;
-
-        // logDebug("[ReaderProxy] byte index: " << byte_index << " bit position: " << bit_position) 
-
-        // Check if the bit is set
-        if (!(bitmap[byte_index] & (1 << bit_position))) { //!(bitmap[byte_index] & (1 >> bit_position)
-            // fragment not noted as missing -> consider as acked
-            // logDebug("[ReaderProxy] Fragment " << currentFragment->fragmentStartingNum << " update acked")
-            this->updateFragmentStatus(ACKED, sequenceNumber, fragmentNum, t_now);
-        } else {
-            // fragment noted as missing
-
-            // NackGuard
-            if(this->nackSuppressionEnabled && (currentFragment->sentTime + this->nackSuppressionDuration > std::chrono::system_clock::now()))
-            {
-                // do not process Nacks if NackGuard hasn't expired yet
-                continue;
-            }
-
-            if(currentFragment->sent){
-                this->updateFragmentStatus(NACKED, sequenceNumber, fragmentNum, t_now);
-            }
-        }
-    }
-
-    logTrace("NACKFRAG,SN," << sequenceNumber << ",smallestFN," << smallestFN << ",highestFN," << highestFN)
-
+    lock.unlock();
     return true;
 }
 
-
-std::vector<SampleFragment*> ReaderProxy::getUnsentFragments(uint32_t sequenceNumber)
+ChangeForReader* ReaderProxy::getChange(std::uint32_t sequenceNumber)
 {
-    // access change with the given sequence number
-    ChangeForReader* change = nullptr;
-    for (auto cfr: history)
-    {
-        if (cfr->sequenceNumber == sequenceNumber)
-        {
-            change = cfr;
-            break;
-        }
-    }
-
     std::unique_lock<std::mutex> lock(rp_mutex);
-    std::vector<SampleFragment*> unsentFragments;
-    if(change)
+    auto it = history.find(sequenceNumber);
+    if(it != history.end())
     {
-        unsentFragments = change->getUnsentFragments();
-    }
-    lock.unlock();
-
-    return unsentFragments;
-}
-
-
-bool ReaderProxy::checkSampleCompleteness(uint32_t sequenceNumber)
-{
-    // access change with the given sequence number
-    ChangeForReader* change = nullptr;
-    for (auto cfr: history)
-    {
-        if (cfr->sequenceNumber == sequenceNumber)
-        {
-            change = cfr;
-            break;
-        }
-    }
-
-    bool complete = false;
-    if(change)
-    {
-        std::unique_lock<std::mutex> lock(rp_mutex);
-        complete = change->checkForCompleteness();
         lock.unlock();
+        return &(it->second);
     }
-    if(complete)
-    {
-        // remove sample from history? maybe just remove if expired or all readers completed reception of a given sample
-        // done elsewhere
-        // TODO really??
-        // logDebug("[ReaderProxy] sample acknowledged completely.\n----------------------------------------------------------------------------------------------")
-    }
-    return complete;
+    throw std::runtime_error("Change not found");
 }
 
-
-bool ReaderProxy::checkForTimeout(uint32_t sequenceNumber)
+void ReaderProxy::removeChange(std::uint32_t sequenceNumber)
 {
-    // access change with the given sequence number
-    ChangeForReader* change = nullptr;
-    for (auto cfr: history)
+    std::unique_lock<std::mutex> lock(rp_mutex);
+    auto it = history.find(sequenceNumber);
+    if(it != history.end())
     {
-        if (cfr->sequenceNumber == sequenceNumber)
+        // Check if the change is incomplete
+        if(it->second.checkForCompleteness() == false)
         {
-            change = cfr;
-            break;
+            logInfo("[ReaderProxy] removing INCOMPLETE change " << it->second.sequenceNumber)
         }
-    }
-
-    if(change)
-    {
-        // timeout necessary if no unsent fragments remain but change has not been acknowledged in its entirety yet
-        if(!(change->complete) && (change->unsentCount() == 0) && (change->ackCount() != change->numberFragments))
+        // Check if the removed change was being tracked for timeout
+        if(timeout.active && timeout.sequenceNumber == sequenceNumber)
         {
-            return true;
+            timeout.active = false;
+            timeout.timestamp = std::chrono::system_clock::time_point();
+            timeout.sequenceNumber = 0;
         }
-    }
-    return false;
-}
-
-void ReaderProxy::resetTimeoutedFragments(uint32_t sequenceNumber)
-{
-    // access change with the given sequence number
-    ChangeForReader* change = nullptr;
-    for (auto cfr: history)
-    {
-        if (cfr->sequenceNumber == sequenceNumber)
-        {
-            change = cfr;
-            break;
-        }
-    }
-
-    if(change && !(change->complete))
-    {
-        std::unique_lock<std::mutex> lock(rp_mutex);
-        change->resetSentFragments();
+        history.erase(it);
         lock.unlock();
-    }
-}
-
-
-uint32_t ReaderProxy::getAckCount(uint32_t sequenceNumber)
-{
-    // access change with the given sequence number
-    ChangeForReader* change = nullptr;
-    for (auto cfr: history)
-    {
-        if (cfr->sequenceNumber == sequenceNumber)
-        {
-            change = cfr;
-            break;
-        }
-    }
-
-    if(change)
-    {
-        return change->ackCount();
+        return;
     }
     else
     {
-        // TODO handle problem
-        return 0;
+        logDebug("[ReaderProxy] change not found for removal")
+        lock.unlock();
+        return;
     }
-    
 }
 
+ReaderProxy::changeStatus ReaderProxy::processNack(NackFrag *msg)
+{
+    std::unique_lock<std::mutex> lock(rp_mutex);
+
+    // Get current time for nack supression checks
+    std::chrono::system_clock::time_point t_now = std::chrono::system_clock::now();
+
+    logDebug("[ReaderProxy] processNack() - received NackFrag: SN " << msg->writerSequenceNumber);
+
+    bool set_nack = false;
+    ChangeForReader* change = nullptr;
+    auto change_it = history.find(msg->writerSequenceNumber);
+    if(change_it != history.end())
+    {
+        change = &(change_it->second);
+    }
+    else
+    {
+        lock.unlock();
+        return CHANGE_NOT_FOUND;
+    }
+    
+    if(msg->fragmentStatus.base >= change->lowestNacked)
+    {
+        // Acknowledge all fragments up to base fragmentnumber - 1. Base is the lowest nacked fragment.
+        change->setAcked(change->lowestNacked, msg->fragmentStatus.base-1);
+    }
+
+    for(std::uint32_t i = 0; i <= NACK_BITMAP_SIZE*8; i++)
+    {
+        std::uint32_t fragmentNum = msg->fragmentStatus.base + i;
+        
+        // Bitmap might cover more fragments than exist in the sample
+        if(fragmentNum > change->fragmentStates.size())
+        {
+            break;
+        }
+
+        // Calculate the index of the byte containing the current bit
+        std::size_t byte_index = i / 8;
+
+        // Calculate the position of the bit within the byte
+        std::size_t bit_position = 7 - (i % 8);
+    
+        if(!(msg->fragmentStatus.bitmap[byte_index] & (1 << bit_position)))
+        {
+            change->setAcked(fragmentNum);
+        }
+        else
+        {
+            int result = change->setNacked(fragmentNum, t_now, this->nackSuppressionDuration);
+            if(result == 1)
+            {
+                return CHANGE_EXHAUSTED_RETRY_LIMIT;
+            }
+            set_nack = true;
+        }
+    }
+
+    if(!set_nack) 
+    {
+        if(change->checkForCompleteness())
+        {
+            lock.unlock();
+            return CHANGE_COMPLETE;
+        }
+    }
+
+    lock.unlock();
+    return CHANGE_INCOMPLETE;
+}
+
+bool ReaderProxy::checkSampleCompleteness(std::uint32_t sequenceNumber)
+{
+    std::unique_lock<std::mutex> lock(rp_mutex);
+    auto it = history.find(sequenceNumber);
+    if(it == history.end())
+    {
+        logDebug("[ReaderProxy] change not found for completeness check");
+        lock.unlock();
+        return true; // consider not found samples as complete
+    }
+    else
+    {
+        lock.unlock();
+        return it->second.checkForCompleteness();
+    }
+}
+
+void ReaderProxy::setTimeout(std::chrono::system_clock::time_point timestamp, std::uint32_t sequenceNumber)
+{
+    this->timeout.sequenceNumber = sequenceNumber;
+    this->timeout.active = true;
+    this->timeout.timestamp = timestamp;
+}
+
+std::chrono::system_clock::time_point ReaderProxy::getTimeout()
+{
+    if(this->timeout.active)
+    {
+        return this->timeout.timestamp;
+    }
+    else
+    {
+        return std::chrono::system_clock::time_point();
+    }
+}
+
+ReaderProxy::timeoutStatus ReaderProxy::checkTimeout()
+{
+    if(this->timeout.active)
+    {
+        if(this->timeout.timestamp <= std::chrono::system_clock::now())
+        {
+            return TIMEOUT_EXPIRED;
+        }
+        else
+        {
+            return TIMEOUT_PENDING;
+        }
+    }
+    return NO_TIMEOUT;
+}
+
+bool ReaderProxy::resetTimedOutFragments()
+{
+    std::unique_lock<std::mutex> lock(rp_mutex);
+    auto it = history.find(this->timeout.sequenceNumber);
+    bool complete_status = false;
+    if(it != history.end())
+    {
+        if(it->second.checkForCompleteness())
+        {
+            complete_status = false;
+        }
+        else
+        {
+            it->second.resetSentFragments();
+            complete_status = true;
+        }
+    }
+    else
+    {
+        logError("[ReaderProxy] change not found for timeout reset");
+    }
+    this->timeout.active = false;
+    this->timeout.timestamp = std::chrono::system_clock::time_point();
+    this->timeout.sequenceNumber = 0;
+    lock.unlock();
+    return complete_status;
+}
 
 }; // end namespace

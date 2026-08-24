@@ -1,0 +1,20 @@
+{
+  "TELEMETRY": {
+    "HOST_ID": "0x73138375"
+  },
+  "CLIENT2": {
+    "HOST_ID": "0x06213572"
+  },
+  "CLIENT3": {
+    "HOST_ID": "0x06213573"
+  },
+  "WIRELESS1": {
+    "HOST_ID": "0x81531321"
+  },
+  "WIRELESS2": {
+    "HOST_ID": "0x81531322"
+  },
+  "TRUCK": {
+    "HOST_ID": "0x44332211"
+  }
+}

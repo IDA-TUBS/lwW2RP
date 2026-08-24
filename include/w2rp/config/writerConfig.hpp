@@ -56,9 +56,9 @@ class writerCfg
     /**
      * @brief get fragment size
      * 
-     * @return uint32_t 
+     * @return std::uint32_t 
      */
-    uint32_t fragmentSize();
+    std::uint32_t fragmentSize();
     
     /**
      * @brief get deadline
@@ -120,30 +120,23 @@ class writerCfg
     /**
      * @brief get host ID
      * 
-     * @return uint32_t 
+     * @return std::uint32_t 
      */
-    uint32_t host_id();
+    std::uint32_t host_id();
 
     /**
      * @brief get reader IDs
      *  
-     * @return uint32_t 
+     * @return std::uint32_t 
      */
-    std::vector<uint32_t> reader_id();
+    std::vector<std::uint32_t> reader_id();
     
-    /**
-     * @brief get prioritization mode
-     * 
-     * @return PrioritizationMode 
-     */
-    PrioritizationMode prioMode();
-
     /**
      * @brief get number of fragments to transmit in a timely aggregated manner
      * 
-     * @return uint32_t 
+     * @return std::uint32_t 
      */
-    uint32_t aggregation_size();
+    std::uint32_t aggregation_size();
 
     private:
 

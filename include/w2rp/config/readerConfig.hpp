@@ -85,13 +85,6 @@ class readerCfg
     std::chrono::microseconds deadline();
 
     /**
-     * @brief get response delay
-     * 
-     * @return std::chrono::microseconds 
-     */
-    std::chrono::microseconds responseDelay();
-
-    /**
      * @brief get writer endpoint (ip, port)
      * 
      * @return w2rp::socket_endpoint [struct]
@@ -108,23 +101,16 @@ class readerCfg
     /**
      * @brief get host ID
      * 
-     * @return uint32_t 
+     * @return std::uint32_t 
      */
-    uint32_t host_id();
+    std::uint32_t host_id();
 
     /**
-     * @brief get reader priority
+     * @brief get writer ID
      * 
-     * @return uint32_t 
+     * @return std::uint32_t 
      */
-    uint32_t priority();
-
-    /**
-     * @brief get liveliness check config
-     * 
-     * @return bool 
-     */
-    bool check_liveliness();
+    std::uint32_t writer_id();
 
     private:
 

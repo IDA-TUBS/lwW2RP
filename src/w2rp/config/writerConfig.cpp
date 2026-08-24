@@ -38,7 +38,6 @@ void writerCfg::print()
     logInfo("# number of readers: " << numberReaders())
     logInfo("# cache size: " << unsigned(sizeCache()))
     logInfo("# host ID: " << unsigned(host_id()))
-    logInfo("# prioritization mode: " << prioMode())
     logInfo("#---------------------------------------------#")
 }
 
@@ -51,9 +50,9 @@ w2rp::socket_endpoint writerCfg::endpoint()
     return socket_endpoint(address, port);
 }
 
-uint32_t writerCfg::fragmentSize()
+std::uint32_t writerCfg::fragmentSize()
 {
-    return getAttribute<uint32_t>(FRAGMENT_SIZE);
+    return getAttribute<std::uint32_t>(FRAGMENT_SIZE);
 }
 
 std::chrono::microseconds writerCfg::deadline()
@@ -80,7 +79,7 @@ std::chrono::microseconds writerCfg::nackSuppressionDuration()
 std::chrono::microseconds writerCfg::timeout()
 {
     // yaml-cpp does not support direct conversion to std::chrono(!)
-    int duration = getAttribute<int>(TIMEOUT);
+    int duration = getAttribute<int>(TIMEOUT_DURATION);
     return std::chrono::microseconds(duration);
 }
 
@@ -130,7 +129,7 @@ unsigned int writerCfg::sizeCache()
     return getAttribute<unsigned int>(SIZE_CACHE);
 }
 
-uint32_t writerCfg::host_id()
+std::uint32_t writerCfg::host_id()
 {
     std::string host = getAttribute<std::string>(HOST);
     return setup.get_hostID(host);
@@ -141,10 +140,9 @@ unsigned int writerCfg::aggregation_size()
     return getAttribute<unsigned int>(AGGREGATION_SIZE);
 }
 
-
-std::vector<uint32_t> writerCfg::reader_id()
+std::vector<std::uint32_t> writerCfg::reader_id()
 {
-    std::vector<uint32_t> readerList;
+    std::vector<std::uint32_t> readerList;
 
     // get readers child node
     auto reader_names = config.get_child(id + "." + READERS);
@@ -152,17 +150,10 @@ std::vector<uint32_t> writerCfg::reader_id()
     {
         std::string reader = it->second.get_value<std::string>();
         std::string host = config.get<std::string>(reader + "." + HOST);
-        uint32_t id = setup.get_hostID(host);
+        std::uint32_t id = setup.get_hostID(host);
         readerList.push_back(id);
     }   
     return readerList;
-}
-
-w2rp::PrioritizationMode writerCfg::prioMode()
-{
-    // yaml-cpp does not support direct conversion to custom types by default
-    int prioMode = getAttribute<int>(PRIO_MODE);
-    return static_cast<w2rp::PrioritizationMode>(prioMode);
 }
 
 /*------------------------------------- Private -----------------------------------------*/

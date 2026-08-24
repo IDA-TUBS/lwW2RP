@@ -7,8 +7,9 @@ threads="6"
 dlog="ON"
 dconsole="ON"
 dfile="ON"
+ddebug="ON"
 
-while getopts "j:l:c:f" opt; do
+while getopts "j:l:c:f:d" opt; do
   case $opt in
     j)
       threads=$OPTARG
@@ -22,6 +23,9 @@ while getopts "j:l:c:f" opt; do
     f)
       dfile="OFF"
       ;;
+    d)
+      ddebug="OFF"
+      ;;
   esac
 done
 
@@ -31,5 +35,5 @@ fi
 cd build
 
 # Execute the cmake with the stored parameters
-cmake .. -DLOG=$dlog -DCONSOLE=$dconsole -DFILE=$dfile
+cmake .. -DLOG=$dlog -DCONSOLE=$dconsole -DFILE=$dfile -DDEBUG=$ddebug
 sudo cmake --build . --target install -j$threads

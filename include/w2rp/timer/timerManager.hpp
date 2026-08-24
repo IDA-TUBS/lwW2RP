@@ -3,6 +3,7 @@
 
 #include <w2rp/log.hpp>
 #include <w2rp/timer/activeWaitTimer.hpp>
+#include <w2rp/timer/nanosleepTimer.hpp>
 
 #define BOOST_BIND_GLOBAL_PLACEHOLDERS
 #include <boost/asio.hpp>
@@ -19,7 +20,8 @@ enum TimerType
 {
     STEADY_TIMER = 0,
     SYSTEM_TIMER,
-    ACTIVEWAIT_TIMER
+    ACTIVEWAIT_TIMER,
+    NANOSLEEP_TIMER
 };
 
 typedef std::pair<TimerType,size_t> timerID;
@@ -69,7 +71,8 @@ class TimerManager
         const Duration& duration, 
         std::function<bool()> function,
         TimerType timer,
-        bool autoStart = true
+        bool autoStart = true,
+        bool immediateExecution = true
     );
 
     /**
@@ -108,7 +111,8 @@ class TimerManager
     void restartTimer(
         timerID timer_id, 
         const Duration& duration, 
-        std::function<bool()> function
+        std::function<bool()> function,
+        bool immediateExecution
     );
 
     /**
@@ -153,7 +157,8 @@ class TimerManager
         std::shared_ptr<boost::asio::steady_timer> timer, 
         size_t timer_id, 
         Duration duration, 
-        std::function<bool()> function
+        std::function<bool()> function,
+        bool immediateExecution = true
     );
 
     /**
@@ -199,6 +204,14 @@ class TimerManager
     std::shared_ptr<ActiveWaitTimer> getActiveWaitTimer(size_t id);
 
     /**
+     * @brief Get the NanosleepTimer object 
+     * 
+     * @param id 
+     * @return std::shared_ptr<NanosleepTimer> 
+     */
+    std::shared_ptr<NanosleepTimer> getNanosleepTimer(size_t id);
+
+    /**
      * @brief register a timed event based on a steady timer
      * 
      * @param duration timer interval
@@ -210,22 +223,40 @@ class TimerManager
     timerID registerSteadyTimer(
         const Duration& duration, 
         std::function<bool()> function,
-        bool autoStart = true
+        bool autoStart = true,
+        bool immediateExecution = true
     );
 
     /**
-     * @brief register a timed event based on an active wait timer
+     * @brief register a timed event based on a active wait timer
      * 
      * @param duration timer interval
      * @param function event handler
-     * @param timer TimerType {STEADY, ACTIVEWAIT}
      * @param autoStart [bool] (true): timer allocation + start (false) timer allocation only
-     * @return timerID timer id object
+     * @param immediateExecution [bool] (true): immediate execution of the event handler upon timer start (false): first execution after duration has passed
+     * @return timerID 
      */
     timerID registerActiveWaitTimer(
         const Duration& duration, 
         std::function<bool()> function,
-        bool autoStart = true
+        bool autoStart = true,
+        bool immediateExecution = true
+    );
+
+    /**
+     * @brief register a timed event based on a nanosleep timer
+     * 
+     * @param duration timer interval
+     * @param function event handler
+     * @param autoStart [bool] (true): timer allocation + start (false) timer allocation only
+     * @param immediateExecution [bool] (true): immediate execution of the event handler upon timer start (false): first execution after duration has passed
+     * @return timerID 
+     */
+    timerID registerNanosleepTimer(
+        const Duration& duration, 
+        std::function<bool()> function,
+        bool autoStart = true,
+        bool immediateExecution = true
     );
 
     /**
@@ -234,11 +265,13 @@ class TimerManager
      * @param timerID timer id object
      * @param duration timer interval
      * @param function event handler
+     * @param immediateExecution [bool] (true): immediate execution of the event handler upon timer start (false): first execution after duration has passed
      */
     void restartSteadyTimer(
         timerID timer_id, 
         const Duration& duration, 
-        std::function<bool()> function
+        std::function<bool()> function,
+        bool immediateExecution = true
     );
 
     /**
@@ -247,11 +280,28 @@ class TimerManager
      * @param timerID timer id object
      * @param duration timer interval
      * @param function event handler
+     * @param immediateExecution [bool] (true): immediate execution of the event handler upon timer start (false): first execution after duration has passed
      */
     void restartActiveWaitTimer(
         timerID timer_id, 
         const Duration& duration, 
-        std::function<bool()> function
+        std::function<bool()> function,
+        bool immediateExecution = true
+    );
+
+    /**
+     * @brief restart a registered nanosleep timer 
+     *      
+     * @param timerID timer id object
+     * @param duration timer interval
+     * @param function event handler
+     * @param immediateExecution [bool] (true): immediate execution of the event handler upon timer start (false): first execution after duration has passed
+     */
+    void restartNanosleepTimer(
+        timerID timer_id, 
+        const Duration& duration, 
+        std::function<bool()> function,
+        bool immediateExecution = true
     );
 
     /**
@@ -271,6 +321,7 @@ class TimerManager
     std::map<size_t, std::shared_ptr<boost::asio::steady_timer>> m_steady_timers;
     std::map<size_t, std::shared_ptr<boost::asio::system_timer>> m_system_timers;
     std::map<size_t,  std::shared_ptr<ActiveWaitTimer>> m_activewait_timers;
+    std::map<size_t, std::shared_ptr<NanosleepTimer>> m_nanosleep_timers;
 
     std::mutex m_mutex;
     

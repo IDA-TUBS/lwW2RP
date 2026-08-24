@@ -1,56 +1,50 @@
-/*
- *
- */
-
 #ifndef W2RP_READER_H_
 #define W2RP_READER_H_
 
 #include <math.h>
 #include <chrono>
 #include <string>
+#include <stdexcept>
+
+#include <boost/asio.hpp>
 
 #include <w2rp/writerProxy.hpp>
-#include <w2rp/helper/fragmentation.hpp>
 #include <w2rp/helper/safe_queue.hpp>
+#include <w2rp/helper/circularBuffer.hpp>
 #include <w2rp/messages/messages.hpp>
+#include <w2rp/messages/messageUtils.hpp>
 #include <w2rp/comm/socketEndpoint.hpp>
 #include <w2rp/comm/UDPComm.hpp>
 #include <w2rp/config/readerConfig.hpp>
 #include <w2rp/guid/guidPrefix.hpp>
 #include <w2rp/guid/guidPrefixManager.hpp>
 #include <w2rp/guid/guid.hpp>
-
-#include <boost/asio.hpp>
+#include <w2rp/config/config.hpp>
 
 namespace w2rp {
 
+typedef std::vector<unsigned char> SerializedPayload;
+
 class Reader
 {
-  public:
+public:
     typedef std::pair<uint64_t, SerializedPayload> sample;
     typedef std::pair<MessageNet_t, boost::asio::ip::udp::endpoint> message_pair;
     
-    /**
-     * @brief empty default constructor
-     */ 
-    Reader();
-
     /**
      * @brief Construct a new Writer object
      * 
      * @param participant_id
      * @param cfg 
      */
-    Reader(uint16_t participant_id, config::readerCfg &cfg);
+    Reader(std::uint16_t participant_id, config::readerCfg cfg);
 
     /**
      * @brief default destructor
      */
     ~Reader();
 
-    /**************/
-    /* Public API */
-    /**************/
+    /* ------------------------------- Public API ------------------------------- */
 
     /**
      * @brief API for app to retrieve new samples once available
@@ -59,10 +53,7 @@ class Reader
      */ 
     void retrieveSample(sample &data );
 
-  private:
-
-    // init state
-    bool initialized = false;
+private:
 
     // reader configuration
     config::readerCfg config;
@@ -70,71 +61,78 @@ class Reader
     // rtps guid
     GUID_t guid;
 
-    /**********************************/
-    /* protocol management structures */
-    /**********************************/
+    /* --------------------- protocol management structures --------------------- */
 
-    /// HistoryCache
-    WriterProxy *writerProxy;
+    // storing the "actual" data that is transmitted via RTPS
+    stableCircularBuffer<CacheChange> historyCache;
 
-    /**************************/
-    /* Comm and message stuff */
-    /**************************/
+    // the writer proxy keeps track of sending/acknowledgment states for each writer
+    WriterProxy writerProxy;
 
-    /// (sub)message parser and encoder
-    NetMessageParser *netParser;
 
-    /// UDP Comm abstraction
-    UDPComm *CommInterface;
+    /* --------------------- Communication and Message Types -------------------- */
 
-    /// socket receive thread
+    // UDP Comm abstraction
+    UDPComm CommInterface;
+
+    // socket receive thread
     std::thread recvThread;
-    /// receive handler thread
+    // receive handler thread
     std::thread handlerThread;
 
-    /// receive queue
+    // receive queue
     SafeQueue<message_pair> receiveQueue;
 
-    /// sample queue for application interface
+    // sample queue for application interface
     SafeQueue<std::pair<uint64_t ,SerializedPayload>> sampleQueue;
 
-    /********/
-    /* misc */
-    /********/
+    /* ------------------------------- statistics ------------------------------- */
 
     uint32_t nackCount;
 
     uint32_t debugCnt;
 
-    /********************************************/
-    /** Callbacks triggered by external events **/ 
-    /********************************************/
+
+    /* --------------------------- Message Processing --------------------------- */
+
+	struct MessageProcessor
+	{
+		Reader* readerInstance;
+		MessageProcessor(Reader* reader): readerInstance(reader) {}
+
+		void operator()(DataFrag& frag)
+		{
+			readerInstance->handleDataFrag(&frag);
+		}
+
+		void operator()(HeartbeatFrag& frag)
+		{
+			readerInstance->handleHBFrag(&frag);
+		}
+
+        void operator()(NackFrag& frag)
+        {
+            // NackFrags are not expected at the Reader
+        }
+	};
 
      /**
      * @brief Blocking reception of incoming message at socket, put into receiveQueue
      */
-    void receiveMsg();
-
+    void receiveMessage();
+	
     /**
-     * @brief Processing of any message in receiveQueue 
+     * @brief Handle incoming messages from the receiveQueue
+     * 
      */
-    void handleMsg();
-
-    /**
-     * @brief Callback 
-     *
-     * @param net MessageNet_t object containing W2RP submessages
-     * @return true: success, false: failure
-     */
-    bool handleMessages(MessageNet_t *net, boost::asio::ip::udp::endpoint writer);
+    void handleMessage();
 
     /**
      * @brief Callback for processing Data Frag
      *
      * @param msg data frag submessage
-     * @return true: success, false: failure
      */
-    bool handleDataFrag(DataFrag *msg, boost::asio::ip::udp::endpoint writer);
+    void handleDataFrag(DataFrag *msg);
 
     /**
      * @brief Method for reacting to Heartbeatfrags, send Nackfrag in return
@@ -142,59 +140,7 @@ class Reader
      * @param msg heartbeat submessage
      * @return true: success, false: failure
      */
-    bool handleHBFrag(HeartbeatFrag *msg, boost::asio::ip::udp::endpoint writer);
-
-
-    /****************************************************/
-    /* methods used during hanlding of Data and HBFrags */
-    /****************************************************/
-
-    /**
-     * @brief create serialized sample data from all fragments of the sample
-     * 
-     * @param cfw pointer to history cache object (sample)
-     * @param sampleData reference to object where sample data shall be written to
-     */ 
-    void buildSerializedSample(ChangeForWriter *cfw, SerializedPayload &sampleData);
-
-
-    /*************************************************/
-    /* methods for checking validity of cacheChanges */ 
-    /*************************************************/
-
-    /**
-     * Method for evaluating whether a sample is still valid or whether its deadline elapsed.
-     * Handles removing of sample in case of elapsed deadline
-     */
-    void checkSampleLiveliness();
-
-  
-    /***************************/
-    /* miscellaneous functions */ 
-    /***************************/
-    
-    /**
-     * @brief Set the Config object
-     * 
-     * @param cfg writer config object
-     */
-    void setConfig(config::readerCfg &cfg);
-
-    /**
-     * @brief 
-     * 
-     * @param participant_id 
-     */
-    void init(uint16_t participant_id);
-
-    /**
-     * @brief 
-     * 
-     * @param participant_id 
-     * @param cfg 
-     */
-    void init(uint16_t participant_id, config::readerCfg &cfg);
-
+    void handleHBFrag(HeartbeatFrag *msg);
 
 };
 

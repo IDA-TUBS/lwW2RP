@@ -10,21 +10,42 @@ class Subscriber
 {
 public:
 
-    Subscriber();
+    Subscriber(
+        std::uint16_t participant_id,
+        config::readerCfg cfg
+    ):
+        reader(participant_id, cfg)
+    {
+        logInfo("[APP] App started")
+    };
 
-    virtual ~Subscriber();
+    virtual ~Subscriber(){}
 
-    bool init(uint16_t participant_id, std::string cfg, std::string setup);
-
-    void run();
+    void run()
+    {    
+        std::thread thread(&Subscriber::rxThread, this);
+        thread.join();
+    }
 
     bool publish();
 
 private:
 
-    Reader* reader;
+    Reader reader;
 
-    void rxThread();
+    void rxThread()
+    {    
+        logInfo("[APP] Subscriber running.")
+
+        w2rp::Reader::sample sample;
+        while (true)
+        {
+            reader.retrieveSample(sample);
+            logInfo("\n----------------------------------------------------------------------------------------\n[APP] Received sample: " << sample.first << "\n---------------------------------------------------------\n")
+            std::string msg(sample.second.begin(), sample.second.end());
+            logInfo("[APP] Sample data: " << msg)
+        }
+    }
 };
 
 #endif //READERTEST_H

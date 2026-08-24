@@ -4,11 +4,18 @@
 #include <cstring>
 #include <chrono>
 #include <vector>
+#include <cstdint>
+#include <variant>
+
 #include <w2rp/messages/message_net.hpp>
 #include <w2rp/config/config.hpp>
 #include <w2rp/log.hpp>
 #include <w2rp/guid/guid.hpp>
 #include <w2rp/guid/guidPrefix.hpp>
+#include <w2rp/cacheChange.hpp>
+#include <w2rp/fragment/sampleFragment.hpp>
+#include <w2rp/fragment/sampleFragmentState.hpp>
+
 
 
 namespace w2rp {
@@ -19,19 +26,8 @@ enum SUBMESSAGES
     NACK_FRAG = 0x12,
     HEARTBEAT_FRAG = 0x13,
     DATA_FRAG = 0x16,   
-    
-    // miscellaneous new submessages required for (some) W2RP extensions
-    UPDATE = 0x20
 };
 
-struct FragmentNumberSet {
-    uint32_t bitmapBase;
-    unsigned char bitmap[NACK_BITMAP_SIZE];
-    uint32_t size = 4 + NACK_BITMAP_SIZE;
-};
-
-
-// TODO add timestamp - non RTPS compliant?
 class W2RPHeader
 {
   public:
@@ -85,22 +81,22 @@ class W2RPHeader
     ~W2RPHeader(){};
 
     // message contents
-    uint32_t protocol;              // Identifies the message as an W2RP message.
-    uint16_t version;               // Identifies the version of the W2RP protocol.
-    uint16_t vendorID;              // Indicates the vendor that provides the implementation of the W2RP protocol.
+    std::uint32_t protocol;    // Identifies the message as an W2RP message.
+    std::uint16_t version;     // Identifies the version of the W2RP protocol.
+    std::uint16_t vendorID;    // Indicates the vendor that provides the implementation of the W2RP protocol.
     GuidPrefix_t guidPrefix;   // Defines a default prefix to use for all GUIDs that appear in the message.
 
     // misc information
-    uint32_t length;    
+    std::uint32_t length;    
 
     /**
-     * @brief encode protocol name in uint32_t
+     * @brief encode protocol name in std::uint32_t
      *
      * @param string containing 4 letter protocol name
-     * @return protocol name encoded in uint32_t
+     * @return protocol name encoded in std::uint32_t
      */
-    uint32_t encode(const char* str) {
-        uint32_t result = 0;
+    std::uint32_t encode(const char* str) {
+        std::uint32_t result = 0;
         for (int i = 0; i < 4; ++i) {
             result <<= 8; // Shift the bits to make space for the next character
             result |= str[i]; // Add the ASCII value of the character to the result
@@ -125,8 +121,6 @@ class W2RPHeader
 
 };
 
-
-
 class SubmessageHeader
 {
   public:
@@ -148,7 +142,11 @@ class SubmessageHeader
      * @param length of submessage
      * @param true if last submsg, else false
      */
-    SubmessageHeader(uint8_t subMsgId, uint32_t subMsgLength, bool isLast): 
+    SubmessageHeader(
+        std::uint8_t subMsgId, 
+        std::uint32_t subMsgLength, 
+        bool isLast
+    ): 
         submessageId(subMsgId),
         submessageLength(subMsgLength),
         flags(0),
@@ -163,14 +161,22 @@ class SubmessageHeader
     /**
      * @brief copy constructor
      */
-    SubmessageHeader(SubmessageHeader &header)
-    {
-        this->submessageId = header.submessageId;
-        this->submessageLength = header.submessageLength;
-        this->flags = header.flags;
-        this->is_last = header.is_last;
-        this->length = header.length;
-    };
+    SubmessageHeader(SubmessageHeader &header) = default;
+
+    /**
+     * @brief copy assignment operator
+     */
+    SubmessageHeader& operator=(const SubmessageHeader &header) = default; 
+
+    /**
+     * @brief move constructor
+     */
+    SubmessageHeader(SubmessageHeader&&) noexcept = default;
+
+    /**
+     * @brief move assignment operator
+     */
+    SubmessageHeader& operator=(SubmessageHeader&&) noexcept = default;
 
     /**
      * @brief destructor
@@ -179,13 +185,13 @@ class SubmessageHeader
     {};
 
     // contents
-    uint8_t submessageId;
-    uint32_t submessageLength;  // without header
-    uint8_t flags;
+    std::uint8_t submessageId;
+    std::uint32_t submessageLength;  // without header
+    std::uint8_t flags;
     bool is_last;
 
     // misc information
-    uint32_t length;
+    std::uint32_t length;
 
     /**
      * @brief Convert submsg header to char array
@@ -204,119 +210,154 @@ class SubmessageHeader
 
 class SubmessageBase
 {
-  public:
+    public:
     /**
      * @brief constructor for base msg object
      */
-    SubmessageBase()
+    SubmessageBase():
+        subMsgHeader()
     {};
 
-    /**
-     * @brief destructor
-     */
-    ~SubmessageBase()
-    {
-        if(subMsgHeader)
-        {
-            delete subMsgHeader;
-        }
-    };
+    SubmessageBase(
+        std::uint8_t subMsgId, 
+        std::uint32_t subMsgLength, 
+        bool isLast
+    ):
+        subMsgHeader(subMsgId, subMsgLength, isLast)
+    {};
 
     // contents
-    SubmessageHeader *subMsgHeader = nullptr;
-
+    SubmessageHeader subMsgHeader;
 };
-
 
 class DataFrag: public SubmessageBase
 {
-  public:
+    public:
     /**
      * @brief constructor for empty submessage object
      */
-    DataFrag()
-    {
-        subMsgHeader = new SubmessageHeader(DATA_FRAG, this->length, false);
-    };
+    DataFrag():
+        SubmessageBase(DATA_FRAG, this->length, false)
+    {};
 
     /**
-     * @brief constructor
+     * @brief Construct a new Data Frag object
+     * 
+     * @param readerID 
+     * @param writerID 
+     * @param writerSN 
+     * @param fragmentNum 
+     * @param dataSize 
+     * @param fragmentSize 
+     * @param payload 
+     * @param sampleTimestamp 
      */
-    DataFrag(uint32_t readerID, uint32_t writerID,
-             uint64_t writerSN, uint32_t fragmentStartingNum, 
-             uint32_t dataSize, uint16_t fragmentSize, unsigned char *payload, std::chrono::system_clock::time_point sampleTimestamp
+    DataFrag(
+        std::uint32_t readerID, 
+        std::uint32_t writerID,
+        std::uint64_t writerSN, 
+        std::uint32_t fragmentNum, 
+        std::uint32_t dataSize, 
+        std::uint16_t fragmentSize, 
+        unsigned char *payload, 
+        std::chrono::system_clock::time_point sampleTimestamp
     ):
-             readerID(readerID),
-             writerID(writerID), 
-             writerSN(writerSN),
-             fragmentStartingNum(fragmentStartingNum),
-             fragmentsInSubmessage(1),
-             dataSize(dataSize),
-             fragmentSize(fragmentSize),
-             timestamp(sampleTimestamp)
+        SubmessageBase(DATA_FRAG, this->length, false),
+        readerID(readerID),
+        writerID(writerID), 
+        writerSequenceNumber(writerSN),
+        fragmentNumber(fragmentNum),
+        fragmentsInSubmessage(1),
+        sampleSize(dataSize),
+        fragmentSize(fragmentSize),
+        timestamp(sampleTimestamp),
+        serializedPayload(payload, payload + fragmentSize)
     {
-        this->serializedPayload = new unsigned char[fragmentSize]{0};
-        memset(this->serializedPayload, 0, fragmentSize * sizeof(unsigned char));
-        memcpy(this->serializedPayload, payload, fragmentSize);
-
-        subMsgHeader = new SubmessageHeader(DATA_FRAG, this->length, false);
-
         this->length = sizeof(readerID) +
                        sizeof(writerID) +
-                       sizeof(writerSN) +
-                       sizeof(fragmentStartingNum) +
+                       sizeof(writerSequenceNumber) +
+                       sizeof(fragmentNumber) +
                        sizeof(fragmentsInSubmessage) +
                        sizeof(timestamp) +
                        fragmentSize;
     };
 
     /**
-     * @brief copy constructor
+     * @brief Construct a new Data Frag object
+     * 
+     * @param readerID 
+     * @param writerID 
+     * @param change 
+     * @param sf 
      */
-    DataFrag(DataFrag &frag)
+    DataFrag(
+        std::uint32_t readerID, 
+        std::uint32_t writerID, 
+        CacheChange &change,
+        SampleFragment &sf
+    ):
+        SubmessageBase(DATA_FRAG, this->length, false),
+        readerID(readerID),
+        writerID(writerID), 
+        writerSequenceNumber(change.sequenceNumber),
+        fragmentNumber(sf.number),
+        fragmentsInSubmessage(1),
+        sampleSize(change.sampleSize),
+        fragmentSize(sf.size),
+        timestamp(change.arrivalTime),
+        serializedPayload(sf.payload.data(), sf.payload.data() + sf.size)
     {
-        subMsgHeader = frag.subMsgHeader;
-
-        this->readerID = frag.readerID;
-        this->writerID = frag.writerID;
-        this->writerSN = frag.writerSN;
-        this->fragmentStartingNum = frag.fragmentStartingNum;
-        this->fragmentsInSubmessage = frag.fragmentsInSubmessage;
-        this->dataSize = frag.dataSize;
-        this->fragmentSize = frag.fragmentSize;
-
-        this->serializedPayload = new unsigned char[fragmentSize]{0};
-        memset(this->serializedPayload, 0, fragmentSize * sizeof(unsigned char));
-        memcpy(this->serializedPayload, frag.serializedPayload, frag.fragmentSize);
-        this->timestamp = frag.timestamp;
-
-        this->length = frag.length;
+        this->length = sizeof(readerID) +
+                       sizeof(writerID) +
+                       sizeof(writerSequenceNumber) +
+                       sizeof(fragmentNumber) +
+                       sizeof(fragmentsInSubmessage) +
+                       sizeof(timestamp) +
+                       fragmentSize;
     };
 
     /**
-     * @brief default destructor
+     * @brief Construct a new Data Frag from a MessageNet_t object
+     * 
+     * @param msg 
      */
-    ~DataFrag()
+    DataFrag(
+        MessageNet_t* msg
+    ):
+        SubmessageBase(DATA_FRAG, this->length, false)
     {
-        if(serializedPayload)
-        {
-            delete serializedPayload;
-        }
+        this->netToData(msg);
     };
 
-    uint32_t readerID;                  // Identifies the Reader entity that is being informed of the change to the data-object. // TODO require multicast readerID?!
-    uint32_t writerID;                  // Identifies the Writer entity that made the change to the data- object.
-    uint64_t writerSN;                  // Uniquely identifies the change and the relative order for all changes made by the Writer.
-    uint32_t fragmentStartingNum;       // Indicates the starting fragment for the series of fragments in the serializedPayload field
-    uint16_t fragmentsInSubmessage;     // The number of consecutive fragments contained in this Submessage
-    uint32_t dataSize;                  // The total size in bytes of the original data before fragmentation.
-    uint16_t fragmentSize;              // The size of an individual fragment in bytes. The maximum fragment size equals 64K.
+    /**
+     * @brief disable copy constructor
+     */
+    DataFrag(DataFrag &data) = delete;
+
+    /**
+     * @brief disable copy assignment
+     */
+    DataFrag& operator=(const DataFrag &data) = delete;
+    
+    /**
+     * @brief Allow moving DataFrag into variants/containers
+     */
+    DataFrag(DataFrag&&) noexcept = default;
+    DataFrag& operator=(DataFrag&&) noexcept = default;
+
+    std::uint32_t readerID;                 // Identifies the Reader entity that is being informed of the change to the data-object. 
+    std::uint32_t writerID;                 // Identifies the Writer entity that made the change to the data- object.
+    std::uint64_t writerSequenceNumber;     // Uniquely identifies the change and the relative order for all changes made by the Writer.
+    std::uint32_t fragmentNumber;           // Indicates the starting fragment for the series of fragments in the serializedPayload field
+    std::uint16_t fragmentsInSubmessage;    // The number of consecutive fragments contained in this Submessage
+    std::uint32_t sampleSize;               // The total size in bytes of the original data before fragmentation.
+    std::uint16_t fragmentSize;             // The size of an individual fragment in bytes. The maximum fragment size equals 64K.
     // parameterList inlineQos;
-    unsigned char *serializedPayload;  // actual payload
+    std::vector<unsigned char> serializedPayload;  // actual payload
     std::chrono::system_clock::time_point timestamp; // timestamp signaling the arrival of the sample at the writer, required at the reader for determining deadline violations. Requires time sync between nodes hosting writer and reader 
 
     // misc information
-    uint32_t length;
+    std::uint32_t length;
 
     /**
      * @brief Convert data frag to char array
@@ -335,67 +376,105 @@ class DataFrag: public SubmessageBase
     void print();
 };
 
-
-
 class NackFrag: public SubmessageBase
 {
-  public:
-    /**
-    * @brief constructor for empty submessage object
-    */
-    NackFrag()
-    {
-        // subMsgHeader = new SubmessageHeader(NACK_FRAG, this->length, false);
+    public:
+    
+    struct fragmentNumberSet {
 
+        fragmentNumberSet(): base(0)
+        {
+            memset(bitmap, 0, NACK_BITMAP_SIZE);
+        };
+
+        fragmentNumberSet(const fragmentNumberSet &other)
+        {
+            this->base = other.base;
+            memcpy(this->bitmap, other.bitmap, NACK_BITMAP_SIZE);
+        };
+
+        // New: Explicitly default the Move Constructor and mark noexcept
+        fragmentNumberSet(fragmentNumberSet&&) noexcept = default;
+        fragmentNumberSet& operator=(fragmentNumberSet&&) noexcept = default;
+        
+        // New: Explicitly default the Copy Assignment (needed for Rule of Five/Three)
+        fragmentNumberSet& operator=(const fragmentNumberSet &other) = default;
+
+        std::uint32_t base;
+        unsigned char bitmap[NACK_BITMAP_SIZE];
+    };
+    
+    /**
+     * @brief (default) Construct a new Nack Frag object
+     * 
+     */
+    NackFrag():
+        SubmessageBase(NACK_FRAG, this->length, false)
+    {
         this->length = sizeof(readerID) +
                        sizeof(writerID) +
-                       sizeof(writerSN) +
-                       sizeof(count) +
-                       fragmentNumberState.size;
-
-        subMsgHeader = new SubmessageHeader(NACK_FRAG, this->length, false);
-    };
-
-    /** 
-     * @brief constructor
-     */
-    NackFrag(uint32_t readerID, uint32_t writerID,
-             uint64_t writerSN, uint16_t bitmapBase, unsigned char *fragmentStates, uint32_t NackFragCount):
-             readerID(readerID),
-             writerID(writerID),
-             writerSN(writerSN),
-             count(NackFragCount)
-    {
-        memcpy(this->fragmentNumberState.bitmap, fragmentStates, NACK_BITMAP_SIZE);
-        this->fragmentNumberState.bitmapBase = bitmapBase;
-
-        // subMsgHeader = new SubmessageHeader(NACK_FRAG, this->length, false);
-
-        this->length = sizeof(readerID) +
-                       sizeof(writerID) +
-                       sizeof(writerSN) +
-                       sizeof(count) +
-                       fragmentNumberState.size;
-
-        subMsgHeader = new SubmessageHeader(NACK_FRAG, this->length, false);
+                       sizeof(writerSequenceNumber) +
+                       sizeof(fragmentStatus) +
+                       sizeof(count);
     };
 
     /**
-     * @brief copy constructor
+     * @brief Construct a new Nack Frag object
+     * 
+     * @param readerID 
+     * @param writerID 
+     * @param writerSN 
+     * @param status 
+     * @param NackFragCount 
      */
-    NackFrag(NackFrag &nack)
+    NackFrag(
+        std::uint32_t readerID, 
+        std::uint32_t writerID,
+        std::uint64_t writerSN,
+        fragmentNumberSet &status,
+        std::uint32_t NackFragCount
+    ):
+        SubmessageBase(NACK_FRAG, this->length, false),
+        readerID(readerID),
+        writerID(writerID),
+        writerSequenceNumber(writerSN),
+        fragmentStatus(status),
+        count(NackFragCount)
     {
-        subMsgHeader = nack.subMsgHeader;
-        
-        this->readerID = nack.readerID;
-        this->writerID = nack.writerID;
-        this->writerSN = nack.writerSN;
-        this->fragmentNumberState = nack.fragmentNumberState;
-        this->count = nack.count;
-        
-
-        this->length = nack.length;
+        this->length = sizeof(readerID) +
+                       sizeof(writerID) +
+                       sizeof(writerSequenceNumber) +
+                       sizeof(fragmentStatus) +
+                       sizeof(count);
     };
+
+    /**
+     * @brief Construct a new Nack Frag from a MessageNet_t object
+     * 
+     * @param msg 
+     */
+    NackFrag(
+        MessageNet_t* msg
+    ):
+        SubmessageBase(NACK_FRAG, this->length, false)
+    {
+        this->netToNack(msg);
+    }; 
+
+    /**
+     * @brief disable copy constructor
+     */
+    NackFrag(NackFrag &nack) = delete;
+    /**
+     * @brief disable copy assignment
+     */
+    NackFrag& operator=(const NackFrag &nack) = delete;
+    
+    /**
+     * @brief Allow moving NackFrag into variants/containers
+     */
+    NackFrag(NackFrag&&) noexcept = default;
+    NackFrag& operator=(NackFrag&&) noexcept = default;
 
     /**
      * @brief default destructor
@@ -404,14 +483,14 @@ class NackFrag: public SubmessageBase
     {};
 
     // contents
-    uint32_t readerID;                      // Identifies the Reader entity that requests to receive certain fragments.
-    uint32_t writerID;                      // Identifies the Writer entity that is the target of the NackFrag message. This is the Writer Entity that is being asked to re-send some fragments.
-    uint64_t writerSN;                      // The sequence number for which some fragments are missing.
-    FragmentNumberSet fragmentNumberState;  // Communicates the state of the reader to the writer. The fragment numbers that appear in the set indicate missing fragments on the reader side. The ones that do not appear in the set are undetermined (could have been received or not).
-    uint32_t count;                         // Reader's NackFrag counter // repurposed for returning the HB's lastFragmentNum
+    std::uint32_t readerID;                     // Identifies the Reader entity that requests to receive certain fragments.
+    std::uint32_t writerID;                     // Identifies the Writer entity that is the target of the NackFrag message. This is the Writer Entity that is being asked to re-send some fragments.
+    std::uint64_t writerSequenceNumber;         // The sequence number for which some fragments are missing.
+    fragmentNumberSet fragmentStatus;                   // Communicates the state of the reader to the writer. The fragment numbers that appear in the set indicate missing fragments on the reader side. The ones that do not appear in the set are undetermined (could have been received or not).
+    std::uint32_t count;                        // Reader's NackFrag counter // repurposed for returning the HB's lastFragmentNum
     
     // misc information
-    uint32_t length;
+    std::uint32_t length;
 
     /**
      * @brief Convert nack frag to char array
@@ -428,60 +507,85 @@ class NackFrag: public SubmessageBase
     void netToNack(MessageNet_t* msg);
 };
 
-
 class HeartbeatFrag: public SubmessageBase
 {
-  public:
+    public:
     /**
     * @brief constructor for empty submessage object
     */
-    HeartbeatFrag()
+    HeartbeatFrag():
+        SubmessageBase(HEARTBEAT_FRAG, this->length, false)
     {
-        subMsgHeader = new SubmessageHeader(HEARTBEAT_FRAG, this->length, false);
-
         this->length = sizeof(readerID) +
                        sizeof(writerID) +
-                       sizeof(writerSN) +
-                       sizeof(lastFragmentNum) + 
+                       sizeof(writerSequenceNumber) +
+                       sizeof(highestFragmentNum) + 
                        sizeof(count);
     };
 
     /**
-     * @brief default constructor
+     * @brief Construct a new Heartbeat Frag object
+     * 
+     * @param readerID 
+     * @param writerID 
+     * @param writerSN 
+     * @param highestFragmentNum 
+     * @param HBFragCount 
      */
-    HeartbeatFrag(uint32_t readerID, uint32_t writerID,
-                uint64_t writerSN, uint32_t lastFragmentNum, uint32_t HBFragCount):
-             readerID(readerID),
-             writerID(writerID),
-             writerSN(writerSN),
-             lastFragmentNum(lastFragmentNum),
-             count(HBFragCount)
+    HeartbeatFrag(
+        std::uint32_t readerID, 
+        std::uint32_t writerID,
+        std::uint64_t writerSN, 
+        std::uint32_t highestFragmentNum, 
+        std::uint32_t HBFragCount
+    ):
+        SubmessageBase(HEARTBEAT_FRAG, this->length, false),
+        readerID(readerID),
+        writerID(writerID),
+        writerSequenceNumber(writerSN),
+        highestFragmentNum(highestFragmentNum),
+        count(HBFragCount)
     {
-        subMsgHeader = new SubmessageHeader(HEARTBEAT_FRAG, this->length, false);
-
-        this->length = sizeof(readerID) +
-                       sizeof(writerID) +
-                       sizeof(writerSN) +
-                       sizeof(lastFragmentNum) + 
-                       sizeof(count);
+        this->length = sizeof(this->readerID) +
+                       sizeof(this->writerID) +
+                       sizeof(this->writerSequenceNumber) +
+                       sizeof(this->highestFragmentNum) + 
+                       sizeof(this->count);
     };
 
     /**
-     * @brief copy constructor
+     * @brief Construct a new Heartbeat Frag from a MessageNet_t object
+     * 
+     * @param msg 
      */
-    HeartbeatFrag(HeartbeatFrag &hb)
+    HeartbeatFrag(
+        MessageNet_t* msg
+    ):
+        SubmessageBase(HEARTBEAT_FRAG, this->length, false)
     {
-        subMsgHeader = hb.subMsgHeader;
-        
-        this->readerID = hb.readerID;
-        this->writerID = hb.writerID;
-        this->writerSN = hb.writerSN;
-        this->lastFragmentNum = hb.lastFragmentNum;
-        this->count = hb.count;
-        
-
-        this->length = hb.length;
+        this->length = sizeof(this->readerID) +
+                sizeof(this->writerID) +
+                sizeof(this->writerSequenceNumber) +
+                sizeof(this->highestFragmentNum) + 
+                sizeof(this->count);
+        this->netToHB(msg);
     };
+
+    /**
+     * @brief disable copy constructor
+     */
+    HeartbeatFrag(HeartbeatFrag &hb) = delete;
+
+    /**
+     * @brief disable copy assignment
+     */
+    HeartbeatFrag& operator=(const HeartbeatFrag &data) = delete;
+    
+    /**
+     * @brief Allow moving HeartbeatFrag into variants/containers
+     */
+    HeartbeatFrag(HeartbeatFrag&&) noexcept = default;
+    HeartbeatFrag& operator=(HeartbeatFrag&&) noexcept = default;
 
     /**
      * @brief default destructor
@@ -490,15 +594,14 @@ class HeartbeatFrag: public SubmessageBase
     {};
 
     // contents
-    uint32_t readerID;          // Identifies the Reader Entity that is being informed of the availability of fragments. Can be set to ENTITYID_UNKNOWN to indicate all readers for the writer that sent the message.
-    uint32_t writerID;          // Identifies the Writer Entity that sent the Submessage.
-    uint64_t writerSN;          // Identifies the sequence number of the data change for which fragments are available.
-    uint32_t lastFragmentNum;   // All fragments up to and including this last (highest) fragment are available on the Writer for the change identified by writerSN.
-    uint32_t count;   
+    std::uint32_t readerID;             // Identifies the Reader Entity that is being informed of the availability of fragments. Can be set to ENTITYID_UNKNOWN to indicate all readers for the writer that sent the message.
+    std::uint32_t writerID;             // Identifies the Writer Entity that sent the Submessage.
+    std::uint64_t writerSequenceNumber; // Identifies the sequence number of the data change for which fragments are available.
+    std::uint32_t highestFragmentNum;   // All fragments up to and including this last (highest) fragment are available on the Writer for the change identified by writerSN.
+    std::uint32_t count;   
 
     // misc information
-    uint32_t length;
-
+    std::uint32_t length;
 
     /**
      * @brief Convert hb frag to char array
@@ -515,28 +618,6 @@ class HeartbeatFrag: public SubmessageBase
     void netToHB(MessageNet_t* msg);
 };
 
-
-
-class NetMessageParser
-{
-  public:
-    /**
-    * @brief constructor
-    */
-    NetMessageParser()
-    {};
-
-    /**
-    * @brief destructor
-    */
-    ~NetMessageParser()
-    {};
-
-
-    void getSubmessages(MessageNet_t* msg, std::vector<SubmessageBase*> *res);
-};
-
-
-} //end namespace
+} //end namespace W2RP
 
 #endif //MESSAGES_H

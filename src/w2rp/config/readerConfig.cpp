@@ -32,11 +32,8 @@ void readerCfg::print()
     logInfo("# Address: " << endpoint().ip_addr)
     logInfo("# Port: " << endpoint().port)
     logInfo("# deadline: " << deadline().count() << "us")
-    logInfo("# response delay: " << responseDelay().count() << "us")
     logInfo("# cache size: " << unsigned(sizeCache()))
     logInfo("# host ID: " << unsigned(host_id()))
-    logInfo("# priority: " << unsigned(priority()))
-    logInfo("# check liveliness: " << unsigned(check_liveliness()))
     logInfo("#---------------------------------------------#")
 }
 
@@ -56,13 +53,6 @@ std::chrono::microseconds readerCfg::deadline()
     return std::chrono::microseconds(duration);
 }
 
-std::chrono::microseconds readerCfg::responseDelay()
-{
-    // yaml-cpp does not support direct conversion to std::chrono(!)
-    int duration = getAttribute<int>(RESPONSE_DELAY);
-    return std::chrono::microseconds(duration);
-}
-
 w2rp::socket_endpoint readerCfg::writer()
 {
     std::string name = getAttribute<std::string>(WRITER);
@@ -77,21 +67,17 @@ unsigned int readerCfg::sizeCache()
     return getAttribute<unsigned int>(SIZE_CACHE);
 }
 
-uint32_t readerCfg::host_id()
+std::uint32_t readerCfg::host_id()
 {
     std::string host = getAttribute<std::string>(HOST);
     return setup.get_hostID(host);
 }
 
-uint32_t readerCfg::priority()
+std::uint32_t readerCfg::writer_id()
 {
-    return getAttribute<uint32_t>(PRIORITY);
-}
-
-
-bool readerCfg::check_liveliness()
-{
-    return getAttribute<bool>(CHECK_LIVELINESS);
+    std::string writerName = getAttribute<std::string>(WRITER);
+    std::string host = config.get<std::string>(writerName + "." + HOST);
+    return setup.get_hostID(host);
 }
 
 /*------------------------------------- Private -----------------------------------------*/

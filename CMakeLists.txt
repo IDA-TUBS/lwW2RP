@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.0)
-project(w2rp VERSION 0.1.0)
+project(w2rp VERSION 0.2.0)
 set (CMAKE_CXX_STANDARD 17)
 
 include(GNUInstallDirs)
@@ -17,10 +17,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 ### search for local boost
-find_package(Boost 1.73.0 EXACT COMPONENTS thread log log_setup REQUIRED)
+find_package(Boost 1.73.0 EXACT COMPONENTS system thread log log_setup REQUIRED)
 
 find_package(OpenCV REQUIRED)
-include_directories( ${OpenCV_INCLUDE_DIRS} )
+include_directories( ${OpenCV_INCLUDE_DIRS})
 
 ### Define library content
 set(
@@ -28,26 +28,25 @@ set(
     ${PROJECT_SOURCE_DIR}/src/w2rp/timer/timerManager.cpp
     
     ${PROJECT_SOURCE_DIR}/src/w2rp/entities/writer.cpp
-    ${PROJECT_SOURCE_DIR}/src/w2rp/entities/reader.cpp
-    
-    ${PROJECT_SOURCE_DIR}/src/w2rp/helper/fragmentation.cpp
-    
+    ${PROJECT_SOURCE_DIR}/src/w2rp/entities/reader.cpp  
+
     ${PROJECT_SOURCE_DIR}/src/w2rp/messages/messages.cpp
+    ${PROJECT_SOURCE_DIR}/src/w2rp/messages/messageUtils.cpp
     
     ${PROJECT_SOURCE_DIR}/src/w2rp/comm/UDPComm.cpp
+
+    ${PROJECT_SOURCE_DIR}/src/w2rp/timer/timerManager.cpp
 
     ${PROJECT_SOURCE_DIR}/src/w2rp/config/readerConfig.cpp
     ${PROJECT_SOURCE_DIR}/src/w2rp/config/writerConfig.cpp
     ${PROJECT_SOURCE_DIR}/src/w2rp/config/setupConfig.cpp
 
+    ${PROJECT_SOURCE_DIR}/src/w2rp/cacheChange.cpp
     ${PROJECT_SOURCE_DIR}/src/w2rp/changeForReader.cpp
-    ${PROJECT_SOURCE_DIR}/src/w2rp/changeForWriter.cpp
+    ${PROJECT_SOURCE_DIR}/src/w2rp/changeFromWriter.cpp
     ${PROJECT_SOURCE_DIR}/src/w2rp/readerProxy.cpp
     ${PROJECT_SOURCE_DIR}/src/w2rp/writerProxy.cpp
     ${PROJECT_SOURCE_DIR}/src/w2rp/log.cpp
-
-    # ${PROJECT_SOURCE_DIR}/src/w2rp/w2rp-tp.cpp
-    
 )
 
 ## Define library content
@@ -59,7 +58,13 @@ target_include_directories(w2rp
   $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(w2rp PUBLIC boost_system boost_log boost_log_setup boost_thread pthread) #lttng-ust
+target_link_libraries(w2rp PUBLIC 
+    Boost::thread 
+    Boost::log 
+    Boost::log_setup 
+    Boost::system 
+    Threads::Threads
+)
 
 target_compile_definitions(w2rp PUBLIC BOOST_LOG_DYN_LINK)
 
@@ -79,6 +84,15 @@ endif()
 if(CONSOLE)
     message("Console logging activated")
     target_compile_definitions(w2rp PUBLIC CONSOLE_ON)
+endif()
+
+# Enable debug via -DDEBUG during build process
+if(DEBUG)
+    message("Debug mode activated")
+    target_compile_definitions(w2rp PUBLIC DEBUG_ON)
+else()
+    message("Release mode activated")
+    target_compile_definitions(w2rp PUBLIC RELEASE_ON)
 endif()
 
 target_compile_options(w2rp PUBLIC -g)
@@ -144,45 +158,45 @@ file(GLOB_RECURSE ALL_HEADERS
 
 set(SRC_FILES 
   ${ALL_HEADERS}
-
-  ${PROJECT_SOURCE_DIR}/src/w2rp/config/readerConfig.cpp
-  ${PROJECT_SOURCE_DIR}/src/w2rp/config/writerConfig.cpp
-  ${PROJECT_SOURCE_DIR}/src/w2rp/config/setupConfig.cpp
 )
 
-# ## TimedEvent testing
+## TimedEvent testing
 add_executable(timer_test_function test/unit_test/timer/timer_test_function.cpp ${SRC_FILES})
 target_link_libraries(timer_test_function w2rp)
 
-# ## TimedEvent testing
+## TimedEvent testing
 add_executable(timer_test_object test/unit_test/timer/timer_test_object.cpp ${SRC_FILES})
 target_link_libraries(timer_test_object w2rp)
 
-# ## Active Wait testing
+## Active Wait testing
 add_executable(timer_test_active test/unit_test/timer/timer_test_active_wait.cpp ${SRC_FILES})
 target_link_libraries(timer_test_active w2rp)
 
-# ## Writer testing
-# add_executable(writer_test test/unit_test/entities/writer_test.cpp ${SRC_FILES})
-# target_link_libraries(writer_test w2rp)
+## Nano Sleep testing
+add_executable(timer_test_nano_sleep test/unit_test/timer/timer_test_nano_sleep.cpp ${SRC_FILES})
+target_link_libraries(timer_test_nano_sleep w2rp)
 
-# ## Reader testing
-# add_executable(reader_test test/unit_test/entities/reader_test.cpp ${SRC_FILES})
-# target_link_libraries(reader_test w2rp)
+## Writer testing
+add_executable(writer_test test/unit_test/entities/writer_test.cpp ${SRC_FILES})
+target_link_libraries(writer_test w2rp)
 
-# ## Config testing
-# add_executable(readConfig_test test/unit_test/config/readConfig_test.cpp ${SRC_FILES})
-# target_link_libraries(readConfig_test w2rp)
+## Reader testing
+add_executable(reader_test test/unit_test/entities/reader_test.cpp ${SRC_FILES})
+target_link_libraries(reader_test w2rp)
 
-## Writer testing (video stream)
-add_executable(writer_test_video examples/app_videoStream/writer_test.cpp ${SRC_FILES})
-target_link_libraries(writer_test_video w2rp ${OpenCV_LIBS})
+## Config testing
+add_executable(readConfig_test test/unit_test/config/readConfig_test.cpp ${SRC_FILES})
+target_link_libraries(readConfig_test w2rp)
 
-## Reader testing (video stream)
-add_executable(reader_test_video examples/app_videoStream/reader_test.cpp ${SRC_FILES})
-target_link_libraries(reader_test_video w2rp ${OpenCV_LIBS})
+## GUID testing
+add_executable(guid_test test/unit_test/guid/guid_test.cpp ${SRC_FILES})
+target_link_libraries(guid_test w2rp)
 
-# ## GUID testing
-# add_executable(guid_test test/unit_test/guid/guid_test.cpp ${SRC_FILES})
-# target_link_libraries(guid_test w2rp)
+# Writer example
+add_executable(dummy_writer examples/dummy/dummy_writer.cpp ${SRC_FILES})
+target_link_libraries(dummy_writer w2rp ${OpenCV_LIBS})
+
+# Reader example 
+add_executable(dummy_reader examples/dummy/dummy_reader.cpp ${SRC_FILES})
+target_link_libraries(dummy_reader w2rp ${OpenCV_LIBS})
 

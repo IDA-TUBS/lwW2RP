@@ -17,8 +17,6 @@ bool handler()
     return true;
 }
 
-
-
 int main()
 {
     // example using functions
@@ -33,6 +31,7 @@ int main()
         cycle,
         handler,
         ACTIVEWAIT_TIMER,
+        true,
         true
     );
     

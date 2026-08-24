@@ -40,6 +40,7 @@ class PeriodicEvent
         std::function<bool()> callback,
         TimerType timer,
         bool autoStart,
+        bool immediateExecution,
         Args... args
     ):
         service_(service),
@@ -48,7 +49,7 @@ class PeriodicEvent
         args_(std::make_tuple(args...))
     {
         auto timerCallback = [&]() { return eventCallback(); }; 
-        id = service_.registerTimer(interval, timerCallback, timer, autoStart);
+        id = service_.registerTimer(interval, timerCallback, timer, autoStart, immediateExecution);
         if(autoStart)
         {
             isActive_ = true;  
@@ -65,7 +66,7 @@ class PeriodicEvent
         std::function<bool()> callback,
         Args... args
     ):
-        PeriodicEvent(service, interval, callback, STEADY_TIMER, true, args...)
+        PeriodicEvent(service, interval, callback, STEADY_TIMER, true, true, args...)
     {};
     
     /**
@@ -81,10 +82,10 @@ class PeriodicEvent
      * @brief restart the timed event
      * 
      */
-    void restart()
+    void restart(bool immediateExecution = true)
     {
         auto timerCallback = [&]() { return eventCallback(); }; 
-        service_.restartTimer(id, interval_, timerCallback);
+        service_.restartTimer(id, interval_, timerCallback, immediateExecution);
         isActive_ = true;
     };
 
@@ -93,10 +94,10 @@ class PeriodicEvent
      * 
      * @param interval interval for event activation
      */
-    void restart(std::chrono::microseconds interval)
+    void restart(std::chrono::microseconds interval, bool immediateExecution = true)
     {
         interval_ = interval;
-        restart();
+        restart(immediateExecution);
     }
 
     /**
@@ -155,12 +156,18 @@ class PeriodicEvent
     /************************************************************************/
     private:
     
+    // Non-copyable, non-movable: timers manage resources in the TimerManager
+    PeriodicEvent(const PeriodicEvent&) = delete;
+    PeriodicEvent& operator=(const PeriodicEvent&) = delete;
+    PeriodicEvent(PeriodicEvent&&) = delete;
+    PeriodicEvent& operator=(PeriodicEvent&&) = delete;
+
     timerID id;
     TimerManager& service_;
     std::chrono::microseconds interval_;
     std::function<bool()> callback_;
     std::tuple<Args...> args_;
-    bool isActive_;
+    bool isActive_ = false;
 };
 
 // Deduction guide for TimedEvent Class

@@ -1,604 +1,354 @@
-/*
- *
- */
-
 #include <w2rp/entities/writer.hpp>
 #include <stdexcept>
-// #include <w2rp/w2rp-tp.h>
 
+#include <sstream>
+#include <bitset>
 
 namespace w2rp {
 
-Writer::Writer()
-{
-}
-
-Writer::Writer(uint16_t participant_id, config::writerCfg cfg)
+Writer::Writer(std::uint16_t participant_id, config::writerCfg cfg)
 :
-    config(cfg)
-{
-    init(participant_id);
-}
-
-Writer::~Writer()
-{
-    // logInfo("[Writer] delete")
-    matchedReaders.clear();
-    historyCache.clear();
-    sendQueue.clear();
-
-    delete netParser;
-}
-
-void Writer::init(uint16_t participant_id)
+    config(cfg),
+    matchedReader(
+        config.reader_id().at(0), 
+        cfg.sizeCache(), 
+        cfg.nackSuppressionDuration(), 
+        cfg.deadline(),
+        cfg.shapingTime(),
+        cfg.aggregation_size()
+    ),
+    historyCache(cfg.sizeCache()),
+    CommInterface(config.endpoint(), config.readerEndpoint(0)),
+    shapingTimer(
+        timer_manager,
+        cfg.shapingTime(),
+        std::bind(&Writer::sendMessage, this),
+        NANOSLEEP_TIMER,
+        false,
+        false
+    ),
+    timeoutTimer(
+        timer_manager,
+        std::bind(&Writer::handleTimeout, this)
+    )
 {
     // generate guid prefix
     GuidPrefix_t guidPrefix;
     guidPrefixManager::instance().create(
-        uint32_t(0x512),
+        config.host_id(),
         participant_id,
         guidPrefix
     );
 
     // set guid
     guid = GUID_t(guidPrefix, c_entityID_writer);
-
-    // logInfo("[WRITER] GUID: " << guid);
-
-
-    sequenceNumberCnt = 0;
-
-    // initialize sample fragmenter
-    sampleFragmenter = new Fragmentation(config.fragmentSize());
-
-
-    /*****************************************************************************************************************/
-    /***************************** (!) Needs major overhaul for Multicast extension (!) ******************************/
-    /*****************************************************************************************************************/
-    // reader proxy initialization
-    for(uint32_t id: config.reader_id()) {
-        ReaderProxy* rp = nullptr;
-        if(config.nackSuppressionDuration() != std::chrono::system_clock::duration::zero())
-        {
-            rp = new ReaderProxy(id, this->config.sizeCache(), config.nackSuppressionDuration());
-        }
-        else
-        {
-            rp = new ReaderProxy(id, this->config.sizeCache());
-        }
-        matchedReaders.push_back(rp);
-    }
-    /*****************************************************************************************************************/
-    /*****************************************************************************************************************/
-
-
-    // init net message parser
-    netParser = new NetMessageParser();
-
-    // init UDPComm object
-    socket_endpoint rx_socketEndpoint = config.endpoint();
-    socket_endpoint tx_socketEndpoint = config.readerEndpoint(0);
-
-    logDebug("Writer: " << rx_socketEndpoint.ip_addr << ":" << rx_socketEndpoint.port)
-
-    CommInterface = new UDPComm(rx_socketEndpoint, tx_socketEndpoint);
+    logDebug("[WRITER] GUID: " << guid);
 
     // create receive and receive handler threads
-    recvThread = std::thread{&Writer::receiveMsg, this};
-    handlerThread = std::thread{&Writer::handleMsg, this};
-
-    // init timers
-    std::chrono::microseconds cycle = config.shapingTime(); 
-
-    shapingTimer = new PeriodicEvent(
-        this->timer_manager,
-        cycle,
-        std::bind(&Writer::sendMessage, this),
-        ACTIVEWAIT_TIMER,
-        true
-    );
-    
-    // only start timer once data available, hence stop immediately
-    shapingTimer->cancel();
-
-    timeoutTimer = new TimedEvent(
-        this->timer_manager,
-        std::bind(&Writer::handleTimeout, this)
-    );
+    writerThread = std::thread{&Writer::sampleProcessing, this};
+    recvThread = std::thread{&Writer::receiveMessage, this};
+    handlerThread = std::thread{&Writer::handleMessage, this};
 
     timer_manager.start();
 
     currentSampleNumber = -1;
     fragmentCounter = 0;
     hbCounter = 0;
-
-    initialized = true;
+    sequenceNumberCnt = 0;
 
     logInfo("[Writer] finished initialization")
 }
 
-void Writer::init(uint16_t participant_id, config::writerCfg cfg)
-{
-    setConfig(cfg);
-    init(participant_id);
-}
+Writer::~Writer()
+{}
 
 /********************************************/
 /** Callbacks triggered by external events **/
 /********************************************/
 
-void Writer::receiveMsg()
+void Writer::receiveMessage()
 {
+    pthread_setname_np(pthread_self(), "recvThread");
     // msg to store received data
     MessageNet_t msg;
     udp::endpoint reader;
 
     while(true)
     {
-        reader = CommInterface->receiveMsg(msg);
+        reader = CommInterface.receiveMsg(msg);
         receiveQueue.enqueue(msg);
-        // logDebug("Reader: " << reader.address().to_string() << ":" << reader.port())
     }
 }
 
-
-void Writer::handleMsg()
+void Writer::handleMessage()
 {
-    // msg to store received data
+    pthread_setname_np(pthread_self(), "handlerThread");
     MessageNet_t msg;
+    W2RPHeader header;
+    std::vector<SubmessageType> submessages;
 
     while(true)
     {
-        msg = receiveQueue.dequeue();
-        // logDebug("[Writer] received message")
-        handleMessages(&msg);
-    }
-}
+        msg = receiveQueue.dequeue();        
+        header.netToHeader(&msg);
+        submessages = messageUtils::getSubmessages(&msg);
 
+        NackProcessor processor(this, &header);
 
-
-bool Writer::handleMessages(MessageNet_t *net)
-{
-    W2RPHeader header;
-    header.netToHeader(net);
-    
-    // first extract submessages from msg
-    std::vector<SubmessageBase*> res;
-
-    netParser->getSubmessages(net, &res);
-    
-    // call corresponding submsg handler functions
-    NackFrag* nackFrag;
-    for(auto subMsg : res)
-    {
-        switch (subMsg->subMsgHeader->submessageId)
+        for(auto& subMsg : submessages)
         {
-            case NACK_FRAG:
-                // logDebug("[Writer] received NackFrag")
-                nackFrag = (NackFrag*)(subMsg);
-                handleNackFrag(&header, nackFrag);
-                break;
-            default:
-                // logDebug("[Writer] received unknown message")
-                break;
+            std::visit(processor, subMsg);
         }
     }
-
-    return true;
 }
 
-
-bool Writer::write(SerializedPayload *data)
+void Writer::write(SerializedPayload& data)
 {
-    // logInfo("[Writer] new sample received")
-    if(initialized)
+    sampleQueue.enqueue(data);
+}
+
+void Writer::sampleProcessing()
+{
+    pthread_setname_np(pthread_self(), "writerThread");
+
+    // Pin this thread to Core 4 (index 4)
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    CPU_SET(4, &cpuset);
+    pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
+
+    SerializedPayload data;
+    while(true)
     {
-        return handleNewSample(data);
-    }
-    else
-    {
-        logError("Writer is uninitialized, no config available")
-        throw std::invalid_argument("initialization missing, config not found");
-        return false;
+        data = sampleQueue.dequeue();
+        handleNewSample(data);
     }
 }
 
-
-bool Writer::handleNewSample(SerializedPayload *data)
+bool Writer::handleNewSample(SerializedPayload& data)
 {
     auto timestamp_now = std::chrono::system_clock::now();
-    logTrace("SN Arrival," << sequenceNumberCnt)
-    // logInfo("[Writer] handleNewSample")
-
-    // first check existing samples for deadline expiry
-    checkSampleLiveliness();
-    addSampleToCache(data, timestamp_now);
-
-    return true;
-}
-
-bool Writer::addSampleToCache(SerializedPayload *data, std::chrono::system_clock::time_point timestamp)
-{
-    // logInfo("[Writer] addSampleToCache")
-    // create CacheChange object
-    CacheChange *newChange = new CacheChange(sequenceNumberCnt++, data->length, config.fragmentSize(), timestamp);
-    // logDebug("[Writer] created CacheChange comprising " << newChange->numberFragments << " fragments; data length: " << data->length)
-
-    // fragment sample
-    std::vector<SampleFragment*> fragments;
-    bool compare = false;
-    sampleFragmenter->fragmentPayload(data, newChange, &fragments, timestamp, compare);
-    // logDebug("[Writer] fragmented data")
-    newChange->setFragmentArray(&fragments);
-    // logDebug("[Writer] added fragmented data to change")
-
-
-    // add CacheChange to history
-    if(historyCache.size() == this->config.sizeCache())
+    logTrace("SN Arrival," << (sequenceNumberCnt+1) << "," << data.size())
+    
+    if(!addSampleToCache(data, timestamp_now))
     {
-        // logDebug("[Writer] history full")
         return false;
     }
-    historyCache.push_back(newChange);
-    // logDebug("[Writer] added change to history")
 
-
-    // generate ChangeForReaders based on CacheChange and add to reader proxies (done by ReaderProxy itself)
-    for (auto rp: matchedReaders)
-    {
-        // logDebug("[Writer] adding change to readerProxy: " << unsigned(rp->readerID))
-        rp->addChange(*newChange);
-    }
-    // logDebug("[Writer] added change to readerProxies")
-
-    // start shaping timer for sample transmission to begin
-    if(!shapingTimer->isActive())
-    {
-        shapingTimer->restart();
-        // logDebug("[Writer] started shaping timer")
-    }
-
-    return true;
-}
-
-
-void Writer::handleNackFrag(W2RPHeader *header, NackFrag *msg)
-{    
-    // Simplification: One reader per host -> Identify matched readers based on host ID
-    uint32_t readerID = header->guidPrefix.get_host();
-
-    // assumption and simplifications for PoC: readerID always correspond to index in matchedReaders
-    for(ReaderProxy* rp: matchedReaders)
-    {
-        if(rp->readerID == readerID)
-        {
-            // only handle NackFrag if sample still in history, if already complete or expired just ignore NackFrag
-            if(rp->processNack(msg))
-            {
-                unsigned int sequenceNumber = msg->writerSN;
-                bool complete = rp->checkSampleCompleteness(sequenceNumber);
-                if(complete)
-                {
-                    logTrace("SN Complete," << sequenceNumber)
-                }
-
-                // restart shapingTimer if not active any more and sample not yet complete
-                if(!shapingTimer->isActive())
-                {
-                    shapingTimer->restart();
-                }
-            }
-            break; // corresponding reader found, exit loop
-        }
-    }
-}
-
-
-/*********************************************/
-/* methods used during fragment transmission */
-/*********************************************/
-
-
-bool Writer::sendMessage()
-{
-    logTrace("SAMPLE_START," << ++send_counter)
-    // take timestamp for adjusting shaping cycle to properly match configured shaping time
-    auto ts_start = std::chrono::steady_clock::now();
-    
-    // tracepoint(w2rp_trace, tracepoint_writer_int, "SAMPLE_START, : ", ++send_counter);
-
-    // logDebug("[Writer] sendMessage()")
     // check liveliness of sample in history cache, removes outdated samples
     checkSampleLiveliness();
 
     // check whether a sample has been successfully transmitted to all readers
     removeCompleteSamples();
 
-    /***********************************************************************************************************************************************/
-    /*************************************************** BEGIN CRITICAL SECTION *******************************************************************/
-    std::unique_lock<std::mutex> lock(history_mutex); // lock history access for the duration of the modification
-    // if no sample left to transmit: no need to transmit anything or schedule a new transmission
-    if(historyCache.size() == 0)
+    return true;
+}
+
+bool Writer::addSampleToCache(SerializedPayload& data, std::chrono::system_clock::time_point timestamp)
+{
+    std::unique_lock<std::mutex> lock(history_mutex);
+    // Assumption for PoC: samples in cache will be outdated before cache is full.
+    // Outdated samples are removed in checkSampleLiveliness() and removeCompleteSamples() as part of handleNewSample()
+    if(historyCache.size() == historyCache.capacity())
     {
-        // logDebug("[Writer] sendMessage: history empty, halt shaping")
+        logDebug("[Writer] history full")
         return false;
     }
+    
+    // create CacheChange object
+    CacheChange newChange(data, ++sequenceNumberCnt, data.size(), config.fragmentSize(), timestamp, config.deadline());
+    logDebug(
+        "[Writer] created CacheChange " << sequenceNumberCnt 
+        << ":" << newChange.numberFragments 
+        << " fragments; data length: " << data.size()
+        << " lifetime: " << std::chrono::duration_cast<std::chrono::milliseconds>(newChange.lifeTime).count() << " ms"
+    )
+    
+    // add to history cache
+    historyCache.push_back(newChange.sequenceNumber, std::move(newChange));
 
-    if(currentSampleNumber != historyCache.front()->sequenceNumber)
-    {
-        // logDebug("[Writer] sendMessage: fill send queue with new sample")
-        // new sample to transmit
-        this->currentSampleNumber = historyCache.front()->sequenceNumber;
-        // priming send queue with all fragments of the new sample
-        fillSendQueueWithSample(this->currentSampleNumber);
-    }
-    lock.unlock(); // modification complete, unlock history
-    /*************************************************** END CRITICAL SECTION ********************************************************************/
-    /***********************************************************************************************************************************************/
+    // generate ChangeForReaders based on CacheChange and add to reader proxy (done by ReaderProxy itself)
+    matchedReader.addChange(historyCache.back());
 
-    // differentiate two scenarios:
-    // 1. scenario: send queue is empty, select a new fragment for tx or retx
-    if(sendQueue.empty())
-    {
-        // logDebug("[Writer] sendMessage: fill queue for retx")
-        // add new fragment to queue
-        SampleFragment* sf = nullptr;
-        ReaderProxy *rp = nullptr;
+    lock.unlock();
 
-        for(uint32_t i = 0; i < config.aggregation_size(); i++)
-        {
-
-            // then select a reader
-            if(rp = selectReader())
-            {
-                // finally select a fragment from the previously chosen reader for transmission
-
-                if(sf = selectNextFragment(rp))
-                {
-                    // add sample fragment to send queue
-                    // use actual 'data' sample fragment from history cache instead of sf from reader proxy
-                    auto sfToSend = (sf->baseChange->getFragmentArray())[sf->fragmentStartingNum];
-                    sendQueue.push_back(sfToSend);
-                }
-            }
-        }
-    }
-    // 2. scenario: send queue not empty (any more)
-    if(!sendQueue.empty())
-    {
-        // logDebug("[Writer] sendMessage: select fragment for (re)tx")
-        auto t_now = std::chrono::system_clock::now();
-
-        // list for storing all packets that shall be transmitted in a burst
-        std::vector<MessageNet_t*> messages;
-        SampleFragment *latestSF;
-
-
-        for(uint32_t i = 0; i < config.aggregation_size(); i++)
-        {
-            if(sendQueue.empty())
-            {
-                break;
-            }
-            SampleFragment* sf = sendQueue.front();
-            latestSF = sf;
-            // update currentSN
-            currentChange = sf->baseChange;
-            
-            sendQueue.pop_front();
-            // update fragment status (at all reader proxies if multicast is used)
-            for(auto rp: matchedReaders)
-            {
-                rp->updateFragmentStatus(SENT, sf->baseChange->sequenceNumber, sf->fragmentStartingNum, t_now);
-
-                // check for timeout situation: reader has no fragments in state 'UNSENT' left
-                if(rp->checkForTimeout(sf->baseChange->sequenceNumber))
-                {
-                    // timeout needed
-
-                    // determine TO time of fragment
-                    auto toTS = t_now + config.timeout();
-                    rp->setTimeoutTimestamp(toTS);
-
-                    timeoutQueue.push(rp);
-
-                    if(!timeoutTimer->isActive())
-                    {
-                        timeoutTimer->restart(toTS);
-                    }
-                }
-            
-            // serialization (toNet) and concatenation of submessages
-            
-            // create W2RP header
-            W2RPHeader *header = new W2RPHeader(guid.prefix);
-
-            // create submessages: DataFrag and HBFrag
-            DataFrag* data;
-            createDataFrag(sf, data);
-
-            
-            MessageNet_t *txMsg = new MessageNet_t;
-            header->headerToNet(txMsg);
-            data->dataToNet(txMsg);            
-
-            messages.push_back(txMsg);
-            }
-        }
-
-        uint32_t num_messages = messages.size();
-        uint32_t i = 1;
-
-        // logDebug("Fragment Burst")
-        for (auto txMsg: messages)
-        {
-            if (i == num_messages)
-            {
-                HeartbeatFrag* hb;
-                this->createHBFrag(latestSF, hb);
-                hb->hbToNet(txMsg);
-            }
-
-            // send message via UDP
-            CommInterface->sendMsg(*txMsg);
-            // logDebug("Transmitted Fragment ...")
-
-            // delete header;
-            // delete data;
-            // delete hb;
-            delete txMsg;
-            i++;
-        }        
-    }
-    // if send queue still empty, no need to schedule new fragment transmission,
-    // wait for next sample top arrive
-    else
-    {
-        // logInfo("[Writer] sendMessage: no fragments available, halt shaping")
-        // ...
-        return false;
-    }
+    // start shaping timer for sample transmission to begin
+    bool immediateExecution = true;
+    shapingTimer.restart(immediateExecution);
 
     return true;
 }
 
-ReaderProxy* Writer::selectReader()
+void Writer::handleNackFrag(W2RPHeader *header, NackFrag *msg)
 {
-    ReaderProxy *nextReader = nullptr;
+    logDebug(
+        "[Writer] handleNackFrag() - received NackFrag: SN " << msg->writerSequenceNumber 
+        << ", lowestFN " << msg->fragmentStatus.base 
+        << ", highestFN " << (msg->fragmentStatus.base + NACK_BITMAP_SIZE*8 - 1)
+        << " from Reader " << header->guidPrefix.get_host()
+    )
+    logTrace("FN NACK," << msg->writerSequenceNumber << "," << msg->fragmentStatus.base)
 
-    // for mode 1:
-    uint32_t highestPriority = std::numeric_limits<uint32_t>::max();
-    // for mode 2:
-    uint32_t leastNacks = std::numeric_limits<uint32_t>::max();
-    // for mode 3:
-    uint32_t mostNacks = 0;
-    // find the highest priority reader that still hasn't received the current sample completely
-    for(auto rp: matchedReaders)
+    // Simplification: One reader per host -> Identify matched readers based on host ID
+    std::uint32_t readerID = header->guidPrefix.get_host();
+
+    // tracing info
+    uint64_t frag_num = 0;
+
+    if(matchedReader.readerID == readerID)
     {
-        // TODO if needed insert checking for deadline violation condition here:
-        // check whether the remaining slot suffice for transmitting sending all
-        // remaining fragments: N_f,rem >= N_f,missing
-
-        if(config.prioMode() == FIXED)
+        switch(matchedReader.processNack(msg))
         {
-            // Prio Mode 1: Using fixed priorities
-
-            // note: if everything is working correctly currentSampleNumber will be also
-            // be the sequence number of the first element in the reader proxy's history
-            if((rp->priority < highestPriority) && !(rp->checkSampleCompleteness(this->currentSampleNumber)))
-            {
-                nextReader = rp;
-                highestPriority = rp->priority;
-            }
-        }
-        else if(config.prioMode() == ADAPTIVE_LOW_PDR)
-        {
-            // Prio Mode 2: Use adaptive prioritization based on packet delivery rate (PDR)
-            // select the reader with the most negatively acknowledged fragments
-            // works best for equal FERs at each reader
-            if((rp->getUnsentFragments(this->currentSampleNumber).size() > mostNacks) && !(rp->checkSampleCompleteness(currentSampleNumber)))
-            {
-                mostNacks = rp->getUnsentFragments(currentSampleNumber).size();
-                nextReader = rp;
-            }
-
-        }
-        else if(config.prioMode() == ADAPTIVE_HIGH_PDR)
-        {
-            // Prio Mode 3: Use adaptive prioritization based on packet delivery rate (PDR)
-            // select the reader with the least amount of negatively acknowledged fragments
-            if((rp->getUnsentFragments(this->currentSampleNumber).size() < leastNacks) && !(rp->checkSampleCompleteness(currentSampleNumber)))
-            {
-                leastNacks = rp->getUnsentFragments(this->currentSampleNumber).size();
-                nextReader = rp;
-            }
+            case ReaderProxy::CHANGE_NOT_FOUND:
+                logDebug("[Writer] handleNackFrag() -  CHANGE_NOT_FOUND")
+                logTrace("SN NotFound," << msg->writerSequenceNumber)
+                break;
+            case ReaderProxy::CHANGE_INCOMPLETE:
+                /** 
+                 * ! NOTE: The Deadline check is disabled here for the PoC, as the NackFrag reception is to slow 
+                 * ! to react to missing fragments during the retransmission pahse. 
+                 * ! Hence, pro active retransmission scheduling based on a fragment transmission budget is implemented.
+                 */
+                // if(isDeadlineAchievable(frag_num))
+                // {
+                //     if(!shapingTimer.isActive())
+                //     {
+                //         shapingTimer.restart();
+                //     }
+                // }
+                // else{
+                //     logInfo("[Writer] handleNackFrag() -  Sample " << msg->writerSequenceNumber << " cannot meet deadline, removing");
+                //     logTrace("SN DeadlineMissed," << msg->writerSequenceNumber << "," << frag_num)
+                //     removeCurrentSample();
+                // }
+                logDebug("[Writer] handleNackFrag() -  CHANGE_INCOMPLETE")
+                break;
+            case ReaderProxy::CHANGE_EXHAUSTED_RETRY_LIMIT:
+                logDebug("[Writer] handleNackFrag() -  CHANGE_EXHAUSTED_RETRY_LIMIT")
+                break;
+            case ReaderProxy::CHANGE_COMPLETE:
+                logDebug("[Writer] handleNackFrag() -  CHANGE_COMPLETE")
+                logTrace("SN Complete," << msg->writerSequenceNumber)
+                removeCurrentSample();
+                break;
+            default:
+                logDebug("[Writer] handleNackFrag() -  UNKNOWN STATUS")
+                break;
         }
     }
-
-
-    return nextReader;
 }
 
-SampleFragment* Writer::selectNextFragment(ReaderProxy *rp)
+/*********************************************/
+/* methods used during fragment transmission */
+/*********************************************/
+bool Writer::sendMessage()
 {
-    // used for retransmissions only
-    // find the unacknowledged fragment and return that fragment for transmission
-    SampleFragment *tmp = nullptr;
-    SampleFragment **fragments = rp->getCurrentChange()->getFragmentArray();
-    if(rp->getCurrentChange())
+    // take timestamp for adjusting shaping cycle to properly match configured shaping time
+    auto ts_start = std::chrono::steady_clock::now();
+
+    /***********************************************************************************************************************************************/
+    /*************************************************** BEGIN CRITICAL SECTION *******************************************************************/
+    std::unique_lock<std::mutex> lock(history_mutex);
+    // if no sample left to transmit: no need to transmit anything or schedule a new transmission
+    if(historyCache.size() == 0)
     {
-        SampleFragment **fragments = rp->getCurrentChange()->getFragmentArray();
-        for (int i = 0; i < rp->getCurrentChange()->numberFragments; i++)
+        logDebug("[Writer] sendMessage() -  history empty, halt shaping")
+        logTrace("SN NoSample, 0")
+        return false;
+    }
+
+    // Check current sample number to update out-dated pointer values if history.front() has changed
+    if(currentSampleNumber != historyCache.front().sequenceNumber)
+    {
+        logInfo("[Writer] sendMessage() - transmitting sample: " << historyCache.front().sequenceNumber)
+        currentSampleNumber = historyCache.front().sequenceNumber;
+        logTrace("SN START," << currentSampleNumber << "," << historyCache.front().numberFragments)
+        currentChange = &historyCache.front();
+        currentChangeForReader = matchedReader.getChange(currentChange->sequenceNumber);
+    }
+
+    // create W2RP header
+    W2RPHeader header(guid.prefix);
+    HeartbeatFrag* hbFrag = nullptr;
+    MessageNet_t txMsg;
+
+    logDebug("[Writer] sendMessage() - executing send routine")
+    
+    for(std::uint32_t i = 0; i < config.aggregation_size(); i++)
+    {
+        std::uint64_t fragmentNumber = currentChangeForReader->getFragmentForTx();
+        SampleFragment* sf = nullptr;
+        if (fragmentNumber != 0)
         {
-            SampleFragment* sf = fragments[i];
-            if (sf->sent || sf->acked) {
-                continue;
-            }
-
-            // NOTE: already set fragment as sent so that aggregation aware burst creation is possible
-            if(config.aggregation_size() > 1)
-            {
-                rp->updateFragmentStatus(SENT, sf->baseChange->sequenceNumber, sf->fragmentStartingNum, std::chrono::system_clock::now());
-            } 
-
-            // take the first unsent and unacknowledged fragment
-            tmp = sf;
+            sf = currentChange->getFragment(fragmentNumber);
+        }
+        else
+        {
+            logDebug("[Writer] sendMessage() -  No fragment available for transmission, end aggregation")
+            logTrace("SN NoFragment," << currentChange->sequenceNumber)
             break;
         }
-    {}
-    return tmp;
+
+        // Simplification: One reader per host -> Identify matched readers based on host ID
+        DataFrag data(config.host_id(), matchedReader.readerID, *currentChange, *sf);
+
+        // Check if heartbeat needs to be sent
+        if((i == (config.aggregation_size() - 1)) || (currentChangeForReader->unsentCount() == 0))
+        {
+            HeartbeatFrag hb(
+                config.host_id(), 
+                matchedReader.readerID, 
+                currentChange->sequenceNumber, 
+                currentChangeForReader->highestSent, 
+                hbCounter++
+            );
+            hbFrag = &hb;
+        }
+        else{
+            hbFrag = nullptr;
+        }
+        
+        // serialization (toNet) and concatenation of submessages
+        messageUtils::buildDataMessage(&txMsg, &header, &data, hbFrag);
+        CommInterface.sendMsg(txMsg);
+        logDebug(
+            "[Writer] sendMessage() -  sent DataFrag: SN " << currentChange->sequenceNumber 
+            << ", Fragment " << sf->number 
+            << " to Reader " << matchedReader.readerID
+        )
+        logTrace("FN Sent," << currentChange->sequenceNumber << "," << sf->number)
     }
-}
+    lock.unlock();
+    /*************************************************** END CRITICAL SECTION ********************************************************************/
+    /***********************************************************************************************************************************************/
 
-
-
-void Writer::fillSendQueueWithSample(uint32_t sequenceNumber)
-{
-    // for multicast all readers need the same data. Just take the first reader here,
-    // as it does not make a difference in the transmission phase which on is used
-    // for fragment selection - each readers needs each fragment once
-
-    ReaderProxy* rp = matchedReaders[0];
-
-    auto unsentFragments = rp->getUnsentFragments(sequenceNumber);
-    // use actual 'data' sample fragment from history cache instead of sf from reader proxy
-    for (auto sf: unsentFragments)
+    if(currentChangeForReader->unsentCount() < config.aggregation_size())
     {
-        auto sfToSend = (sf->baseChange->getFragmentArray())[sf->fragmentStartingNum];
-        sendQueue.push_back(sfToSend);
+        logDebug("[Writer] sendMessage() -  less fragments left than aggregation size, schedule timeout.")
+        // configure timeout for reset of timed-out fragments and retransmission, if needed
+        auto reset_timepoint = std::chrono::system_clock::now() + config.timeout();
+        matchedReader.setTimeout(reset_timepoint, currentSampleNumber);
+        if(!timeoutTimer.isActive())
+        {
+            timeoutTimer.restart(reset_timepoint);
+        }
+        
+        if(currentChangeForReader->unsentCount() == 0)
+        {
+            logDebug("[Writer] sendMessage() -  all fragments sent for current sample")
+        }
     }
+
+    if(!currentChange->isValid())
+    {
+        logInfo("[Writer] sendMessage() -  Sample " << currentSampleNumber << " cannot meet deadline, removing");
+        logTrace("SN DeadlineMissed," << currentSampleNumber << "," << currentChangeForReader->unsentCount())
+        removeCurrentSample();
+    }
+
+    // continue shaping timer for next transmission opportunity
+    return true;
 }
-
-
-void Writer::createDataFrag(SampleFragment* sf, DataFrag*& ret)
-{
-    // ?????????????????????????????????????????
-    // TODO broad/multicast readerID = numeric_limits<uint32_t>::max()? message.h #define ID_BROADCAST numeric_limits<uint32_t>::max()
-    // uint32_t readerID = 0;
-    // ????????????????????????????????????????
-    ret = new DataFrag(c_entityID_reader.to_uint32(), c_entityID_writer.to_uint32(),
-                        sf->baseChange->sequenceNumber, sf->fragmentStartingNum,
-                        sf->baseChange->sampleSize, sf->dataSize, sf->data, sf->baseChange->arrivalTime);
-}
-
-
-void Writer::createHBFrag(SampleFragment* sf, HeartbeatFrag*& ret)
-{
-    // ????????????????????????????????????????
-    // TODO broad/multicast readerID = 0? message.h #define ID_BROADCAST 0
-    // uint32_t readerID = 0;
-    // ????????????????????????????????????????
-
-    // Hardcoded + static entityIDs, since lightweightW2RP only supports a single type of reader and writer entities.
-    ret = new HeartbeatFrag(c_entityID_reader.to_uint32(), c_entityID_writer.to_uint32(),
-                            sf->baseChange->sequenceNumber,
-                            matchedReaders[0]->getCurrentChange()->highestFNSend,
-                            hbCounter);
-
-    hbCounter++;
-}
-
-
 
 /*************************************************/
 /* methods for checking validity of cacheChanges */
@@ -606,155 +356,42 @@ void Writer::createHBFrag(SampleFragment* sf, HeartbeatFrag*& ret)
 
 void Writer::checkSampleLiveliness()
 {
-    /***********************************************************************************************************************************************/
-    /*************************************************** BEGIN CRITICAL SECTION *******************************************************************/
     std::unique_lock<std::mutex> lock(history_mutex); // lock history access for the duration of the modification
 
-    // logDebug("[Writer] checkSampleLiveliness")
-    if(historyCache.size() == 0)
+    while(!historyCache.empty())
     {
-        while(sendQueue.size() > 0){
-            SampleFragment* to_delete_element = sendQueue.front();
-            sendQueue.erase(sendQueue.begin());
-            delete to_delete_element;
-        }
-//        sendQueue.clear();
-        lock.unlock();
-        return;
-    }
-
-    std::vector<uint32_t> deprecatedSNs;
-    std::vector<CacheChange*> toDelete;
-
-    // check liveliness of samples in history cache, if deadline expired remove sample from cache and ReaderProxies
-    // auto* change = historyCache.front();
-    while(1)
-    {
-        auto* change = historyCache.front();
-        if(!change->isValid(this->config.deadline()))
+        auto& change = historyCache.front();
+        if(!change.isValid())
         {
-            deprecatedSNs.push_back(change->sequenceNumber);
-            // logDebug("[Writer][checkSampleLiveliness] delete change " << change->sequenceNumber << " from history")
+            logDebug("[Writer] checkSampleLiveliness() - delete change " << change.sequenceNumber << " from history")
+            matchedReader.removeChange(change.sequenceNumber);
             historyCache.pop_front();
-            toDelete.push_back(change); // delete all expired changes in the end
-            if(historyCache.size() == 0)
-            {
-                // deleted only existing entry in cache
-                break;
-            }
         }
-        // assumption here: samples put into history cache in the right order AND
-        // all samples have the same deadline, hence any sample in the history
-        // following the first] valid sample is also still valid!
-        break;
-    }
-    
-
-    for (uint32_t sequenceNumber: deprecatedSNs)
-    {
-
-        for (auto rp: matchedReaders)
+        else
         {
-
-            if(!(rp->changeExists(sequenceNumber)))
-            {
-                // logDebug("[WRITER] (checkSampleliveness) - continue")
-                continue;
-            }
-
-            // logDebug("[WRITER] (checkSampleliveness) - removing change: " << sequenceNumber)
-            rp->removeChange(sequenceNumber);
+            logDebug("[Writer] checkSampleLiveliness() - change " << change.sequenceNumber << " is still valid - stop checking further samples")
+            break;
         }
-    }
-
-    if(!sendQueue.empty())
-    {
-        // also purge fragments of expired samples from sendQueue
-        for(auto it = sendQueue.cbegin(); it != sendQueue.end(); it++)
-        {
-            // remove fragments if their sequence number matches any of those in deprecatedSNs
-            uint32_t sequenceNumber = (*it)->baseChange->sequenceNumber;
-            for(uint32_t deprecatedSn: deprecatedSNs)
-            {
-                if(sequenceNumber == deprecatedSn)
-                {
-                    sendQueue.erase(it--);
-                    break;
-                }
-            }
-        }
-    }
-
-    // finally delete expired changes
-    //toDelete.clear();
-    while(toDelete.size() > 0){
-        CacheChange* to_delete_element = toDelete.front();
-        toDelete.erase(toDelete.begin());
-        delete to_delete_element;
     }
 
     lock.unlock(); // modification complete, unlock history
-    /*************************************************** END CRITICAL SECTION ********************************************************************/
-    /***********************************************************************************************************************************************/
-
 }
 
 void Writer::removeCompleteSamples()
 {
-    /***********************************************************************************************************************************************/
-    /*************************************************** BEGIN CRITICAL SECTION *******************************************************************/
-    // iterate over all changes, remove those that are complete at ALL (!!) readers
-    std::unique_lock<std::mutex> lock(history_mutex); // lock history access for the duration of the modification
-    if(historyCache.size() == 0)
+    // iterate over all changes, remove those that are complete at the reader
+    std::unique_lock<std::mutex> lock(history_mutex); 
+
+    while(!historyCache.empty())
     {
-        lock.unlock();
-        return;
-    }
+        auto& change = historyCache.front();
 
-    while(1)
-    {
-        auto* change = historyCache.front();
-
-        if(!change)
+        if(matchedReader.checkSampleCompleteness(change.sequenceNumber))
         {
-            break;
-        }
-
-        bool completed = true;
-        for(auto rp: matchedReaders)
-        {
-            if(!(rp->checkSampleCompleteness(change->sequenceNumber)))
-            {
-                completed = false;
-                break;
-            }
-        }
-
-        if(completed)
-        {
-            // remove if change successfully acknowledged by all readers
-            // logDebug("[Writer][removeCompleteSample] delete change " << change->sequenceNumber << " from history")
-            for(auto rp: matchedReaders)
-            {
-                rp->removeChange(change->sequenceNumber);
-            }
+            // remove if change successfully acknowledged by reader
+            logDebug("[Writer] removeCompleteSamples() - delete change " << change.sequenceNumber << " from history")
+            matchedReader.removeChange(change.sequenceNumber);
             historyCache.pop_front();
-
-
-            // remove all queued fragments of that sample from the send queue
-            for(auto it = sendQueue.cbegin(); it != sendQueue.end(); it++)
-            {
-                // remove fragments if their sequence number matches that of the just removed change
-                uint32_t sequenceNumber = (*it)->baseChange->sequenceNumber;
-
-                if(sequenceNumber == change->sequenceNumber)
-                {
-                    sendQueue.erase(it--);
-                    break;
-                }
-
-            }
-            delete change;
         }
         else
         {
@@ -764,15 +401,49 @@ void Writer::removeCompleteSamples()
             // further samples for completeness if there is any incomplete sample
             break;
         }
-//        if(historyCache.size() == 0 || change == historyCache.back())
-//        {
-//            break;
-//        }
     }
-    lock.unlock(); // modification complete, unlock history
-    /*************************************************** END CRITICAL SECTION ********************************************************************/
-    /***********************************************************************************************************************************************/
+    lock.unlock();
+}
 
+void Writer::removeCurrentSample()
+{
+    std::unique_lock<std::mutex> lock(history_mutex); 
+    if(!historyCache.empty())
+    {
+        auto& change = historyCache.front();
+        logDebug("[Writer] removeCompleteSample_impl() - delete change " << change.sequenceNumber << " from history")
+        matchedReader.removeChange(change.sequenceNumber);
+        historyCache.pop_front();
+    }
+    lock.unlock();
+}
+
+bool Writer::isDeadlineAchievable(uint64_t& frag_num)
+{
+    auto now = std::chrono::system_clock::now();
+
+    std::unique_lock<std::mutex> lock(history_mutex);
+    auto deadline_time = currentChange->arrivalTime + config.deadline();
+    uint64_t fragments_left = currentChangeForReader->unsentCount();
+    lock.unlock();
+
+    if(fragments_left == 0)
+    {
+        frag_num = 0;
+        return true;
+    }
+    if (now >= deadline_time) return false;
+
+    auto time_remaining = std::chrono::duration_cast<std::chrono::microseconds>(deadline_time - now);
+        
+    // Shaping time is the delay between transmissions. 
+    // Total time needed = ceil(fragments / aggregation_size) * shaping_interval
+    auto num_transmissions = (fragments_left + config.aggregation_size() - 1) / config.aggregation_size();
+    auto time_needed = num_transmissions * config.shapingTime();
+    
+    // tracing info
+    frag_num = fragments_left;
+    return time_needed <= time_remaining;
 }
 
 
@@ -782,68 +453,58 @@ void Writer::removeCompleteSamples()
 
 void Writer::handleTimeout()
 {
-    // logDebug("[Writer] handleTimeout")
-
-    // current timestamp
-    auto t_now = std::chrono::system_clock::now();
-
-    if(!timeoutQueue.empty())
+    // tracing info
+    uint64_t frag_num = 0;
+    switch(matchedReader.checkTimeout())
     {
-        // current (first) change in readerProxy
-        ReaderProxy *timeoutedReader = timeoutQueue.front();
-        timeoutedReader->resetTimeoutedFragments(this->currentChange->sequenceNumber);
-        timeoutedReader->timeoutActive = false;
-        timeoutQueue.pop();
-
-        if(!shapingTimer->isActive())
-        {
-            shapingTimer->restart();
-        }
-    }
-
-
-    while(!timeoutQueue.empty())
-    {
-        // reader with the next timeout
-        ReaderProxy *nextReader = timeoutQueue.front();
-
-        // first check whether resetting still necessary or whether all fragments are acked by now
-        if(nextReader->getAckCount(this->currentChange->sequenceNumber) == this->currentChange->numberFragments) {
-            timeoutQueue.pop();
-            continue;
-        }
-
-        auto t_nextTimeout = nextReader->getTimeoutTimestamp();
-
-        if(t_nextTimeout <= t_now)
-        {
-            if(nextReader)
+        case ReaderProxy::NO_TIMEOUT:
+            logDebug("[Writer] handleTimeout() - NO_TIMEOUT")
+            break;
+        case ReaderProxy::TIMEOUT_PENDING:
+            logDebug("[Writer] handleTimeout() - TIMEOUT_PENDING")
+            timeoutTimer.restart(matchedReader.getTimeout());
+            break;
+        case ReaderProxy::TIMEOUT_EXPIRED:
+            logDebug("[Writer] handleTimeout() - TIMEOUT_EXPIRED")
+            if(matchedReader.resetTimedOutFragments())
             {
-                // current (first) change in readerProxy
-                nextReader->resetTimeoutedFragments(this->currentChange->sequenceNumber);
-                nextReader->timeoutActive = false;
-                timeoutQueue.pop();
-
-                if(!shapingTimer->isActive())
+                /**
+                 * ! NOTE: The Deadline check is disabled here for the PoC, as the NackFrag reception is to slow 
+                 * ! to react to missing fragments during the retransmission pahse. 
+                 * ! Hence, pro active retransmission scheduling based on a fragment transmission budget is implemented.
+                 */
+                // {
+                //     if(!shapingTimer.isActive())
+                //     {
+                //         shapingTimer.restart();
+                //     }
+                // }
+                // else
+                // {
+                //     logInfo("[Writer] handleTimeout() -  Sample " << currentSampleNumber << " cannot meet deadline, removing");
+                //     removeCurrentSample();
+                //     logTrace("SN DeadlineMissed," << currentSampleNumber << "," << frag_num)
+                //     if(historyCache.size() > 0 && !shapingTimer.isActive())
+                //     {
+                //         shapingTimer.restart();
+                //     }
+                // }
+            }
+            else{
+                logInfo("[Writer] handleTimeout() -  Sample " << currentSampleNumber << " complete, removing");
+                removeCurrentSample();
+                logTrace("SN Complete," << currentSampleNumber << "," << frag_num)
+                if(historyCache.size() > 0 && !shapingTimer.isActive())
                 {
-                    shapingTimer->restart();
+                    shapingTimer.restart();
                 }
             }
-        }
-        else
-        {
-            // timeout may become relevant in the future, restart timedEvent accordingly
-            if(!timeoutTimer->isActive())
-            {
-                timeoutTimer->restart(t_nextTimeout);
-            }
-        }
-
-
-        break;
+            break;
+        default:
+            logError("[Writer] handleTimeout() - unknown timeout status")
+            break;
     }
 }
-
 
 /************************/
 /* RM related functions */ 
@@ -851,18 +512,9 @@ void Writer::handleTimeout()
 
 void Writer::updateTxEndpoint(std::string endpoint_tx, int port)
 {
-    logInfo("Updating Tx Endpoint: " << endpoint_tx << ":" << port)
-    CommInterface->setTxEndpoint(socket_endpoint(endpoint_tx, port));
+    logInfo("[Writer] updateTxEndpoint() - Updating Tx Endpoint: " << endpoint_tx << ":" << port)
+    CommInterface.setTxEndpoint(socket_endpoint(endpoint_tx, port));
 }
 
-
-/***************************/
-/* miscellaneous functions */
-/***************************/
-
-void Writer::setConfig(config::writerCfg cfg)
-{
-    // config = cfg;
-}
 
 } //end namespace

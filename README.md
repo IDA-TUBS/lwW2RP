@@ -58,8 +58,6 @@ For logging boost/log is employed.
 The console log will display logging messages for all severity levels besides "trace"
 The file log only logs "trace" messages
 
-
-
 ## Features
 
 lightweight W2RP features:
@@ -68,8 +66,8 @@ lightweight W2RP features:
 - sample-/object-level BEC
 - configurable minimum distance shaping (MDS)
 - support for dynamically sized objects
-- (shaped) burst transmissions to make better us aggregation mechanisms (effectiveness not tested yet)
-
+- (shaped) burst transmissions to match aggregation mechanisms
+  
 In general, the inner, data handling structure of lwW2RP is inspired by the [RTPS](https://www.omg.org/spec/DDSI-RTPS/2.2/PDF) (Real-Time Publish-Subscribe) protocol with a *history cache* managing samples/objects (*cacheChanges*). Notably, while messages are also based on the RTPS specification, lwW2RP is not compatible with arbitrary RTPS implementations!
 
 Furthermore, lwW2RP purposefully omits implementing dynamic discovery. Given the proof-of-concept nature of this implementation, its focus was on evaluating the basic W2RP mechanisms and not providing a feature-rich implementation. Details on how to use lwW2RP can be found below.
@@ -78,7 +76,7 @@ Furthermore, lwW2RP purposefully omits implementing dynamic discovery. Given the
 
 ## Usage
 
-To use lwW2RP, one needs to add a *writer* (sender) and a *reader* (receiver) to the receiving parts of a (distributed) application, e.g, by putting the entities into dedicated publisher and subscriber classes. An example can be found in `examples/app_videoStream`.
+To use lwW2RP, one needs to add a *writer* (sender) and a *reader* (receiver) to the receiving parts of a (distributed) application, e.g, by putting the entities into dedicated publisher and subscriber classes. An example can be found in `examples/`.
 
 Add a writer to the publisher class:
 
@@ -97,15 +95,7 @@ Data can then be transmitted using the `write` function:
 ```cpp
 SerializedPayload *payload = new SerializedPayload(data, size);
 
-if(writer->write(payload)
-{
-    // sample transmitted successfully
-}
-else
-{
-    // problem occured
-    return false;
-}
+writer->write(payload);
 ```
 
 Importantly, lwW2RP only accepts `SerializedPayload` objects. Thus, there is a need to manually convert your object into such an object. 
@@ -125,10 +115,10 @@ bool Subscriber::init(uint16_t participant_id ,std::string cfg, std::string setu
 Data can then be retrieved by the subscribing app using:
 
 ```cpp
-reader->retrieveSample(payload);			
+reader->retrieveSample(payload);
 ```
 
-Note, `retrieveSample` is a blocking call. It is recommended to create a dedicated rx thread to avoid further blocking effects (see `examples/app_videoStream/reader_test.cpp`).
+Note, `retrieveSample` is a blocking call. It is recommended to create a dedicated rx thread to avoid further blocking effects (see `examples/reader/subscriber.hpp`).
 
 ### Configuration
 
@@ -142,7 +132,7 @@ lwW2RP is configured via two config files `w2rp_config.json` and `setup_defines.
 
 For explanations all other parameters, we kindly refer the user to the papers linked below.
 
-Both config files have to be presented on all devices hosting (distributed) parts of an application. Examples of how to load the configs can be found in `examples/app_videoStream/reader_test.cpp` and `examples/app_videoStream/writer_test.cpp`.
+Both config files have to be presented on all devices hosting (distributed) parts of an application. Examples of how to load the configs can be found in `examples/reader/subscriber.hpp` and `examples/writer/publisher.hpp`.
 
 
 
@@ -154,17 +144,8 @@ Both config files have to be presented on all devices hosting (distributed) part
 
 [3] A. Bendrick, J. Peeck and R. Ernst, "On the effectiveness of W2RP in physical environments", 2023, *technical memorandum*, doi: https://doi.org/10.24355/dbbs.084-202301231301-0
 
-[4] A. Bendrick, J. Peeck and R. Ernst, "An Error Protection Protocol for the Multicast Transmission of Data Samples in V2X environments", 2023, https://doi.org/10.24355/dbbs.084-202405020823-0
-
-
-
 ## Contact
-
-Alex Bendrick (bendrick@ida.ing.tu-bs.de)
 
 Daniel Tappe (tappe@ida.ing.tu-bs.de)
 
 When using or referencing W2RP in scientific works we kindly ask you reference the papers mentioned above.
-
-
-

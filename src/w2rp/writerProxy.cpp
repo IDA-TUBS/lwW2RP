@@ -1,143 +1,101 @@
-/*
- *
- */
-
 #include <w2rp/writerProxy.hpp>
 #include <w2rp/log.hpp>
 
 namespace w2rp {
 
+WriterProxy::WriterProxy(
+    std::uint32_t id,
+    std::uint32_t historySize
+):
+    writerID(id), 
+    historySize(historySize),
+    latestSequenceNumber(0)
+{}
+
 bool WriterProxy::addChange(CacheChange &change)
 {
-    if(change.sequenceNumber == highestSequenceNumber) // || history.size() == historySize)
+    // Per RTPS spec, sequence numbers should start with 1, thus 0 is a valid initial value
+    // However, also checking that history is not empty still allows 0 as first sequence number
+    if(change.sequenceNumber == latestSequenceNumber && history.size() > 0)
     {
         // no new sample, no need to add to history
         return false;
     }
-    // logDebug("[WriterProxy] added change " << change.sequenceNumber << " to history")
-    ChangeForWriter* cfr = new ChangeForWriter(change);
+    ChangeFromWriter cfw(change, writerID);
 
-    history.push_back(cfr);
-    highestSequenceNumber = change.sequenceNumber;
-
-    checkHistory();
+    history.emplace(
+        std::piecewise_construct,
+        std::forward_as_tuple(change.sequenceNumber),
+        std::forward_as_tuple(std::ref(change), writerID)
+    );
+    
+    latestSequenceNumber = change.sequenceNumber;
 
     return true;
 }
 
 void WriterProxy::removeChange(uint32_t sequenceNumber)
 {
-    // logDebug("[WriterProxy] remove change " << sequenceNumber)
-    for (auto it = history.begin(); it != history.end();)
+    auto it = history.find(sequenceNumber);
+    if(it != history.end())
     {
-        if ((*it)->sequenceNumber <= sequenceNumber)
+        logDebug("[WriterProxy] removing change " << sequenceNumber)
+        if(it->second.isComplete() == false)
         {
-            // logDebug("[WriterProxy] removing change " << (*it)->sequenceNumber)
-            auto change = (*it);
-            history.erase(it);
-            delete change;
-
-            return;
+            logInfo("[WriterProxy] removing INCOMPLETE change " << sequenceNumber)
         }
-        else
-        {
-            ++it;
-        }
+        history.erase(it);
     }
 }
 
-void WriterProxy::checkHistory()
+WriterProxy::ChangeStatus WriterProxy::updateFragmentStatus(
+    std::uint32_t sequenceNumber, 
+    std::uint32_t fragmentNumber
+)
 {
-    if(history.size() > historySize)
+    auto it = history.find(sequenceNumber);
+    if(it == history.end())
     {
-        if(history.front()->getCompleteFlag() == false)
-        {
-            logInfo("[WriterProxy] removing INCOMPLETE change " << history.front()->sequenceNumber)
-        }
-        delete history.front();
-        history.pop_front();
+        logDebug("[WriterProxy] change not found for fragment status update")
+        return NOT_FOUND;
+    }
+
+    auto& change = it->second;
+    change.markReceived(fragmentNumber);
+
+    if(change.isComplete())
+    {
+        return COMPLETE;
+    }
+    else
+    {
+        return INCOMPLETE;
     }
 }
 
-bool WriterProxy::checkChange(CacheChange &change)
+ChangeFromWriter& WriterProxy::getChange(std::uint32_t sequenceNumber)
 {
-    for (auto it = history.begin(); it != history.end(); it++)
-    {
-        if ((*it)->sequenceNumber == change.sequenceNumber)
-        {
-            return (*it)->getCompleteFlag();
-        }
-    }
-    return false;
+    return history.at(sequenceNumber);
 }
 
-bool WriterProxy::updateFragmentStatus(fragmentStates status, uint32_t sequenceNumber, uint32_t fragmentNumber, unsigned char *data, uint32_t dataLength)
+bool WriterProxy::checkPublished(std::uint32_t sequenceNumber)
 {
-    // first find change corresponding to the given sequence number
-    ChangeForWriter* tmp = nullptr;
-    for (auto cfw: history)
-    {
-        if (cfw->sequenceNumber == sequenceNumber)
-        {
-            tmp = cfw;
-            break;
-        }
-    }
-
-    if(tmp)
-    {
-        bool status_state = tmp->setFragmentStatus(status, fragmentNumber);
-        bool status_data = tmp->setFragmentData(fragmentNumber, data, dataLength);
-
-        return (status_data && status_state);
-    }
- 
-    return false;
+    ChangeFromWriter& change = history.at(sequenceNumber);
+    return change.isPublished();
 }
 
-
-bool WriterProxy::checkSampleCompleteness(uint32_t sequenceNumber)
+void WriterProxy::setPublished(std::uint32_t sequenceNumber)
 {
-    // access change with the given sequence number
-    ChangeForWriter* change = nullptr;
-    for (auto cfw: history)
-    {
-        if (cfw->sequenceNumber == sequenceNumber)
-        {
-            change = cfw;
-            break;
-        }
-    }
+    ChangeFromWriter& change = history.at(sequenceNumber);
+    change.setPublished();
 
-    bool complete = false;
-    if(change)
-    {
-        complete = change->checkForCompleteness();
-    }
-    if(complete)
-    {
-        // remove sample from history? or do at a different point in time
-        // done elsewhere
-    }
-
-    return complete;
 }
 
-
-ChangeForWriter* WriterProxy::getChange(uint32_t sequenceNumber)
+bool WriterProxy::isComplete(std::uint32_t sequenceNumber)
 {
-    // first find change corresponding to the given sequence number
-    ChangeForWriter* tmp = nullptr;
-    for (auto cfw: history)
-    {
-        if (cfw->sequenceNumber == sequenceNumber)
-        {
-            tmp = cfw;
-            break;
-        }
-    }
+    ChangeFromWriter& change = history.at(sequenceNumber);
+    return change.isComplete();
+}
 
-    return tmp;
-};
 
 }; // end namespace

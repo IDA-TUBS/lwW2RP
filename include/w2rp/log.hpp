@@ -20,6 +20,9 @@
 #include <cstdlib>
 #include <iostream>
 
+#include <chrono>
+#include <string>
+
 /**
  * @brief Preprocessor wrapper for boost logging library
  * 
@@ -27,29 +30,31 @@
 #ifdef LOG_ON
 
 #define logTrace(msg) BOOST_LOG_TRIVIAL(trace) << msg; 
-#define logDebug(msg) BOOST_LOG_TRIVIAL(debug) << msg;
 #define logInfo(msg) BOOST_LOG_TRIVIAL(info) << msg;
 #define logWarning(msg) BOOST_LOG_TRIVIAL(warning) << msg;
 #define logError(msg) BOOST_LOG_TRIVIAL(error) << msg;
 #define logFatal(msg) BOOST_LOG_TRIVIAL(fatal) << msg;
-#define AppLog(msg) BOOST_LOG_TRIVIAL(debug) << msg;
 
 #else
 #define logTrace(msg)
-#define logDebug(msg)
 #define logInfo(msg)
 #define logWarning(msg)
 #define logError(msg)
 #define logFatal(msg)
-#define AppLog(msg)
 #endif
+
+#ifdef DEBUG_ON
+#define logDebug(msg) BOOST_LOG_TRIVIAL(debug) << msg; 
+#else
+#define logDebug(msg)
+#endif
+
 
 namespace w2rp {
 
 void init_console_log();
 
 void init_file_log(std::string log_prefix, std::string log_suffix);
-
 };
 
-#endif
+#endif // W2RP_LOG_h

@@ -17,20 +17,18 @@ namespace config{
 
 /*********************** Reader ***************************/
 #define RESPONSE_DELAY "RESPONSE_DELAY [us]"
-#define PRIORITY "PRIORITY"
 #define CHECK_LIVELINESS "CHECK_LIVELINESS"
 
 /*********************** Writer ***************************/
 #define FRAGMENT_SIZE "FRAGMENT_SIZE [Byte]"
 #define SHAPING_TIME "SHAPING_TIME [us]"
 #define NACK_SUPPRESSION_DURATION "NACK_SUPPRESSION_DURATION [us]"
-#define TIMEOUT "TIMEOUT [us]"
+#define TIMEOUT_DURATION "TIMEOUT_DURATION [us]"
 #define NUMBER_READERS "NUMBER_READERS"
-#define PRIO_MODE "PRIO_MODE"
 #define AGGREGATION_SIZE "AGGREGATION_SIZE"
 
 /************** Misc. parameters **************************/
-#define NACK_BITMAP_SIZE 64 // in Bytes. Allows handling of NACK_BITMAP_SIZE*8 fragments
+#define NACK_BITMAP_SIZE 128 // in Bytes. Allows handling of NACK_BITMAP_SIZE*8 fragments
 
 }; // end namespace conifg
 }; // end namespace w2rp

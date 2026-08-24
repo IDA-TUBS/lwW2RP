@@ -23,7 +23,17 @@ TimerManager::~TimerManager()
 void TimerManager::start()
 {
     logInfo("TimerManager active")
-    executor = std::thread([this](){timer_io.run();});
+    executor = std::thread([this](){
+        pthread_setname_np(pthread_self(), "timerMgrThread");
+
+        // Pin this thread to Core 5 (index 5)
+        cpu_set_t cpuset;
+        CPU_ZERO(&cpuset);
+        CPU_SET(5, &cpuset);
+        pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
+
+        timer_io.run();
+    });
 }
 
 void TimerManager::stop()
@@ -33,16 +43,19 @@ void TimerManager::stop()
     executor.join();
 }
 
-timerID TimerManager::registerTimer(const Duration& duration, std::function<bool()> function, TimerType timer, bool autoStart)
+timerID TimerManager::registerTimer(const Duration& duration, std::function<bool()> function, TimerType timer, bool autoStart, bool immediateExecution)
 {
     timerID timer_id;
     switch (timer)
     {
         case STEADY_TIMER:
-            timer_id = registerSteadyTimer(duration, function, autoStart);
+            timer_id = registerSteadyTimer(duration, function, autoStart, immediateExecution);
             break;
         case ACTIVEWAIT_TIMER:
-            timer_id = registerActiveWaitTimer(duration, function, autoStart);
+            timer_id = registerActiveWaitTimer(duration, function, autoStart, immediateExecution);
+            break;
+        case NANOSLEEP_TIMER:
+            timer_id = registerNanosleepTimer(duration, function, autoStart, immediateExecution);
             break;
         default:
             logError("Timer registration failed, unrecognized TimerType")
@@ -113,27 +126,43 @@ void TimerManager::cancelTimer(timerID timer_id)
                 }
             }
             break;
-
+        case NANOSLEEP_TIMER:
+            {
+                auto timer_entry = getNanosleepTimer(timer_id.second);
+                if (timer_entry) 
+                {
+                    timer_entry->stop();  // Stop the nanosleep timer
+                }
+                else
+                {
+                    logError("No NanosleepTimer available with ID: " <<  timer_id.second)
+                }
+            }
+            break;
         default:
             // nothing to do
+            logError("Timer cancellation failed, unrecognized TimerType")
             break;
     }
     
     lock.unlock();
 }
 
-void TimerManager::restartTimer(timerID timer_id, const Duration& duration, std::function<bool()> function)
+void TimerManager::restartTimer(timerID timer_id, const Duration& duration, std::function<bool()> function, bool immediateExecution)
 {
     switch (timer_id.first)
     {
         case STEADY_TIMER:
-            restartSteadyTimer(timer_id, duration, function);
+            restartSteadyTimer(timer_id, duration, function, immediateExecution);
             break;
         case ACTIVEWAIT_TIMER:
-            restartActiveWaitTimer(timer_id, duration, function);
+            restartActiveWaitTimer(timer_id, duration, function, immediateExecution);
+            break;
+        case NANOSLEEP_TIMER:
+            restartNanosleepTimer(timer_id, duration, function, immediateExecution);
             break;
         default:
-            logError("Timer registration failed, unrecognized TimerType")
+            logError("Timer restart failed, unrecognized TimerType")
             break;
     }
 }
@@ -173,9 +202,16 @@ timerID TimerManager::assignID(TimerType t_type)
     return timer_id;
 }
 
-void TimerManager::configureTimer(std::shared_ptr<boost::asio::steady_timer> timer, size_t timer_id, Duration duration, std::function<bool()> function)
+void TimerManager::configureTimer(std::shared_ptr<boost::asio::steady_timer> timer, size_t timer_id, Duration duration, std::function<bool()> function, bool immediateExecution)
 {
-    timer->expires_after(duration);
+    if(immediateExecution)
+    {
+        timer->expires_after(std::chrono::milliseconds(0)); // execute as soon as possible
+    }
+    else
+    {
+        timer->expires_after(duration);
+    }
     timer->async_wait(
         [timer, timer_id, function, duration, this](const boost::system::error_code& ec) {
             if (!ec) {
@@ -184,7 +220,7 @@ void TimerManager::configureTimer(std::shared_ptr<boost::asio::steady_timer> tim
                 if(restart_ == true)
                 {
                     // logInfo("Re-register intervall timer: " << timer_id)
-                    configureTimer(timer, timer_id, duration, function);
+                    configureTimer(timer, timer_id, duration, function, false);
                 }
             }
             else
@@ -249,7 +285,20 @@ std::shared_ptr<ActiveWaitTimer> TimerManager::getActiveWaitTimer(size_t id)
     }
 }
 
-timerID TimerManager::registerSteadyTimer(const Duration& duration, std::function<bool()> function, bool autoStart)
+std::shared_ptr<NanosleepTimer> TimerManager::getNanosleepTimer(size_t id)
+{
+    auto timer_entry = m_nanosleep_timers.find(id);
+    if (timer_entry != m_nanosleep_timers.end()) 
+    {
+        return timer_entry->second;
+    } 
+    else 
+    {
+        return nullptr;
+    }
+}
+
+timerID TimerManager::registerSteadyTimer(const Duration& duration, std::function<bool()> function, bool autoStart, bool immediateExecution)
 {
     timerID timer_id = assignID(STEADY_TIMER);
     
@@ -258,7 +307,7 @@ timerID TimerManager::registerSteadyTimer(const Duration& duration, std::functio
     
     if(autoStart)
     {
-        configureTimer(timer, timer_id.second, duration, function);      
+        configureTimer(timer, timer_id.second, duration, function);
     }
 
     // Add the timer to the list of timers
@@ -268,7 +317,7 @@ timerID TimerManager::registerSteadyTimer(const Duration& duration, std::functio
     return timer_id;
 }
 
-timerID TimerManager::registerActiveWaitTimer(const Duration& duration, std::function<bool()> function, bool autoStart)
+timerID TimerManager::registerActiveWaitTimer(const Duration& duration, std::function<bool()> function, bool autoStart, bool immediateExecution)
 {
     timerID timer_id = assignID(ACTIVEWAIT_TIMER);
     
@@ -286,7 +335,25 @@ timerID TimerManager::registerActiveWaitTimer(const Duration& duration, std::fun
     return timer_id;
 }
 
-void TimerManager::restartSteadyTimer(timerID timer_id, const Duration& duration, std::function<bool()> function)
+timerID TimerManager::registerNanosleepTimer(const Duration& duration, std::function<bool()> function, bool autoStart, bool immediateExecution)
+{
+    timerID timer_id = assignID(NANOSLEEP_TIMER);
+    
+    auto timer = std::make_shared<NanosleepTimer>();
+
+    if (autoStart)
+    {
+        timer->start(duration, function, immediateExecution);
+    }
+
+    // Add the timer to the list of custom timers
+    std::unique_lock<std::mutex> lock(m_mutex);
+    m_nanosleep_timers.emplace(timer_id.second, std::move(timer));
+    
+    return timer_id;
+}
+
+void TimerManager::restartSteadyTimer(timerID timer_id, const Duration& duration, std::function<bool()> function, bool immediateExecution)
 {
     std::unique_lock<std::mutex> lock(m_mutex);
     auto timer = getSteadyTimer(timer_id.second);
@@ -303,7 +370,7 @@ void TimerManager::restartSteadyTimer(timerID timer_id, const Duration& duration
 
 }
 
-void TimerManager::restartActiveWaitTimer(timerID timer_id, const Duration& duration, std::function<bool()> function)
+void TimerManager::restartActiveWaitTimer(timerID timer_id, const Duration& duration, std::function<bool()> function, bool immediateExecution)
 {
     std::unique_lock<std::mutex> lock(m_mutex);
     auto timer = getActiveWaitTimer(timer_id.second);
@@ -311,11 +378,27 @@ void TimerManager::restartActiveWaitTimer(timerID timer_id, const Duration& dura
     if (timer) 
     {
         timer->stop();  // Stop the current timer
-        timer->start(duration, function);  // Restart the timer
+        timer->start(duration, function, immediateExecution);  // Restart the timer
     }
     else
     {
         logError("restartActiveWaitTimer: Timer object not available")
+    }
+}
+
+void TimerManager::restartNanosleepTimer(timerID timer_id, const Duration& duration, std::function<bool()> function, bool immediateExecution)
+{
+    std::unique_lock<std::mutex> lock(m_mutex);
+    auto timer = getNanosleepTimer(timer_id.second);
+    lock.unlock();
+    if (timer) 
+    {
+        timer->stop();  // Stop the current timer
+        timer->start(duration, function, immediateExecution);  // Restart the timer
+    }
+    else
+    {
+        logError("restartNanosleepTimer: Timer object not available")
     }
 }
 

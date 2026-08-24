@@ -1,182 +1,160 @@
-/*
- *
- */
-
 #ifndef W2RP_CHANGEFORREADER_H_
 #define W2RP_CHANGEFORREADER_H_
 
 #include <math.h>
 #include <vector>
 #include <chrono>
+#include <memory>
+#include <cstdint>
+#include <deque>
+#include <unordered_set>
+#include <queue>
+#include <functional>
+#include <set>
+#include <mutex>
+
 #include <w2rp/cacheChange.hpp>
-#include <w2rp/sampleFragment.hpp>
+#include <w2rp/fragment/sampleFragmentState.hpp>
 #include <w2rp/log.hpp>
 
 namespace w2rp {
 
-class SampleFragment;
-
-class ChangeForReader: public CacheChange
+class ChangeForReader
 {
-  private:
-    /// reader entity ID
-    uint32_t readerID;
+private:
+    // reader entity ID
+    std::uint32_t readerID;
 
-  public:
-    // /// flag for signaling that all fragments have been acknowledged
-    // bool complete;
+    // mutex for object access
+    std::mutex cache_mutex;
 
-    /// storing fragment number that has been sent last
-    int lastSentFN;
-    /// highest yet sent fragment number
-    int highestFNSend;
+    // flag for signaling that all fragments have been acknowledged
+    bool complete;
 
-    /// reference (pointer) to intial CacheChange
-    CacheChange *baseChange;
+    // flag indicating whether all fragments have been transmitted at least once
+    bool transmittedAll;
 
+public:
+
+    // storing fragment number that has been sent last
+    std::uint32_t lastSent;
+
+    // highest yet sent fragment number
+    std::uint32_t highestSent;
+
+    // lowest yet unsent/ fragment number
+    std::uint32_t lowestNacked;
+
+    // reference to corresponding CacheChange
+    std::uint32_t sequenceNumber;
+
+    // Maximum number of fragments that can be retransmitted for this change. 
+    std::uint32_t retransmissionBudget;
+
+    // Array for storing the unsent/nacked sample states
+    std::vector<SampleFragmentState> fragmentStates;
+
+    // quick access queue for sample fragments to be retransmitted
+    std::priority_queue<
+        std::uint32_t, 
+        std::vector<std::uint32_t>, 
+        std::greater<std::uint32_t>
+    > unsentQueue;
+
+    // quick access set for sample fragments to be sent
+    std::deque<std::uint32_t> initialQueue;
+
+    // quick access set for sample fragments to be acknowledged
+    std::set<std::uint32_t> sentSet;
 
     /**
      * @brief empty default constructor
      */
-    ChangeForReader(){
-        complete = false;
-        lastSentFN = -1;
-        highestFNSend = 0;
-    }
+    ChangeForReader();
 
     /**
      * @brief overloaded constructor
      *
+     * @param change reference to the associated cache change
      * @param id of reader
-     * @param seqNum sequence number of the current sample
-     * @param sampleSize size of the sample in bytes
-     * @param fragmentSize size of a fragment in bytes
-     * @param timestamp time when sample was generated/arrived at middleware
      */
-    ChangeForReader(CacheChange* change, uint32_t id, uint32_t seqNum, uint32_t sampleSize, uint32_t fragmentSize, std::chrono::system_clock::time_point timestamp):
-        CacheChange(seqNum, sampleSize, fragmentSize, timestamp),
-        readerID(id),
-        // complete(false),
-        lastSentFN(-1),
-        highestFNSend(0),
-        baseChange(change)
-    {
-        sampleFragmentArray = new SampleFragment*[this->numberFragments];
-
-        // instantiate all fragments comprising the sample
-        for(uint32_t i = 0; i < this->numberFragments; i++){
-            sampleFragmentArray[i] = new SampleFragment(baseChange,
-                                                        i,
-                                                        (fragmentSize < sampleSize - (i*fragmentSize)) ? fragmentSize : sampleSize - (i*fragmentSize),
-                                                        arrivalTime);
-        }
-    };
+    ChangeForReader(
+        CacheChange &change, 
+        std::uint32_t id,
+        std::uint32_t fragment_budget
+    );
 
     /**
-     * @brief overloaded constructor, generate ChangeForReader from CacheChange
-     *
-     * @param id of reader
-     * @param change reference to cache change
+     * @brief destructor
      */
-    ChangeForReader(uint32_t id, CacheChange &change):
-        CacheChange(change.sequenceNumber, change.sampleSize, change.fragmentSize, change.arrivalTime),
-        readerID(id),
-        // complete(false),
-        lastSentFN(-1),
-        highestFNSend(0),
-        baseChange(&change)
-    {
-        sampleFragmentArray = new SampleFragment*[this->numberFragments];
-
-        auto sampleArrayRef = change.getFragmentArray();
-        // copy contents of reference array (CacheChange) to this instance's array
-        for(uint32_t i = 0; i < this->numberFragments; i++){
-            // logDebug("[ChangeForReader] create sf " << i)
-            sampleFragmentArray[i] = new SampleFragment(*sampleArrayRef[i]);
-        }
-    };
-
-    /**
-     * @brief copy constructor
-     */
-    ChangeForReader(ChangeForReader &change):
-        CacheChange(change.sequenceNumber, change.sampleSize, change.fragmentSize, change.arrivalTime),
-        readerID(change.readerID),
-        // complete(change.complete),
-        lastSentFN(change.lastSentFN),
-        highestFNSend(change.highestFNSend),
-        baseChange(change.baseChange)
-    {
-        sampleFragmentArray = new SampleFragment*[this->numberFragments];
-
-        auto sampleArrayRef = change.getFragmentArray();
-
-        // copy contents of reference array to this instance's array
-        for(uint32_t i = 0; i < this->numberFragments; i++){
-            sampleFragmentArray[i] = new SampleFragment(*sampleArrayRef[i]);
-        }
-    }
-
-    /**
-     * @brief empty default destructor
-     */
-    ~ChangeForReader()
-    {
-        // logDebug("[ChangeForReader] delete")
-        // delete[] sampleFragmentArray; // Leads to conflicts at object destruction
-    };
-
-    /**
-     * @brief determine number of fragments that have not been acknowledged yet
-     *
-     * @return number of fragments
-     */
-    uint32_t notAckCount();
-
-    /**
-     * @brief determine number of fragments that have been acknowledged so far
-     *
-     * @return number of fragments
-     */
-    uint32_t ackCount();
-
-    /**
-     * @brief determine number of fragments that have been sent so far, also includes those already acknowledged by the reader
-     *
-     * @return number of fragments
-     */
-    uint32_t sentCount();
-
-    /**
-     * @brief determine number of fragments that are in state "UNSENT"
-     *
-     * @return number of fragments
-     */
-    uint32_t unsentCount();
-
-    /**
-     * @brief method for updating the fragment status
-     *
-     * @param statues new fragment status
-     * @param fragmentNumber fragment whose fragment shall be updated
-     * @return true if operation successful, else returns false
-     */
-    bool setFragmentStatus(fragmentStates status, uint32_t fragmentNumber, std::chrono::system_clock::time_point sentTimestamp);
-
-    /**
-     * @brief gather all fragments of a given change that are currently in state unsent (and not acknowledged!)
-     *
-     * @return list of fragments
-     */
-    std::vector<SampleFragment*> getUnsentFragments();
+    ~ChangeForReader();
 
     /**
      * @brief reset all sent but unacknowledged fragments to state 'UNSENT', used by WiMEP
      */
     void resetSentFragments();
 
-};
+    /**
+     * @brief check whether sample has been received or acknowledged in its entirety
+     *
+     * @return true if complete, else returns false
+     */
+    bool checkForCompleteness();
 
-}; // end namespace
+    /**
+     * @brief get fragment number of next fragment that shall be transmitted
+     *
+     * @return fragment number of next fragment to be transmitted
+     */
+    std::uint32_t getFragmentForTx();
+
+    /**
+     * @brief set fragment to acknowledged
+     * 
+     * @param fragmentNumber fn of fragment to be updated
+     * @return true if successful, else false
+     */
+    bool setAcked(std::uint32_t fragmentNumber);
+
+    /**
+     * @brief set fragments to acknowledged
+     * 
+     * @param lowestFragmentNumber fn of lowest fragment to be updated
+     * @param highestFragmentNumber fn of highest fragment to be updated
+     * @return true if successful, else false
+     */
+    bool setAcked(std::uint32_t lowestFragmentNumber, std::uint32_t highestFragmentNumber);
+
+    /**
+     * @brief set fragment to nacked
+     * 
+     * @param fragmentNumber fn of fragment to be updated
+     * @param nackTimestamp timestamp when nack was received
+     * @param nackSuppressionInterval duration for nack suppression
+     * @return 0 if successful, -1 if fragment number is invalid, 1 if retransmission budget is exceeded
+     */
+    int setNacked(
+        std::uint32_t fragmentNumber,
+        std::chrono::system_clock::time_point nackTimestamp,
+        std::chrono::system_clock::duration nackSuppressionInterval
+    );
+
+    /**
+     * @brief return the number of unssent fragments
+     * 
+     * @return std::size_t 
+     */
+    std::size_t unsentCount();
+
+    /**
+     * @brief return the number of fragments that can still be retransmitted within the deadline
+     * 
+     * @return std::size_t 
+     */
+    std::size_t retransmissionBudgetCount();
+
+}; 
+
+}// end namespace
 
 #endif // W2RP_CHANGEFORREADER_H_

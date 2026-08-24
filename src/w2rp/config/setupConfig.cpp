@@ -11,7 +11,7 @@ setupConfig::setupConfig(std::string cfg_path)
     boost::property_tree::read_json(cfg_path, config);     
 }
 
-uint32_t setupConfig::get_hostID(std::string name)
+std::uint32_t setupConfig::get_hostID(std::string name)
 {
     std::string hex_string = getAttribute<std::string>(name, HOST_ID);
 

@@ -5,6 +5,8 @@ void w2rp::init_console_log()
     boost::log::add_common_attributes();
     
     #ifdef CONSOLE_ON
+    
+    #ifdef DEBUG_ON
     boost::log::add_console_log
     (
         std::cout,
@@ -12,6 +14,18 @@ void w2rp::init_console_log()
         boost::log::keywords::auto_flush = true,
         boost::log::keywords::filter = boost::log::trivial::severity >= boost::log::trivial::debug
     );
+    #endif
+
+    #ifdef RELEASE_ON
+    boost::log::add_console_log
+    (
+        std::cout,
+        boost::log::keywords::format = "[%TimeStamp%][%Severity%]: %Message%",
+        boost::log::keywords::auto_flush = true,
+        boost::log::keywords::filter = boost::log::trivial::severity >= boost::log::trivial::info
+    );
+    #endif
+    
     #endif
 }
 
@@ -40,4 +54,3 @@ void w2rp::init_file_log(std::string log_prefix, std::string log_suffix)
     );
     #endif
 }
-
