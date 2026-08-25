@@ -42,20 +42,23 @@ sudo ./build.sh -j<n_threads>
 
 ### Build configuration
 
-The build scripts offers the possibility to configure different logging options.
+The build scripts offers the possibility to configure different logging options via defines, see `build.sh`:
 
-* **LOG=ON** enables logging statements
-* **CONSOLE=ON** Adds a console log
-* **FILE=ON** Adds a file log
+* **-DLOG=ON** enables logging statements
+* **-DCONSOLE=ON** Adds a console log
+* **-DFILE=ON** Adds a file log
+
+*Note*: All logging options are enabled by default.
 
 #### Debug build type
 
-Using -DCMAKE_BUILD_TYPE=Debug, logging will be enabled and a console log is supplied by default
+Using **DEBUG=ON** enables more detailed console output for debugging.
 
 #### Logging
 
-For logging boost/log is employed. 
-The console log will display logging messages for all severity levels besides "trace"
+For logging boost/log is employed.
+The console log will display logging messages for all severity levels besides "trace" and "debug".
+The debug log messages are activated with **DEBUG=ON**.
 The file log only logs "trace" messages
 
 ## Features
@@ -71,8 +74,6 @@ lightweight W2RP features:
 In general, the inner, data handling structure of lwW2RP is inspired by the [RTPS](https://www.omg.org/spec/DDSI-RTPS/2.2/PDF) (Real-Time Publish-Subscribe) protocol with a *history cache* managing samples/objects (*cacheChanges*). Notably, while messages are also based on the RTPS specification, lwW2RP is not compatible with arbitrary RTPS implementations!
 
 Furthermore, lwW2RP purposefully omits implementing dynamic discovery. Given the proof-of-concept nature of this implementation, its focus was on evaluating the basic W2RP mechanisms and not providing a feature-rich implementation. Details on how to use lwW2RP can be found below.
-
-
 
 ## Usage
 
@@ -133,7 +134,6 @@ lwW2RP is configured via two config files `w2rp_config.json` and `setup_defines.
 For explanations all other parameters, we kindly refer the user to the papers linked below.
 
 Both config files have to be presented on all devices hosting (distributed) parts of an application. Examples of how to load the configs can be found in `examples/reader/subscriber.hpp` and `examples/writer/publisher.hpp`.
-
 
 
 ## References

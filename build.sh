@@ -7,7 +7,7 @@ threads="6"
 dlog="ON"
 dconsole="ON"
 dfile="ON"
-ddebug="ON"
+ddebug="OFF"
 
 while getopts "j:l:c:f:d" opt; do
   case $opt in
@@ -24,7 +24,7 @@ while getopts "j:l:c:f:d" opt; do
       dfile="OFF"
       ;;
     d)
-      ddebug="OFF"
+      ddebug="ON"
       ;;
   esac
 done
