@@ -4,10 +4,6 @@ set (CMAKE_CXX_STANDARD 17)
 
 include(GNUInstallDirs)
 
-### cmake macros
-include(${PROJECT_SOURCE_DIR}/cmake/dev/set_sources.cmake)
-include(${PROJECT_SOURCE_DIR}/cmake/dev/generate_msvc_libraries.cmake)
-
 ### Build directory structure
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -99,11 +95,15 @@ target_compile_options(w2rp PUBLIC -g)
 
 include(CMakePackageConfigHelpers)
 
-### Add headers to system include dir 
-set_public_headers_directory(${PROJECT_SOURCE_DIR}/include w2rp
+### Add headers to system include dir
+install(
+    DIRECTORY ${PROJECT_SOURCE_DIR}/include/w2rp
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     COMPONENT headers
-    INSTALL
+    FILES_MATCHING
+    PATTERN "*.h"
+    PATTERN "*.hpp"
+    PATTERN "*.ipp"
 )
 
 ### Install lib
